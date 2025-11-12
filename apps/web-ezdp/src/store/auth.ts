@@ -5,17 +5,29 @@ import { useRouter } from 'vue-router';
 
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
-import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
+import {
+  resetAllStores,
+  useAccessStore,
+  useBusinessStore,
+  useUserStore,
+} from '@vben/stores';
 
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
 
-import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
+import {
+  getAccessCodesApi,
+  getBusinessLinesApi,
+  getUserInfoApi,
+  loginApi,
+  logoutApi,
+} from '#/api';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
+  const businessStore = useBusinessStore();
   const router = useRouter();
 
   const loginLoading = ref(false);
@@ -40,15 +52,19 @@ export const useAuthStore = defineStore('auth', () => {
         accessStore.setAccessToken(accessToken);
 
         // 获取用户信息并存储到 accessStore 中
-        const [fetchUserInfoResult, accessCodes] = await Promise.all([
-          fetchUserInfo(),
-          getAccessCodesApi(),
-        ]);
+        const [fetchUserInfoResult, accessCodes, businessLines] =
+          await Promise.all([
+            fetchUserInfo(),
+            getAccessCodesApi(),
+            getBusinessLinesApi(),
+          ]);
 
         userInfo = fetchUserInfoResult;
 
         userStore.setUserInfo(userInfo);
         accessStore.setAccessCodes(accessCodes);
+
+        await businessStore.init(true, businessLines ?? []);
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
@@ -84,6 +100,7 @@ export const useAuthStore = defineStore('auth', () => {
       // 不做任何处理
     }
     resetAllStores();
+    businessStore.reset();
     accessStore.setLoginExpired(false);
 
     // 回登录页带上当前路由地址

@@ -3,12 +3,13 @@ import { createApp, watchEffect } from 'vue';
 import { registerAccessDirective } from '@vben/access';
 import { registerLoadingDirective } from '@vben/common-ui/es/loading';
 import { preferences } from '@vben/preferences';
-import { initStores } from '@vben/stores';
+import { initStores, registerBusinessApiProvider } from '@vben/stores';
 import '@vben/styles';
 import '@vben/styles/antd';
 
 import { useTitle } from '@vueuse/core';
 
+import { getBusinessLinesApi, getRolePowerApi } from '#/api';
 import { $t, setupI18n } from '#/locales';
 
 import { initComponentAdapter } from './adapter/component';
@@ -45,6 +46,11 @@ async function bootstrap(namespace: string) {
 
   // 配置 pinia-tore
   await initStores(app, { namespace });
+
+  registerBusinessApiProvider({
+    fetchBusinessLines: getBusinessLinesApi,
+    fetchRolePower: getRolePowerApi,
+  });
 
   // 安装权限指令
   registerAccessDirective(app);

@@ -9,5 +9,34 @@ export const overridesPreferences = defineOverridesPreferences({
   // overrides
   app: {
     name: import.meta.env.VITE_APP_TITLE,
+    loginExpiredMode: 'page',
+    enableRefreshToken: false,
+    watermark: true,
+    watermarkContent: 'EZDP',
+    accessMode: 'frontend',
+  },
+  copyright: {
+    enable: true,
+    companyName: 'Plaso',
+    companySiteLink: 'https://www.plaso.cn',
+    date: '2025',
+    icp: '',
+    icpLink: '',
+    settingShow: true,
+  },
+  breadcrumb: {
+    showHome: true,
+    styleType: 'background',
+  },
+  footer: {
+    enable: true,
+    fixed: true,
+  },
+  sidebar: {
+    width: 220,
+  },
+  tabbar: {
+    maxCount: 10,
+    middleClickToClose: true,
   },
 });

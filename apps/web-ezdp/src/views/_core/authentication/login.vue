@@ -30,20 +30,20 @@ const MOCK_USER_OPTIONS: BasicOption[] = [
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
-    {
-      component: 'VbenSelect',
-      componentProps: {
-        options: MOCK_USER_OPTIONS,
-        placeholder: $t('authentication.selectAccount'),
-      },
-      fieldName: 'selectAccount',
-      label: $t('authentication.selectAccount'),
-      rules: z
-        .string()
-        .min(1, { message: $t('authentication.selectAccount') })
-        .optional()
-        .default('vben'),
-    },
+    // {
+    //   component: 'VbenSelect',
+    //   componentProps: {
+    //     options: MOCK_USER_OPTIONS,
+    //     placeholder: $t('authentication.selectAccount'),
+    //   },
+    //   fieldName: 'selectAccount',
+    //   label: $t('authentication.selectAccount'),
+    //   rules: z
+    //     .string()
+    //     .min(1, { message: $t('authentication.selectAccount') })
+    //     .optional()
+    //     .default('vben'),
+    // },
     {
       component: 'VbenInput',
       componentProps: {
@@ -65,7 +65,7 @@ const formSchema = computed((): VbenFormSchema[] => {
         },
         triggerFields: ['selectAccount'],
       },
-      fieldName: 'username',
+      fieldName: 'loginName',
       label: $t('authentication.username'),
       rules: z.string().min(1, { message: $t('authentication.usernameTip') }),
     },
@@ -92,6 +92,11 @@ const formSchema = computed((): VbenFormSchema[] => {
 <template>
   <AuthenticationLogin
     :form-schema="formSchema"
+    :show-third-party-login="false"
+    :show-register="false"
+    :show-forget-password="false"
+    :show-code-login="false"
+    :show-qrcode-login="false"
     :loading="authStore.loginLoading"
     @submit="authStore.authLogin"
   />
