@@ -83,7 +83,10 @@ async function updateRolePermissions(
     menuIds?: number[];
   },
 ) {
-  return requestClient.put(`/role/${id}/permissions`, data);
+  return requestClient.post('/role/permissions', {
+    roleId: id,
+    ...data,
+  });
 }
 
 /**

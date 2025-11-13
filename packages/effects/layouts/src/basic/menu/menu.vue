@@ -3,10 +3,11 @@ import type { MenuRecordRaw } from '@vben/types';
 
 import type { MenuProps } from '@vben-core/menu-ui';
 
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { SvgAvatar2Icon } from '@vben/icons';
-import { useBusinessStore } from '@vben/stores';
+import { useBusinessStore, useTabbarStore } from '@vben/stores';
 
 import { Menu } from '@vben-core/menu-ui';
 import {
@@ -33,6 +34,11 @@ const emit = defineEmits<{
 }>();
 
 const businessStore = useBusinessStore();
+const tabbarStore = useTabbarStore();
+const router = useRouter();
+
+// 切换业务线的 loading 状态
+const switchingBusinessLine = ref(false);
 
 // 业务线选项
 const businessLineOptions = computed(() => businessStore.businessLineOptions);
@@ -52,7 +58,19 @@ const selectedValue = computed({
     if (!Number.isFinite(id) || businessStore.currentBusinessLineId === id) {
       return;
     }
-    await businessStore.switchBusinessLine(id);
+    try {
+      switchingBusinessLine.value = true;
+      // 先清空路由标签页
+      await tabbarStore.closeAllTabs(router);
+      // 清空 sessionStorage 中的标签页数据
+      sessionStorage.removeItem('core-tabbar');
+      // 切换业务线
+      await businessStore.switchBusinessLine(id);
+      // 强制刷新页面，确保菜单和路由重新加载
+      window.location.reload();
+    } finally {
+      switchingBusinessLine.value = false;
+    }
   },
 });
 
@@ -74,7 +92,10 @@ function handleMenuOpen(key: string, path: string[]) {
 
 <template>
   <div class="business-line-select">
-    <Select v-model="selectedValue">
+    <Select
+      v-model="selectedValue"
+      :disabled="switchingBusinessLine || businessStore.loading"
+    >
       <SelectTrigger class="business-line-select-trigger">
         <div v-if="selectedOption" class="flex items-center">
           <img
@@ -135,7 +156,7 @@ $namespace: vben;
 
   :deep(.business-line-select-trigger) {
     width: 95%;
-    margin: 0 auto;
+    margin: 10px auto;
   }
 }
 

@@ -5,12 +5,7 @@ import { useRouter } from 'vue-router';
 
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
-import {
-  resetAllStores,
-  useAccessStore,
-  useBusinessStore,
-  useUserStore,
-} from '@vben/stores';
+import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
@@ -99,19 +94,34 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       // 不做任何处理
     }
-    resetAllStores();
-    businessStore.reset();
-    accessStore.setLoginExpired(false);
 
-    // 回登录页带上当前路由地址
-    await router.replace({
-      path: LOGIN_PATH,
-      query: redirect
-        ? {
-            redirect: encodeURIComponent(router.currentRoute.value.fullPath),
-          }
-        : {},
-    });
+    // 手动清除各个 store（不调用 resetAllStores，因为 core-business 没有 $reset 方法）
+    // 1. 清除 accessStore
+    accessStore.setAccessToken(null);
+    accessStore.setRefreshToken(null);
+    accessStore.setAccessCodes([]);
+    accessStore.setAccessMenus([]);
+    accessStore.setAccessRoutes([]);
+    accessStore.setIsAccessChecked(false);
+    accessStore.setLoginExpired(false);
+    accessStore.unlockScreen();
+
+    // 2. 清除 userStore
+    userStore.setUserInfo(null);
+    userStore.setUserRoles([]);
+
+    // 3. 清除 businessStore（使用 reset 方法，不是 $reset）
+    businessStore.reset();
+
+    // 4. 清除当前 authStore
+    loginLoading.value = false;
+
+    // 直接使用 window.location.replace 强制跳转，确保页面刷新
+    const redirectQuery = redirect
+      ? `?redirect=${encodeURIComponent(router.currentRoute.value.fullPath)}`
+      : '';
+    const loginUrl = `${LOGIN_PATH}${redirectQuery}`;
+    window.location.replace(loginUrl);
   }
 
   async function fetchUserInfo() {

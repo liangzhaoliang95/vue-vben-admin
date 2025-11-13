@@ -28,14 +28,20 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   return await generateAccessible(preferences.app.accessMode, {
     ...options,
     fetchMenuListAsync: async () => {
-      message.loading({
+      // 显示 loading 提示
+      const hideLoading = message.loading({
         content: `${$t('common.loadingMenu')}...`,
-        duration: 1.5,
+        duration: 0, // 设置为 0 表示不自动关闭
       });
 
-      // 使用后端真实接口获取当前角色的菜单
-      const menus = await businessStore.ensureCurrentRoleMenus(true);
-      return menus;
+      try {
+        // 使用后端真实接口获取当前角色的菜单
+        const menus = await businessStore.ensureCurrentRoleMenus(true);
+        return menus;
+      } finally {
+        // 菜单加载完成后关闭 loading
+        hideLoading();
+      }
     },
     // 可以指定没有权限跳转403页面
     forbiddenComponent,

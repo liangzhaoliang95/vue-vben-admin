@@ -1,27 +1,12 @@
 <script lang="ts" setup>
 import { computed, onMounted, useSlots } from 'vue';
-import { useRouter } from 'vue-router';
 
 import { useRefresh } from '@vben/hooks';
 import { RotateCw } from '@vben/icons';
 import { preferences, usePreferences } from '@vben/preferences';
-import {
-  registerBusinessAccessRefresher,
-  triggerBusinessAccessRefresh,
-  useAccessStore,
-  useBusinessStore,
-} from '@vben/stores';
+import { useAccessStore } from '@vben/stores';
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  VbenAvatar,
-  VbenFullScreen,
-  VbenIconButton,
-} from '@vben-core/shadcn-ui';
+import { VbenFullScreen, VbenIconButton } from '@vben-core/shadcn-ui';
 
 import {
   GlobalSearch,
@@ -51,11 +36,9 @@ const emit = defineEmits<{ clearPreferencesAndLogout: [] }>();
 const REFERENCE_VALUE = 50;
 
 const accessStore = useAccessStore();
-const businessStore = useBusinessStore();
 const { globalSearchShortcutKey, preferencesButtonPosition } = usePreferences();
 const slots = useSlots();
 const { refresh } = useRefresh();
-const router = useRouter();
 
 const rightSlots = computed(() => {
   const list = [{ index: REFERENCE_VALUE + 100, name: 'user-dropdown' }];
@@ -131,64 +114,11 @@ const leftSlots = computed(() => {
   return list.sort((a, b) => a.index - b.index);
 });
 
-const businessLineOptions = computed(() => businessStore.businessLineOptions);
-
-const hasBusinessLineOptions = computed(
-  () => businessLineOptions.value.length > 0,
-);
-
-const businessLineValue = computed({
-  get() {
-    return businessStore.currentBusinessLineId === null
-      ? ''
-      : String(businessStore.currentBusinessLineId);
-  },
-  async set(value: string) {
-    if (!value) {
-      return;
-    }
-    const id = Number(value);
-    if (!Number.isFinite(id) || businessStore.currentBusinessLineId === id) {
-      return;
-    }
-    await handleBusinessLineChange(id);
-  },
-});
-
-const businessLineLoading = computed(() => businessStore.loading);
-
-async function handleBusinessLineChange(id: number) {
-  try {
-    await businessStore.switchBusinessLine(id);
-    await rebuildAccess();
-  } catch (error) {
-    console.error('业务线切换失败:', error);
-  }
-}
-
-async function rebuildAccess() {
-  // 触发业务访问刷新（如果已注册），这会重置访问检查状态并重新生成菜单和路由
-  await triggerBusinessAccessRefresh();
-  // 刷新当前页面，确保菜单和路由已更新
-  await refresh();
-}
-
 function clearPreferencesAndLogout() {
   emit('clearPreferencesAndLogout');
 }
 
-onMounted(() => {
-  void businessStore.init();
-  // 注册业务访问刷新器，当切换业务线时重新生成菜单和路由
-  registerBusinessAccessRefresher(async () => {
-    // 重置访问检查状态，让路由守卫重新生成菜单和路由
-    accessStore.setIsAccessChecked(false);
-    // 获取当前路由路径
-    const currentPath = router.currentRoute.value.fullPath;
-    // 触发路由导航，让路由守卫重新生成菜单和路由
-    await router.push(currentPath);
-  });
-});
+onMounted(() => {});
 </script>
 
 <template>
@@ -223,34 +153,6 @@ onMounted(() => {
     <template v-for="slot in rightSlots" :key="slot.name">
       <slot :name="slot.name">
         <template v-if="slot.name === 'global-search'">
-          <div
-            v-if="hasBusinessLineOptions"
-            class="mr-1 flex items-center sm:mr-4"
-          >
-            <Select v-model="businessLineValue" :disabled="businessLineLoading">
-              <SelectTrigger class="h-9 min-w-[180px]">
-                <SelectValue placeholder="选择业务线" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="option in businessLineOptions"
-                  :key="option.value"
-                  :value="option.value"
-                >
-                  <div class="flex items-center gap-2">
-                    <VbenAvatar
-                      v-if="option.logoUrl"
-                      :alt="option.label"
-                      :src="option.logoUrl"
-                      class="size-5"
-                      shape="square"
-                    />
-                    <span class="truncate">{{ option.label }}</span>
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
           <GlobalSearch
             :enable-shortcut-key="globalSearchShortcutKey"
             :menus="accessStore.accessMenus"

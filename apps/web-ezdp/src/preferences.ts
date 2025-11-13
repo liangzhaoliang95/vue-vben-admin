@@ -11,7 +11,7 @@ export const overridesPreferences = defineOverridesPreferences({
     name: import.meta.env.VITE_APP_TITLE,
     loginExpiredMode: 'page',
     enableRefreshToken: false,
-    watermark: true,
+    watermark: false,
     watermarkContent: 'EZDP',
     accessMode: 'backend',
   },

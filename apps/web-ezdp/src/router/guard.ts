@@ -3,9 +3,9 @@ import type { Router } from 'vue-router';
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
-import { startProgress, stopProgress } from '@vben/utils';
+import { resetStaticRoutes, startProgress, stopProgress } from '@vben/utils';
 
-import { accessRoutes, coreRouteNames } from '#/router/routes';
+import { accessRoutes, coreRouteNames, routes } from '#/router/routes';
 import { useAuthStore } from '#/store';
 
 import { generateAccess } from './access';
@@ -86,9 +86,13 @@ function setupAccessGuard(router: Router) {
     }
 
     // 是否已经生成过动态路由
+    // 如果 isAccessChecked 为 false，说明需要重新生成路由
     if (accessStore.isAccessChecked) {
       return true;
     }
+
+    // 删除所有动态路由，只保留静态路由，确保重新生成时不会有旧路由残留
+    resetStaticRoutes(router, routes);
 
     // 生成路由表
     // 当前登录用户拥有的角色标识列表

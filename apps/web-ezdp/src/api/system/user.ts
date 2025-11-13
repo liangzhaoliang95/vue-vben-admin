@@ -61,4 +61,57 @@ async function deleteUser(id: number | string) {
   return requestClient.delete(`/user/${id}`);
 }
 
-export { createUser, deleteUser, getUserList, updateUser };
+/**
+ * 获取用户权限（业务线和角色）
+ * @param id 用户 ID
+ */
+async function getUserPermissions(id: number | string) {
+  return requestClient.post<{
+    items: Array<{
+      businessLineId: number;
+      businessLineName: string;
+      roleId: number;
+      roleName: string;
+    }>;
+  }>(`/user/permissions`, { userId: id });
+}
+
+/**
+ * 保存用户权限（业务线和角色）
+ * @param id 用户 ID
+ * @param permissions 权限列表
+ */
+async function saveUserPermissions(
+  id: number | string,
+  permissions: Array<{
+    businessLineId: number;
+    roleId: number;
+  }>,
+) {
+  return requestClient.post(`/user/permissions/save`, {
+    userId: id,
+    permissions,
+  });
+}
+
+/**
+ * 删除用户业务线
+ * @param id 用户 ID
+ * @param businessLineId 业务线 ID
+ */
+async function deleteUserBusinessLine(
+  id: number | string,
+  businessLineId: number,
+) {
+  return requestClient.delete(`/user/${id}/business-line/${businessLineId}`);
+}
+
+export {
+  createUser,
+  deleteUser,
+  deleteUserBusinessLine,
+  getUserList,
+  getUserPermissions,
+  saveUserPermissions,
+  updateUser,
+};

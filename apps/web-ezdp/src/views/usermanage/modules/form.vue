@@ -8,8 +8,7 @@ import { message } from 'ant-design-vue';
 import { useVbenForm } from '#/adapter/form';
 import { createUser, updateUser } from '#/api/system/user';
 import { $t } from '#/locales';
-
-import { useFormSchema } from '../data';
+import { useFormSchema } from '#/views/usermanage/user/data';
 
 const emits = defineEmits(['success']);
 

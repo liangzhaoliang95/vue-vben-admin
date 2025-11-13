@@ -15,11 +15,17 @@ import { Button, message, Modal } from 'ant-design-vue';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { deleteUser, getUserList, updateUser } from '#/api/system/user';
 import { $t } from '#/locales';
-import { useColumns, useGridFormSchema } from '#/views/system/user/data';
-import Form from '#/views/system/user/modules/form.vue';
+import Form from '#/views/usermanage/modules/form.vue';
+import { useColumns, useGridFormSchema } from '#/views/usermanage/user/data';
+import PermissionContent from '#/views/usermanage/user/modules/permission.vue';
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
+  destroyOnClose: true,
+});
+
+const [PermissionDrawer, permissionDrawerApi] = useVbenDrawer({
+  connectedComponent: PermissionContent,
   destroyOnClose: true,
 });
 
@@ -30,8 +36,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
   gridOptions: {
     columns: useColumns(onActionClick, onStatusChange),
-    height: 'auto',
     keepSource: true,
+    height: 'auto',
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
@@ -78,6 +84,10 @@ function onActionClick(e: OnActionClickParams<SystemUserApi.User>) {
     }
     case 'edit': {
       onEdit(e.row);
+      break;
+    }
+    case 'permission': {
+      onPermissionSetting(e.row);
       break;
     }
   }
@@ -136,11 +146,24 @@ function onRefresh() {
 function onCreate() {
   formDrawerApi.setData({}).open();
 }
+
+function onPermissionSetting(row: SystemUserApi.User) {
+  permissionDrawerApi.setData({
+    userId: row.id,
+    userName: row.userName || row.loginName,
+  });
+  permissionDrawerApi.open();
+}
+
+function onPermissionSuccess() {
+  gridApi.query();
+}
 </script>
 
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
+    <PermissionDrawer @success="onPermissionSuccess" />
     <Grid :table-title="$t('system.user.title')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">

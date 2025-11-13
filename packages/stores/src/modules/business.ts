@@ -331,7 +331,6 @@ export const useBusinessStore = defineStore(
         // 转换菜单数据
         const routeNodes = toRouteNodes(menus);
         roleMenuCache.value[roleId] = routeNodes;
-
       }
       // 确保返回的是数组，即使缓存中有数据也要返回
       return roleMenuCache.value[roleId] ?? [];
@@ -365,6 +364,10 @@ export const useBusinessStore = defineStore(
       if (!target) {
         return;
       }
+
+      // 切换业务线前，先清空菜单缓存，确保获取新业务线的菜单
+      roleMenuCache.value = {};
+
       currentBusinessLineId.value = id;
 
       const role =
@@ -377,8 +380,11 @@ export const useBusinessStore = defineStore(
       } else {
         currentRoleId.value = null;
         updateUserRoles(null);
-        // 没有角色时，清空权限码
+        // 没有角色时，清空权限码、菜单和路由
         accessStore.setAccessCodes([]);
+        accessStore.setAccessMenus([]);
+        accessStore.setAccessRoutes([]);
+        accessStore.setIsAccessChecked(false);
       }
     }
 

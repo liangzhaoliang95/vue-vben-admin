@@ -56,7 +56,8 @@ export function useColumns(
     {
       field: 'email',
       title: $t('system.user.email'),
-      width: 200,
+      minWidth: 200,
+      showOverflow: true,
     },
     {
       cellRender: {
@@ -85,12 +86,19 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['edit', 'delete'],
+        options: [
+          'edit',
+          {
+            code: 'permission',
+            text: '权限设置',
+          },
+          'delete',
+        ],
       },
       field: 'action',
       fixed: 'right',
       title: $t('common.action'),
-      width: 150,
+      width: 200,
     },
   ];
 }
