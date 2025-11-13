@@ -22,6 +22,17 @@
     "operationSuccess": "操作成功",
     "operationFailed": "操作失败"
   },
+  "confirmTitle": {
+    "delete": "删除确认"
+  },
+  "confirmContent": {
+    "delete": "确定要删除 {0} 吗？删除后无法恢复。"
+  },
+  "successMessage": {
+    "create": "创建成功",
+    "update": "更新成功",
+    "delete": "删除成功"
+  },
   "placeholder": {
     "input": "请输入",
     "select": "请选择"

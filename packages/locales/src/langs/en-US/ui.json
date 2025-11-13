@@ -22,6 +22,17 @@
     "operationSuccess": "Operation succeeded",
     "operationFailed": "Operation failed"
   },
+  "confirmTitle": {
+    "delete": "Delete Confirmation"
+  },
+  "confirmContent": {
+    "delete": "Are you sure to delete {0}? This action cannot be undone."
+  },
+  "successMessage": {
+    "create": "Created successfully",
+    "update": "Updated successfully",
+    "delete": "Deleted successfully"
+  },
   "placeholder": {
     "input": "Please enter",
     "select": "Please select"

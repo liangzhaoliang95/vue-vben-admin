@@ -20,5 +20,14 @@
   "yes": "是",
   "no": "否",
   "showSearchPanel": "显示搜索面板",
-  "hideSearchPanel": "隐藏搜索面板"
+  "hideSearchPanel": "隐藏搜索面板",
+  "keyword": "关键词",
+  "action": "操作",
+  "createdAt": "创建时间",
+  "status": {
+    "name": "状态",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "select": "请选择状态"
+  }
 }

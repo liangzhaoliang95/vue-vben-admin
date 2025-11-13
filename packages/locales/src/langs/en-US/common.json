@@ -20,5 +20,14 @@
   "yes": "Yes",
   "no": "No",
   "showSearchPanel": "Show search panel",
-  "hideSearchPanel": "Hide search panel"
+  "hideSearchPanel": "Hide search panel",
+  "keyword": "Keyword",
+  "action": "Action",
+  "createdAt": "Created At",
+  "status": {
+    "name": "Status",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "select": "Please select status"
+  }
 }

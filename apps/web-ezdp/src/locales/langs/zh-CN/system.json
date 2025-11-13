@@ -1,0 +1,68 @@
+{
+  "title": "系统管理",
+  "userManagement": {
+    "title": "用户管理"
+  },
+  "user": {
+    "title": "用户管理",
+    "name": "用户",
+    "loginName": "登录名",
+    "userName": "用户名",
+    "phone": "手机号",
+    "email": "邮箱",
+    "avatar": "头像",
+    "password": "密码",
+    "loginNamePlaceholder": "请输入登录名",
+    "userNamePlaceholder": "请输入用户名",
+    "phonePlaceholder": "请输入手机号",
+    "emailPlaceholder": "请输入邮箱",
+    "avatarPlaceholder": "请输入头像URL",
+    "passwordPlaceholder": "请输入密码（至少6位）",
+    "searchPlaceholder": "登录名/用户名/手机号/邮箱",
+    "loginNameRequired": "登录名不能为空",
+    "loginNameLength": "登录名长度为1-50个字符",
+    "userNameRequired": "用户名不能为空",
+    "userNameLength": "用户名长度为1-100个字符",
+    "passwordRequired": "密码不能为空",
+    "passwordMinLength": "密码至少6位",
+    "phoneMaxLength": "手机号最多20个字符",
+    "emailInvalid": "邮箱格式不正确",
+    "emailMaxLength": "邮箱最多100个字符",
+    "avatarMaxLength": "头像URL最多500个字符"
+  },
+  "businessLine": {
+    "title": "业务线管理",
+    "name": "业务线",
+    "code": "业务线编码",
+    "description": "描述",
+    "logoUrl": "Logo地址",
+    "isInternal": "是否内部业务线",
+    "status": "状态",
+    "sortOrder": "排序",
+    "operation": "操作",
+    "keyword": "搜索关键词"
+  },
+  "role": {
+    "title": "角色管理",
+    "list": "角色列表",
+    "name": "角色",
+    "roleName": "角色名称",
+    "code": "角色编码",
+    "businessLine": "业务线",
+    "description": "描述",
+    "isSystem": "系统角色",
+    "isSuper": "超级管理员",
+    "id": "角色ID",
+    "status": "状态",
+    "sortOrder": "排序",
+    "remark": "备注",
+    "createTime": "创建时间",
+    "operation": "操作",
+    "permissions": "权限",
+    "menuPermissions": "菜单权限",
+    "setPermissions": "授权",
+    "keyword": "搜索关键词",
+    "noMenus": "暂无菜单数据"
+  }
+}
+

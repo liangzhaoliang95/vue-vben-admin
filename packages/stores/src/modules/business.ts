@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 
 import { acceptHMRUpdate, defineStore } from 'pinia';
 
+import { useAccessStore } from './access';
 import { useUserStore } from './user';
 
 interface BusinessLineInfo {
@@ -35,6 +36,7 @@ interface MenuTreeNode {
   component?: string;
   icon?: string;
   keepAlive?: boolean;
+  link?: string; // 外链地址（用于IFrameView等组件）
   name: string;
   path: string;
   permissions?: string;
@@ -53,14 +55,10 @@ interface ButtonPermission {
   permission: string;
 }
 
-interface RolePowerResponse {
-  buttons?: ButtonPermission[];
-  menus?: MenuTreeNode[];
-}
-
 interface BusinessApiProvider {
   fetchBusinessLines: () => Promise<BusinessLineRoles[]>;
-  fetchRolePower: (roleId: number) => Promise<RolePowerResponse>;
+  fetchRoleMenu: (roleId: number) => Promise<MenuTreeNode[]>;
+  fetchRolePowerCodes?: (roleId: number) => Promise<string[]>;
 }
 
 let businessApiProvider: BusinessApiProvider | null = null;
@@ -93,8 +91,13 @@ function toRouteNodes(nodes: MenuTreeNode[] | undefined) {
     return [] as RouteRecordStringComponent[];
   }
   return nodes.map((node) => {
+    // 后端返回的component路径格式：/dashboard/analytics/index（已去掉 views/ 和 .vue）
+    // 前端直接使用，不需要添加 /views 前缀
+    // normalizeViewPath 会自动处理路径映射
+    const component: string | undefined = node.component;
+
     const route: RouteRecordStringComponent = {
-      component: node.component,
+      component: component || '',
       meta: {
         alwaysShow: node.alwaysShow,
         hideMenu: node.visible === false,
@@ -108,26 +111,38 @@ function toRouteNodes(nodes: MenuTreeNode[] | undefined) {
               .filter(Boolean)
           : undefined,
         title: node.title || node.name,
+        // 如果 component 是 IFrameView 且有 link，将 link 转换为 iframeSrc
+        iframeSrc:
+          component === 'IFrameView' && node.link ? node.link : undefined,
+        // 保留 link 字段用于其他用途（如新窗口打开）
+        link: node.link,
       },
       name: node.code || node.name,
       path: normalizeRoutePath(node.path),
       redirect: node.redirect,
     };
 
+    // 如果component为空字符串，删除它
     if (!route.component) {
-      delete route.component;
+      (route as any).component = undefined;
     }
 
+    // 如果redirect为空，删除它
     if (!route.redirect) {
-      delete route.redirect;
+      (route as any).redirect = undefined;
     }
 
     if (!route.meta?.icon) {
       delete route.meta?.icon;
     }
 
-    if (!route.meta?.permissions?.length) {
-      delete route.meta?.permissions;
+    if (
+      route.meta &&
+      route.meta.permissions &&
+      Array.isArray(route.meta.permissions) &&
+      route.meta.permissions.length === 0
+    ) {
+      delete route.meta.permissions;
     }
 
     if (!route.meta?.title) {
@@ -136,6 +151,14 @@ function toRouteNodes(nodes: MenuTreeNode[] | undefined) {
 
     if (!route.meta?.order && route.meta?.order !== 0) {
       delete route.meta?.order;
+    }
+
+    // 清理未定义的 meta 字段
+    if (!route.meta?.iframeSrc) {
+      delete route.meta?.iframeSrc;
+    }
+    if (!route.meta?.link) {
+      delete route.meta?.link;
     }
 
     if (node.children?.length) {
@@ -157,13 +180,22 @@ async function fetchBusinessLines() {
   return await getBusinessApiProvider().fetchBusinessLines();
 }
 
-async function fetchRolePower(roleId: number) {
-  return await getBusinessApiProvider().fetchRolePower(roleId);
+async function fetchRoleMenu(roleId: number) {
+  return await getBusinessApiProvider().fetchRoleMenu(roleId);
+}
+
+async function fetchRolePowerCodes(roleId: number): Promise<string[]> {
+  const provider = getBusinessApiProvider();
+  if (provider.fetchRolePowerCodes) {
+    return await provider.fetchRolePowerCodes(roleId);
+  }
+  return [];
 }
 
 export const useBusinessStore = defineStore(
   'core-business',
   () => {
+    const accessStore = useAccessStore();
     const businessLines = ref<BusinessLineRoles[]>([]);
     const currentBusinessLineId = ref<null | number>(null);
     const currentRoleId = ref<null | number>(null);
@@ -246,19 +278,31 @@ export const useBusinessStore = defineStore(
             (item) => item.businessLine.id === persistedBusinessLineId,
           ) ?? defaultBusinessLine;
 
-        currentBusinessLineId.value = targetBusinessLine.businessLine.id;
+        if (targetBusinessLine) {
+          currentBusinessLineId.value = targetBusinessLine.businessLine.id;
 
-        const defaultRole =
-          targetBusinessLine.roles.find(
-            (role) => role.id === persistedRoleId,
-          ) ?? targetBusinessLine.roles[0];
+          const defaultRole =
+            targetBusinessLine.roles.find(
+              (role) => role.id === persistedRoleId,
+            ) ?? targetBusinessLine.roles[0];
 
-        if (defaultRole) {
-          currentRoleId.value = defaultRole.id;
-          await ensureRoleMenus(defaultRole.id);
-          updateUserRoles(defaultRole);
-        } else {
-          currentRoleId.value = null;
+          if (defaultRole) {
+            currentRoleId.value = defaultRole.id;
+            await ensureRoleMenus(defaultRole.id);
+            updateUserRoles(defaultRole);
+
+            // 获取并更新权限码
+            try {
+              const powerCodes = await fetchRolePowerCodes(defaultRole.id);
+              accessStore.setAccessCodes(powerCodes);
+            } catch (error) {
+              console.error('获取权限码失败:', error);
+              accessStore.setAccessCodes([]);
+            }
+          } else {
+            currentRoleId.value = null;
+            accessStore.setAccessCodes([]);
+          }
         }
 
         initialized.value = true;
@@ -269,13 +313,27 @@ export const useBusinessStore = defineStore(
 
     async function ensureRoleMenus(roleId: number, force: boolean = false) {
       if (!roleId) {
+        // 如果没有角色ID，清空缓存并返回空数组
+        roleMenuCache.value = {};
         return [];
       }
       if (!roleMenuCache.value[roleId] || force) {
-        const response = await fetchRolePower(roleId);
-        roleMenuCache.value[roleId] = toRouteNodes(response?.menus);
-        roleButtonCache.value[roleId] = response?.buttons ?? [];
+        // 调用 getRoleMenu 接口，直接返回菜单数组
+        const menus = await fetchRoleMenu(roleId);
+
+        // 确保 menus 是数组
+        if (!Array.isArray(menus)) {
+          console.error('getRoleMenu 返回的数据格式错误，期望数组:', menus);
+          roleMenuCache.value[roleId] = [];
+          return [];
+        }
+
+        // 转换菜单数据
+        const routeNodes = toRouteNodes(menus);
+        roleMenuCache.value[roleId] = routeNodes;
+
       }
+      // 确保返回的是数组，即使缓存中有数据也要返回
       return roleMenuCache.value[roleId] ?? [];
     }
 
@@ -319,6 +377,8 @@ export const useBusinessStore = defineStore(
       } else {
         currentRoleId.value = null;
         updateUserRoles(null);
+        // 没有角色时，清空权限码
+        accessStore.setAccessCodes([]);
       }
     }
 
@@ -327,9 +387,20 @@ export const useBusinessStore = defineStore(
         return;
       }
       currentRoleId.value = id;
-      const menus = await ensureRoleMenus(id);
+      // 强制刷新菜单，不使用缓存
+      const menus = await ensureRoleMenus(id, true);
       const role = availableRoles.value.find((item) => item.id === id) ?? null;
       updateUserRoles(role ?? null);
+
+      // 获取并更新权限码
+      try {
+        const powerCodes = await fetchRolePowerCodes(id);
+        accessStore.setAccessCodes(powerCodes);
+      } catch (error) {
+        console.error('获取权限码失败:', error);
+        accessStore.setAccessCodes([]);
+      }
+
       return menus;
     }
 
@@ -382,4 +453,4 @@ if (hot) {
   hot.accept(acceptHMRUpdate(useBusinessStore, hot));
 }
 
-export type { BusinessLineRoles, RolePowerResponse };
+export type { BusinessLineRoles, MenuTreeNode };

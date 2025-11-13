@@ -13,7 +13,7 @@ export const overridesPreferences = defineOverridesPreferences({
     enableRefreshToken: false,
     watermark: true,
     watermarkContent: 'EZDP',
-    accessMode: 'frontend',
+    accessMode: 'backend',
   },
   copyright: {
     enable: true,

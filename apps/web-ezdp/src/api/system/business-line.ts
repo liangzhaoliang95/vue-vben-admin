@@ -1,0 +1,58 @@
+import type { Recordable } from '@vben/types';
+
+import { requestClient } from '#/api/request';
+
+export namespace SystemBusinessLineApi {
+  export interface BusinessLine {
+    id: number;
+    code: string;
+    name: string;
+    description?: string;
+    logoUrl?: string;
+    isInternal: number;
+    status: 0 | 1;
+    sortOrder: number;
+    createdAt: number;
+    updatedAt: number;
+  }
+}
+
+/**
+ * 获取业务线列表数据
+ */
+async function getBusinessLineList(params: Recordable<any>) {
+  return requestClient.post<{
+    items: SystemBusinessLineApi.BusinessLine[];
+    total: number;
+  }>('/businessLine/list', params);
+}
+
+/**
+ * 创建业务线
+ * @param data 业务线数据
+ */
+async function createBusinessLine(
+  data: Omit<
+    SystemBusinessLineApi.BusinessLine,
+    'createdAt' | 'id' | 'updatedAt'
+  >,
+) {
+  return requestClient.post('/businessLine', data);
+}
+
+/**
+ * 更新业务线
+ *
+ * @param id 业务线 ID
+ * @param data 业务线数据
+ */
+async function updateBusinessLine(
+  id: number | string,
+  data: Partial<
+    Omit<SystemBusinessLineApi.BusinessLine, 'createdAt' | 'id' | 'updatedAt'>
+  >,
+) {
+  return requestClient.put(`/businessLine/${id}`, data);
+}
+
+export { createBusinessLine, getBusinessLineList, updateBusinessLine };

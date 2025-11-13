@@ -1,0 +1,68 @@
+{
+  "title": "System Management",
+  "userManagement": {
+    "title": "User Management"
+  },
+  "user": {
+    "title": "User Management",
+    "name": "User",
+    "loginName": "Login Name",
+    "userName": "User Name",
+    "phone": "Phone",
+    "email": "Email",
+    "avatar": "Avatar",
+    "password": "Password",
+    "loginNamePlaceholder": "Please enter login name",
+    "userNamePlaceholder": "Please enter user name",
+    "phonePlaceholder": "Please enter phone number",
+    "emailPlaceholder": "Please enter email",
+    "avatarPlaceholder": "Please enter avatar URL",
+    "passwordPlaceholder": "Please enter password (at least 6 characters)",
+    "searchPlaceholder": "Login name/User name/Phone/Email",
+    "loginNameRequired": "Login name is required",
+    "loginNameLength": "Login name must be 1-50 characters",
+    "userNameRequired": "User name is required",
+    "userNameLength": "User name must be 1-100 characters",
+    "passwordRequired": "Password is required",
+    "passwordMinLength": "Password must be at least 6 characters",
+    "phoneMaxLength": "Phone number must be at most 20 characters",
+    "emailInvalid": "Invalid email format",
+    "emailMaxLength": "Email must be at most 100 characters",
+    "avatarMaxLength": "Avatar URL must be at most 500 characters"
+  },
+  "businessLine": {
+    "title": "Business Line Management",
+    "name": "Business Line",
+    "code": "Business Line Code",
+    "description": "Description",
+    "logoUrl": "Logo URL",
+    "isInternal": "Is Internal",
+    "status": "Status",
+    "sortOrder": "Sort Order",
+    "operation": "Operation",
+    "keyword": "Keyword"
+  },
+  "role": {
+    "title": "Role Management",
+    "list": "Role List",
+    "name": "Role",
+    "roleName": "Role Name",
+    "code": "Role Code",
+    "businessLine": "Business Line",
+    "description": "Description",
+    "isSystem": "System Role",
+    "isSuper": "Super Admin",
+    "id": "Role ID",
+    "status": "Status",
+    "sortOrder": "Sort Order",
+    "remark": "Remark",
+    "createTime": "Creation Time",
+    "operation": "Operation",
+    "permissions": "Permissions",
+    "menuPermissions": "Menu Permissions",
+    "setPermissions": "Permissions",
+    "keyword": "Keyword",
+    "noMenus": "No menu data"
+  }
+}
+

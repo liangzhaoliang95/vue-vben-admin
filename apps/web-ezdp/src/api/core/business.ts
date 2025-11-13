@@ -1,13 +1,19 @@
-import type { BusinessLineRoles, RolePowerResponse } from '@vben/stores';
+import type { BusinessLineRoles, MenuTreeNode } from '@vben/stores';
 
 import { requestClient } from '../request';
 
 export function getBusinessLinesApi() {
-  return requestClient.get<BusinessLineRoles[]>('/tk/role/businessLines');
+  return requestClient.get<BusinessLineRoles[]>('/role/businessLines');
 }
 
-export function getRolePowerApi(roleId: number) {
-  return requestClient.post<RolePowerResponse>('/tk/role/getRolePower', {
+export function getRoleMenuApi(roleId: number) {
+  return requestClient.post<MenuTreeNode[]>('/role/getRoleMenu', {
+    roleId,
+  });
+}
+
+export function getRolePowerCodesApi(roleId: number) {
+  return requestClient.post<string[]>('/role/getRolePowerCodes', {
     roleId,
   });
 }

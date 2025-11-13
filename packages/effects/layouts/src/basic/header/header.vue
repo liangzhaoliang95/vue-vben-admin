@@ -1,10 +1,12 @@
 <script lang="ts" setup>
 import { computed, onMounted, useSlots } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { useRefresh } from '@vben/hooks';
 import { RotateCw } from '@vben/icons';
 import { preferences, usePreferences } from '@vben/preferences';
 import {
+  registerBusinessAccessRefresher,
   triggerBusinessAccessRefresh,
   useAccessStore,
   useBusinessStore,
@@ -20,8 +22,6 @@ import {
   VbenFullScreen,
   VbenIconButton,
 } from '@vben-core/shadcn-ui';
-
-import { message } from 'ant-design-vue';
 
 import {
   GlobalSearch,
@@ -55,8 +55,7 @@ const businessStore = useBusinessStore();
 const { globalSearchShortcutKey, preferencesButtonPosition } = usePreferences();
 const slots = useSlots();
 const { refresh } = useRefresh();
-
-const BUSINESS_SWITCH_MESSAGE_KEY = 'business-line-switch';
+const router = useRouter();
 
 const rightSlots = computed(() => {
   const list = [{ index: REFERENCE_VALUE + 100, name: 'user-dropdown' }];
@@ -160,25 +159,17 @@ const businessLineLoading = computed(() => businessStore.loading);
 
 async function handleBusinessLineChange(id: number) {
   try {
-    message.loading({
-      content: '正在切换业务线...',
-      duration: 0,
-      key: BUSINESS_SWITCH_MESSAGE_KEY,
-    });
     await businessStore.switchBusinessLine(id);
     await rebuildAccess();
-    message.success({
-      content: '业务线切换成功',
-      key: BUSINESS_SWITCH_MESSAGE_KEY,
-    });
   } catch (error) {
-    console.error(error);
-    message.error((error as Error)?.message || '业务线切换失败，请稍后重试');
+    console.error('业务线切换失败:', error);
   }
 }
 
 async function rebuildAccess() {
+  // 触发业务访问刷新（如果已注册），这会重置访问检查状态并重新生成菜单和路由
   await triggerBusinessAccessRefresh();
+  // 刷新当前页面，确保菜单和路由已更新
   await refresh();
 }
 
@@ -188,6 +179,15 @@ function clearPreferencesAndLogout() {
 
 onMounted(() => {
   void businessStore.init();
+  // 注册业务访问刷新器，当切换业务线时重新生成菜单和路由
+  registerBusinessAccessRefresher(async () => {
+    // 重置访问检查状态，让路由守卫重新生成菜单和路由
+    accessStore.setIsAccessChecked(false);
+    // 获取当前路由路径
+    const currentPath = router.currentRoute.value.fullPath;
+    // 触发路由导航，让路由守卫重新生成菜单和路由
+    await router.push(currentPath);
+  });
 });
 </script>
 

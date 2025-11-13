@@ -18,7 +18,9 @@ async function generateRoutesByBackend(
 
   try {
     const menuRoutes = await fetchMenuListAsync?.();
-    if (!menuRoutes) {
+    // 如果返回空数组或 null/undefined，返回空数组
+    if (!menuRoutes || (Array.isArray(menuRoutes) && menuRoutes.length === 0)) {
+      console.warn('后端返回的菜单列表为空，将清除所有动态路由');
       return [];
     }
 
@@ -62,7 +64,13 @@ function convertRoutes(
       if (pageMap[pageKey]) {
         route.component = pageMap[pageKey];
       } else {
-        console.error(`route component is invalid: ${pageKey}`, route);
+        console.error(`route component is invalid: ${pageKey}`, {
+          component,
+          normalizePath,
+          pageKey,
+          availableKeys: Object.keys(pageMap).slice(0, 10),
+          route,
+        });
         route.component = pageMap['/_core/fallback/not-found.vue'];
       }
     }

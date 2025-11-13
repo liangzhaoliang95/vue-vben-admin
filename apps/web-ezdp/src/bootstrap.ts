@@ -9,7 +9,11 @@ import '@vben/styles/antd';
 
 import { useTitle } from '@vueuse/core';
 
-import { getBusinessLinesApi, getRolePowerApi } from '#/api';
+import {
+  getBusinessLinesApi,
+  getRoleMenuApi,
+  getRolePowerCodesApi,
+} from '#/api';
 import { $t, setupI18n } from '#/locales';
 
 import { initComponentAdapter } from './adapter/component';
@@ -49,7 +53,8 @@ async function bootstrap(namespace: string) {
 
   registerBusinessApiProvider({
     fetchBusinessLines: getBusinessLinesApi,
-    fetchRolePower: getRolePowerApi,
+    fetchRoleMenu: getRoleMenuApi,
+    fetchRolePowerCodes: getRolePowerCodesApi,
   });
 
   // 安装权限指令
