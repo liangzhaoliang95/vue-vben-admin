@@ -2,7 +2,7 @@ import type { Router } from 'vue-router';
 
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
-import { useAccessStore, useUserStore } from '@vben/stores';
+import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 import { resetStaticRoutes, startProgress, stopProgress } from '@vben/utils';
 
 import { accessRoutes, coreRouteNames, routes } from '#/router/routes';
@@ -98,6 +98,12 @@ function setupAccessGuard(router: Router) {
     // 当前登录用户拥有的角色标识列表
     const userInfo = userStore.userInfo || (await authStore.fetchUserInfo());
     const userRoles = userInfo.roles ?? [];
+
+    // 确保业务线已初始化，如果切换了业务线，需要重新初始化并选择角色
+    const businessStore = useBusinessStore();
+    if (!businessStore.initialized || !businessStore.currentRoleId) {
+      await businessStore.init(true);
+    }
 
     // 生成菜单和路由
     const { accessibleMenus, accessibleRoutes } = await generateAccess({

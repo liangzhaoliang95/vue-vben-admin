@@ -53,25 +53,41 @@ function convertRoutes(
     }
 
     // layout转换
-    if (component && layoutMap[component]) {
-      route.component = layoutMap[component];
-      // 页面组件转换
-    } else if (component) {
-      const normalizePath = normalizeViewPath(component);
-      const pageKey = normalizePath.endsWith('.vue')
-        ? normalizePath
-        : `${normalizePath}.vue`;
-      if (pageMap[pageKey]) {
-        route.component = pageMap[pageKey];
-      } else {
-        console.error(`route component is invalid: ${pageKey}`, {
-          component,
-          normalizePath,
-          pageKey,
-          availableKeys: Object.keys(pageMap).slice(0, 10),
-          route,
-        });
-        route.component = pageMap['/_core/fallback/not-found.vue'];
+    // 尝试多种格式匹配：原值、去除前导斜杠、添加前导斜杠
+    if (component) {
+      const componentKeys = [
+        component,
+        component.startsWith('/') ? component.slice(1) : component,
+        component.startsWith('/') ? component : `/${component}`,
+      ];
+
+      let matchedLayout = false;
+      for (const key of componentKeys) {
+        if (layoutMap[key]) {
+          route.component = layoutMap[key];
+          matchedLayout = true;
+          break;
+        }
+      }
+
+      // 如果没有匹配到 layout，尝试作为页面组件转换
+      if (!matchedLayout) {
+        const normalizePath = normalizeViewPath(component);
+        const pageKey = normalizePath.endsWith('.vue')
+          ? normalizePath
+          : `${normalizePath}.vue`;
+        if (pageMap[pageKey]) {
+          route.component = pageMap[pageKey];
+        } else {
+          console.error(`route component is invalid: ${pageKey}`, {
+            component,
+            normalizePath,
+            pageKey,
+            availableKeys: Object.keys(pageMap).slice(0, 10),
+            route,
+          });
+          route.component = pageMap['/_core/fallback/not-found.vue'];
+        }
       }
     }
 

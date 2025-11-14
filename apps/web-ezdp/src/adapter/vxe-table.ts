@@ -52,6 +52,36 @@ setupVbenVxeTable({
       },
     });
 
+    // 表格配置项可以用 cellRender: { name: 'CellProvider' } 显示存储类型图标
+    vxeUI.renderer.add('CellProvider', {
+      renderTableDefault(_renderOpts, params) {
+        const { column, row } = params;
+        const providerMap: Record<string, { icon: string; label: string }> = {
+          minio: { label: 'MinIO', icon: 'mdi:server-network' },
+          ali: { label: '阿里云OSS', icon: 'mdi:cloud' },
+          ecloudObs: { label: '移动云Obs', icon: 'mdi:cloud-outline' },
+        };
+        const provider = providerMap[row[column.field]] || {
+          label: row[column.field],
+          icon: 'mdi:cloud',
+        };
+        return h(
+          'div',
+          {
+            class: 'flex items-center gap-2',
+            style: 'display: flex; align-items: center; gap: 8px;',
+          },
+          [
+            h(IconifyIcon, {
+              class: 'size-5',
+              icon: provider.icon,
+            }),
+            h('span', provider.label),
+          ],
+        );
+      },
+    });
+
     // 表格配置项可以用 cellRender: { name: 'CellLink' },
     vxeUI.renderer.add('CellLink', {
       renderTableDefault(renderOpts) {
@@ -110,6 +140,33 @@ setupVbenVxeTable({
         const options = attrs?.options || [];
         const option = options.find((opt: any) => opt.value === value);
         return h(Tag, {}, { default: () => option?.label || value });
+      },
+    });
+
+    // 表格配置项可以用 cellRender: { name: 'CellStatus' },
+    vxeUI.renderer.add('CellStatus', {
+      renderTableDefault({ attrs, props }, { row, column }) {
+        const value = row[column.field];
+        const statusMap = props?.statusMap || {};
+        const status = statusMap[value];
+        const onClick = attrs?.onClick;
+
+        if (status) {
+          let color = 'default';
+          if (status.type === 'success') {
+            color = 'success';
+          } else if (status.type === 'error') {
+            color = 'error';
+          }
+          
+          const tagProps: any = {
+            color,
+            style: onClick ? { cursor: 'pointer' } : {},
+            onClick: onClick ? () => onClick({ row, column }) : undefined,
+          };
+          return h(Tag, tagProps, { default: () => status.text || value });
+        }
+        return h(Tag, {}, { default: () => value });
       },
     });
 

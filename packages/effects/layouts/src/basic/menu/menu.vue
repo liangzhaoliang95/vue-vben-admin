@@ -4,10 +4,10 @@ import type { MenuRecordRaw } from '@vben/types';
 import type { MenuProps } from '@vben-core/menu-ui';
 
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
 
 import { SvgAvatar2Icon } from '@vben/icons';
-import { useBusinessStore, useTabbarStore } from '@vben/stores';
+import { preferences } from '@vben/preferences';
+import { useAccessStore, useBusinessStore } from '@vben/stores';
 
 import { Menu } from '@vben-core/menu-ui';
 import {
@@ -34,8 +34,6 @@ const emit = defineEmits<{
 }>();
 
 const businessStore = useBusinessStore();
-const tabbarStore = useTabbarStore();
-const router = useRouter();
 
 // 切换业务线的 loading 状态
 const switchingBusinessLine = ref(false);
@@ -58,19 +56,17 @@ const selectedValue = computed({
     if (!Number.isFinite(id) || businessStore.currentBusinessLineId === id) {
       return;
     }
-    try {
-      switchingBusinessLine.value = true;
-      // 先清空路由标签页
-      await tabbarStore.closeAllTabs(router);
-      // 清空 sessionStorage 中的标签页数据
-      sessionStorage.removeItem('core-tabbar');
-      // 切换业务线
-      await businessStore.switchBusinessLine(id);
-      // 强制刷新页面，确保菜单和路由重新加载
-      window.location.reload();
-    } finally {
-      switchingBusinessLine.value = false;
-    }
+    switchingBusinessLine.value = true;
+    // 只更新业务线ID和清空角色ID（会持久化），不等待接口调用
+    // 页面刷新后，路由守卫会检测到 isAccessChecked = false，然后调用接口重新生成菜单
+    businessStore.currentBusinessLineId = id;
+    // 清空当前角色ID，让页面加载时根据新业务线重新选择角色
+    businessStore.currentRoleId = null;
+    // 标记需要重新生成路由和菜单
+    const accessStore = useAccessStore();
+    accessStore.setIsAccessChecked(false);
+    // 立即刷新页面，让页面加载时再去调用接口
+    window.location.href = preferences.app.defaultHomePath;
   },
 });
 

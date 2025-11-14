@@ -1,0 +1,80 @@
+{
+  "tools": {
+    "title": "Deploy Tools Management",
+    "objectStorage": {
+      "title": "Object Storage",
+      "name": "Name",
+      "provider": "Provider",
+      "accessKey": "AccessKey",
+      "accessSecret": "AccessSecret",
+      "bucket": "Bucket",
+      "endpoint": "Endpoint",
+      "region": "Region",
+      "testConnection": "Test Connection"
+    },
+    "dockerSecret": {
+      "title": "Docker Registry",
+      "name": "Docker Registry",
+      "host": "Docker Host",
+      "username": "Username",
+      "password": "Password",
+      "testConnection": "Test Connection"
+    },
+    "k8sSecret": {
+      "title": "K8s Secret",
+      "name": "Name",
+      "server": "server",
+      "namespaces": "namespace",
+      "kubeconfig": "kubeconfig",
+      "testConnection": "Test Connection"
+    }
+  },
+  "projectManagement": {
+    "title": "Project Management",
+    "projectConfig": {
+      "title": "Project Config",
+      "name": "Project Name",
+      "projectId": "Project ID",
+      "projectUrl": "Git Repository URL",
+      "projectUrlPlaceholder": "e.g.: git{'@'}gitlab.plaso.cn:school-server/manage_service.git",
+      "group": "Business Line",
+      "k8sName": "K8s Name",
+      "ossName": "OSS Name",
+      "dockerfilePath": "Dockerfile Path",
+      "dockerfilePathPlaceholder": "e.g.: ./packages/manageweb",
+      "isUpime": "Is Upime",
+      "upimeDeployName": "Upime Deploy Name",
+      "versionName": "Version Name",
+      "sonar": "Sonar Config",
+      "dockerRepo": "Docker Repository",
+      "dockerRepoPath": "Docker Repository Path",
+      "dockerRepoPathPlaceholder": "e.g.: namespace/project",
+      "dockerPath": "Docker Path",
+      "namePlaceholder": "Only English letters, numbers, underscores and hyphens are allowed",
+      "nameRequired": "Project name cannot be empty",
+      "nameEnglishOnly": "Project name can only contain English letters, numbers, underscores and hyphens",
+      "type": {
+        "label": "Project Type",
+        "select": "Please select project type",
+        "backend": "Backend",
+        "frontend": "Frontend",
+        "submodule": "Submodule"
+      },
+      "cloud": {
+        "label": "Cloud Provider",
+        "select": "Please select cloud provider",
+        "ali": "Alibaba Cloud",
+        "ecloud": "Ecloud"
+      },
+      "k8sType": {
+        "label": "K8s Type",
+        "select": "Please select K8s type"
+      },
+      "hasBuildConfig": "Build",
+      "hasDeployConfig": "Deploy",
+      "configured": "Configured",
+      "notConfigured": "Not Configured"
+    }
+  }
+}
+

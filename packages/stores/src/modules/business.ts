@@ -377,6 +377,9 @@ export const useBusinessStore = defineStore(
 
       if (role) {
         await switchRole(role.id);
+        // 切换角色后，需要重新生成路由和菜单
+        // 标记需要重新生成，路由守卫会检测到并重新生成
+        accessStore.setIsAccessChecked(false);
       } else {
         currentRoleId.value = null;
         updateUserRoles(null);

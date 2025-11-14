@@ -23,10 +23,12 @@
     "operationFailed": "操作失败"
   },
   "confirmTitle": {
-    "delete": "删除确认"
+    "delete": "删除确认",
+    "statusChange": "切换状态"
   },
   "confirmContent": {
-    "delete": "确定要删除 {0} 吗？删除后无法恢复。"
+    "delete": "确定要删除 {0} 吗？删除后无法恢复。",
+    "statusChange": "确定要将 {0} 的状态切换为 【{1}】 吗？"
   },
   "successMessage": {
     "create": "创建成功",
