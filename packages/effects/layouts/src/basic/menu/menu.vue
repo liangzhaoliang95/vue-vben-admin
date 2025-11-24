@@ -7,7 +7,7 @@ import { computed, ref } from 'vue';
 
 import { SvgAvatar2Icon } from '@vben/icons';
 import { preferences } from '@vben/preferences';
-import { useAccessStore, useBusinessStore } from '@vben/stores';
+import { useAccessStore, useBusinessStore, useTabbarStore } from '@vben/stores';
 
 import { Menu } from '@vben-core/menu-ui';
 import {
@@ -34,6 +34,7 @@ const emit = defineEmits<{
 }>();
 
 const businessStore = useBusinessStore();
+const tabbarStore = useTabbarStore();
 
 // 切换业务线的 loading 状态
 const switchingBusinessLine = ref(false);
@@ -57,6 +58,12 @@ const selectedValue = computed({
       return;
     }
     switchingBusinessLine.value = true;
+    // 清空标签页（只保留固定标签）
+    const affixTabs = tabbarStore.tabs.filter(
+      (tab) => tab?.meta?.affixTab === true,
+    );
+    tabbarStore.tabs = affixTabs.length > 0 ? affixTabs : [];
+    tabbarStore.updateCacheTabs();
     // 只更新业务线ID和清空角色ID（会持久化），不等待接口调用
     // 页面刷新后，路由守卫会检测到 isAccessChecked = false，然后调用接口重新生成菜单
     businessStore.currentBusinessLineId = id;

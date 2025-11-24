@@ -5,6 +5,7 @@ import { computed, ref } from 'vue';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 
 import { useAccessStore } from './access';
+import { useTabbarStore } from './tabbar';
 import { useUserStore } from './user';
 
 interface BusinessLineInfo {
@@ -367,6 +368,14 @@ export const useBusinessStore = defineStore(
 
       // 切换业务线前，先清空菜单缓存，确保获取新业务线的菜单
       roleMenuCache.value = {};
+
+      // 清空标签页（只保留固定标签）
+      const tabbarStore = useTabbarStore();
+      const affixTabs = tabbarStore.tabs.filter(
+        (tab) => tab?.meta?.affixTab === true,
+      );
+      tabbarStore.tabs = affixTabs.length > 0 ? affixTabs : [];
+      tabbarStore.updateCacheTabs();
 
       currentBusinessLineId.value = id;
 
