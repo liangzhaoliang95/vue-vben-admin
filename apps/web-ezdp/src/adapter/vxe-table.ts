@@ -158,7 +158,7 @@ setupVbenVxeTable({
           } else if (status.type === 'error') {
             color = 'error';
           }
-          
+
           const tagProps: any = {
             color,
             style: onClick ? { cursor: 'pointer' } : {},
