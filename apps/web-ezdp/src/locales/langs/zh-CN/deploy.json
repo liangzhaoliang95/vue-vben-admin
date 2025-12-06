@@ -73,7 +73,10 @@
       "hasBuildConfig": "打包",
       "hasDeployConfig": "发布",
       "configured": "已配置",
-      "notConfigured": "未配置"
+      "notConfigured": "未配置",
+      "basicInfo": "项目基本信息",
+      "buildConfig": "打包配置",
+      "deployConfig": "发布配置"
     }
   }
 }

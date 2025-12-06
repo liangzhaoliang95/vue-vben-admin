@@ -36,7 +36,22 @@ const coreRoutes: RouteRecordRaw[] = [
     name: 'Root',
     path: '/',
     redirect: preferences.app.defaultHomePath,
-    children: [],
+    children: [
+      // 项目配置详情页 - 无需权限检查，只要登录即可访问
+      {
+        name: 'ProjectConfigDetail',
+        path: 'project-management/project-config/detail',
+        component: () =>
+          import('#/views/project-management/project-config/detail.vue'),
+        meta: {
+          activePath: '/project-management/project-config',
+          fullPathKey: false,
+          hideInMenu: true,
+          hideInBreadcrumb: false,
+          title: $t('deploy.projectManagement.projectConfig.title'),
+        },
+      },
+    ],
   },
   {
     component: AuthPageLayout,

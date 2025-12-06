@@ -10,6 +10,7 @@ import { Plus } from '@vben/icons';
 import { useBusinessStore } from '@vben/stores';
 
 import { Button, message, Modal } from 'ant-design-vue';
+import { useRouter } from 'vue-router';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -20,6 +21,8 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+
+const router = useRouter();
 
 const businessStore = useBusinessStore();
 
@@ -133,27 +136,39 @@ function onCreate() {
 }
 
 async function onBuildConfigClick(row: ProjectConfigApi.ProjectConfig) {
-  if (row.hasBuildConfig) {
-    // 已配置，打开编辑页面
-    // TODO: 打开打包配置编辑页面
-    message.info('打开打包配置编辑页面');
-  } else {
-    // 未配置，打开新建页面
-    // TODO: 打开打包配置新建页面
-    message.info('打开打包配置新建页面');
-  }
+  // 跳转到配置详情页面，默认显示打包配置 tab
+  // pageKey 用于让详情页和列表页共享同一个 Tab
+  router.push({
+    path: '/project-management/project-config/detail',
+    query: {
+      pageKey: '/project-management/project-config', // 使用列表页的 path 作为 Tab key
+      id: row.id,
+      group: row.group,
+      name: row.name,
+      projectId: row.projectId,
+      projectUrl: row.projectUrl,
+      type: row.type,
+      tab: 'build',
+    },
+  });
 }
 
 async function onDeployConfigClick(row: ProjectConfigApi.ProjectConfig) {
-  if (row.hasDeployConfig) {
-    // 已配置，打开编辑页面
-    // TODO: 打开发布配置编辑页面
-    message.info('打开发布配置编辑页面');
-  } else {
-    // 未配置，打开新建页面
-    // TODO: 打开发布配置新建页面
-    message.info('打开发布配置新建页面');
-  }
+  // 跳转到配置详情页面，默认显示发布配置 tab
+  // pageKey 用于让详情页和列表页共享同一个 Tab
+  router.push({
+    path: '/project-management/project-config/detail',
+    query: {
+      pageKey: '/project-management/project-config', // 使用列表页的 path 作为 Tab key
+      id: row.id,
+      group: row.group,
+      name: row.name,
+      projectId: row.projectId,
+      projectUrl: row.projectUrl,
+      type: row.type,
+      tab: 'deploy',
+    },
+  });
 }
 </script>
 

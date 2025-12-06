@@ -59,7 +59,13 @@ function setupAccessGuard(router: Router) {
             preferences.app.defaultHomePath,
         );
       }
-      return true;
+      // 如果是核心路由但动态路由还未生成，需要先生成动态路由（确保菜单能正常显示）
+      // 但允许继续访问当前路由
+      if (!accessStore.isAccessChecked && accessStore.accessToken) {
+        // 不阻塞当前路由，继续往下执行以生成动态路由
+      } else {
+        return true;
+      }
     }
 
     // accessToken 检查

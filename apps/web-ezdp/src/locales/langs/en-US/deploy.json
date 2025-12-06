@@ -73,7 +73,10 @@
       "hasBuildConfig": "Build",
       "hasDeployConfig": "Deploy",
       "configured": "Configured",
-      "notConfigured": "Not Configured"
+      "notConfigured": "Not Configured",
+      "basicInfo": "Project Basic Information",
+      "buildConfig": "Build Configuration",
+      "deployConfig": "Deploy Configuration"
     }
   }
 }
