@@ -5,12 +5,13 @@ import type {
 } from '#/adapter/vxe-table';
 import type { ProjectConfigApi } from '#/api/project-management/project-config';
 
+import { useRouter } from 'vue-router';
+
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 import { useBusinessStore } from '@vben/stores';
 
 import { Button, message, Modal } from 'ant-design-vue';
-import { useRouter } from 'vue-router';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {

@@ -1,7 +1,19 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue';
 
-import { Button, Card, Checkbox, Form, FormItem, Input, InputNumber, message, Select, SelectOption, Space } from 'ant-design-vue';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Form,
+  FormItem,
+  Input,
+  InputNumber,
+  message,
+  Select,
+  SelectOption,
+  Space,
+} from 'ant-design-vue';
 
 import { $t } from '#/locales';
 
@@ -52,7 +64,7 @@ async function handleSave() {
     // TODO: 调用保存接口
     // await saveDeployConfig(props.projectId, formState);
     message.success($t('ui.successMessage.save'));
-  } catch (error) {
+  } catch {
     message.error($t('ui.errorMessage.save'));
   } finally {
     loading.value = false;
@@ -65,7 +77,7 @@ async function handleTestDeploy() {
     loading.value = true;
     // TODO: 调用测试部署接口
     message.success('部署测试已启动');
-  } catch (error) {
+  } catch {
     message.error('部署测试失败');
   } finally {
     loading.value = false;
@@ -98,10 +110,7 @@ loadConfig();
       :wrapper-col="{ span: 18 }"
       class="max-w-3xl"
     >
-      <FormItem
-        label="发布类型"
-        name="deployType"
-      >
+      <FormItem label="发布类型" name="deployType">
         <Select
           v-model:value="formState.deployType"
           placeholder="请选择发布类型"
@@ -119,40 +128,28 @@ loadConfig();
       <!-- Kubernetes 特定配置 -->
       <template v-if="formState.deployType === 'kubernetes'">
         <Card title="基本配置" class="mb-4" size="small">
-          <FormItem
-            label="命名空间"
-            name="namespace"
-          >
+          <FormItem label="命名空间" name="namespace">
             <Input
               v-model:value="formState.namespace"
               placeholder="例如: default 或 production"
             />
           </FormItem>
 
-          <FormItem
-            label="Deployment 名称"
-            name="deploymentName"
-          >
+          <FormItem label="Deployment 名称" name="deploymentName">
             <Input
               v-model:value="formState.deploymentName"
               placeholder="例如: myapp-deployment"
             />
           </FormItem>
 
-          <FormItem
-            label="Service 名称"
-            name="serviceName"
-          >
+          <FormItem label="Service 名称" name="serviceName">
             <Input
               v-model:value="formState.serviceName"
               placeholder="例如: myapp-service"
             />
           </FormItem>
 
-          <FormItem
-            label="容器端口"
-            name="containerPort"
-          >
+          <FormItem label="容器端口" name="containerPort">
             <InputNumber
               v-model:value="formState.containerPort"
               :min="1"
@@ -161,10 +158,7 @@ loadConfig();
             />
           </FormItem>
 
-          <FormItem
-            label="副本数"
-            name="replicas"
-          >
+          <FormItem label="副本数" name="replicas">
             <InputNumber
               v-model:value="formState.replicas"
               :min="1"
@@ -175,40 +169,28 @@ loadConfig();
         </Card>
 
         <Card title="资源配置" class="mb-4" size="small">
-          <FormItem
-            label="CPU 限制"
-            name="cpuLimit"
-          >
+          <FormItem label="CPU 限制" name="cpuLimit">
             <Input
               v-model:value="formState.cpuLimit"
               placeholder="例如: 500m 或 1"
             />
           </FormItem>
 
-          <FormItem
-            label="内存限制"
-            name="memoryLimit"
-          >
+          <FormItem label="内存限制" name="memoryLimit">
             <Input
               v-model:value="formState.memoryLimit"
               placeholder="例如: 512Mi 或 1Gi"
             />
           </FormItem>
 
-          <FormItem
-            label="CPU 请求"
-            name="cpuRequest"
-          >
+          <FormItem label="CPU 请求" name="cpuRequest">
             <Input
               v-model:value="formState.cpuRequest"
               placeholder="例如: 100m 或 0.5"
             />
           </FormItem>
 
-          <FormItem
-            label="内存请求"
-            name="memoryRequest"
-          >
+          <FormItem label="内存请求" name="memoryRequest">
             <Input
               v-model:value="formState.memoryRequest"
               placeholder="例如: 128Mi 或 256Mi"
@@ -217,84 +199,60 @@ loadConfig();
         </Card>
 
         <Card title="配置管理" class="mb-4" size="small">
-          <FormItem
-            label="镜像拉取密钥"
-            name="imagePullSecret"
-          >
+          <FormItem label="镜像拉取密钥" name="imagePullSecret">
             <Input
               v-model:value="formState.imagePullSecret"
               placeholder="例如: registry-secret"
             />
           </FormItem>
 
-          <FormItem
-            label="ConfigMap 名称"
-            name="configMapName"
-          >
+          <FormItem label="ConfigMap 名称" name="configMapName">
             <Input
               v-model:value="formState.configMapName"
               placeholder="例如: myapp-config"
             />
           </FormItem>
 
-          <FormItem
-            label="Secret 名称"
-            name="secretName"
-          >
+          <FormItem label="Secret 名称" name="secretName">
             <Input
               v-model:value="formState.secretName"
               placeholder="例如: myapp-secret"
             />
           </FormItem>
 
-          <FormItem
-            label="环境变量"
-            name="envVars"
-          >
+          <FormItem label="环境变量" name="envVars">
             <Input.TextArea
               v-model:value="formState.envVars"
               :rows="4"
-              placeholder='JSON格式，例如: {"NODE_ENV": "production", "PORT": "8080"}'
+              placeholder="JSON格式，例如: {&quot;NODE_ENV&quot;: &quot;production&quot;, &quot;PORT&quot;: &quot;8080&quot;}"
             />
           </FormItem>
 
-          <FormItem
-            label="卷挂载"
-            name="volumeMounts"
-          >
+          <FormItem label="卷挂载" name="volumeMounts">
             <Input.TextArea
               v-model:value="formState.volumeMounts"
               :rows="4"
-              placeholder='JSON格式，例如: [{"name": "config", "mountPath": "/etc/config"}]'
+              placeholder="JSON格式，例如: [{&quot;name&quot;: &quot;config&quot;, &quot;mountPath&quot;: &quot;/etc/config&quot;}]"
             />
           </FormItem>
         </Card>
 
         <Card title="网络配置" class="mb-4" size="small">
-          <FormItem
-            label="启用 Ingress"
-            name="ingressEnabled"
-          >
+          <FormItem label="启用 Ingress" name="ingressEnabled">
             <Checkbox v-model:checked="formState.ingressEnabled">
               启用 Ingress 访问
             </Checkbox>
           </FormItem>
 
           <template v-if="formState.ingressEnabled">
-            <FormItem
-              label="Ingress 主机名"
-              name="ingressHost"
-            >
+            <FormItem label="Ingress 主机名" name="ingressHost">
               <Input
                 v-model:value="formState.ingressHost"
                 placeholder="例如: myapp.example.com"
               />
             </FormItem>
 
-            <FormItem
-              label="Ingress 路径"
-              name="ingressPath"
-            >
+            <FormItem label="Ingress 路径" name="ingressPath">
               <Input
                 v-model:value="formState.ingressPath"
                 placeholder="例如: / 或 /api"
@@ -304,20 +262,14 @@ loadConfig();
         </Card>
 
         <Card title="健康检查" class="mb-4" size="small">
-          <FormItem
-            label="健康检查路径"
-            name="healthCheckPath"
-          >
+          <FormItem label="健康检查路径" name="healthCheckPath">
             <Input
               v-model:value="formState.healthCheckPath"
               placeholder="例如: /health 或 /healthz"
             />
           </FormItem>
 
-          <FormItem
-            label="就绪检查路径"
-            name="readinessCheckPath"
-          >
+          <FormItem label="就绪检查路径" name="readinessCheckPath">
             <Input
               v-model:value="formState.readinessCheckPath"
               placeholder="例如: /ready 或 /readiness"
@@ -328,17 +280,10 @@ loadConfig();
 
       <FormItem :wrapper-col="{ offset: 6, span: 18 }">
         <Space>
-          <Button
-            type="primary"
-            :loading="loading"
-            @click="handleSave"
-          >
+          <Button type="primary" :loading="loading" @click="handleSave">
             保存配置
           </Button>
-          <Button
-            :loading="loading"
-            @click="handleTestDeploy"
-          >
+          <Button :loading="loading" @click="handleTestDeploy">
             测试部署
           </Button>
         </Space>

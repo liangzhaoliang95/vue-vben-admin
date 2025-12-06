@@ -5,7 +5,14 @@ import { useRoute, useRouter } from 'vue-router';
 import { Page } from '@vben/common-ui';
 import { ArrowLeft } from '@vben/icons';
 
-import { Button, Card, Descriptions, DescriptionsItem, Tabs, TabPane } from 'ant-design-vue';
+import {
+  Button,
+  Card,
+  Descriptions,
+  DescriptionsItem,
+  TabPane,
+  Tabs,
+} from 'ant-design-vue';
 
 import { $t } from '#/locales';
 
@@ -69,16 +76,24 @@ const projectTypeText = computed(() => {
       class="mb-4"
     >
       <Descriptions :column="2" bordered>
-        <DescriptionsItem :label="$t('deploy.projectManagement.projectConfig.group')">
+        <DescriptionsItem
+          :label="$t('deploy.projectManagement.projectConfig.group')"
+        >
           {{ projectInfo.group }}
         </DescriptionsItem>
-        <DescriptionsItem :label="$t('deploy.projectManagement.projectConfig.name')">
+        <DescriptionsItem
+          :label="$t('deploy.projectManagement.projectConfig.name')"
+        >
           {{ projectInfo.name }}
         </DescriptionsItem>
-        <DescriptionsItem :label="$t('deploy.projectManagement.projectConfig.projectId')">
+        <DescriptionsItem
+          :label="$t('deploy.projectManagement.projectConfig.projectId')"
+        >
           {{ projectInfo.projectId }}
         </DescriptionsItem>
-        <DescriptionsItem :label="$t('deploy.projectManagement.projectConfig.type.label')">
+        <DescriptionsItem
+          :label="$t('deploy.projectManagement.projectConfig.type.label')"
+        >
           {{ projectTypeText }}
         </DescriptionsItem>
         <DescriptionsItem
