@@ -21,7 +21,7 @@
       "testConnection": "测试连接"
     },
     "k8sSecret": {
-      "title": "k8s秘钥",
+      "title": "K8S集群",
       "name": "名称",
       "server": "server",
       "namespaces": "namespace",
@@ -77,6 +77,21 @@
       "basicInfo": "项目基本信息",
       "buildConfig": "打包配置",
       "deployConfig": "发布配置"
+    },
+    "deployEnvironment": {
+      "title": "发布环境配置",
+      "name": "环境名称",
+      "namePlaceholder": "请输入环境名称",
+      "description": "描述",
+      "descriptionPlaceholder": "请输入描述",
+      "frontendStorage": "前端环境",
+      "frontendStoragePlaceholder": "请选择前端环境（对象存储）",
+      "frontendBaseUrl": "前端基础地址",
+      "frontendBaseUrlPlaceholder": "请输入前端基础地址",
+      "backendCluster": "后端集群",
+      "backendClusterPlaceholder": "请选择后端集群（K8S集群）",
+      "backendEnvironment": "后端NS",
+      "backendEnvironmentPlaceholder": "请输入后端NS"
     }
   }
 }

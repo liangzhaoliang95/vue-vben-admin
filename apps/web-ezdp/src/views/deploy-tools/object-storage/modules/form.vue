@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { useBusinessStore } from '@vben/stores';
 
 import { Button, message } from 'ant-design-vue';
 
@@ -17,6 +18,8 @@ import { $t } from '#/locales';
 import { useFormSchema } from '../data';
 
 const emits = defineEmits(['success']);
+
+const businessStore = useBusinessStore();
 
 const formData = ref<any>();
 
@@ -151,6 +154,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             bucket: detail.bucket,
             endpoint: detail.endpoint,
             status: detail.status,
+            businessLineId: detail.businessLineId, // 确保业务线ID被设置
           });
           // 最后设置 provider，此时 region 已经设置好了
           await nextTick();
@@ -167,16 +171,22 @@ const [Drawer, drawerApi] = useVbenDrawer({
             bucket: data.bucket,
             endpoint: data.endpoint,
             status: data.status,
+            businessLineId: data.businessLineId, // 使用列表数据中的业务线ID
           });
           // 最后设置 provider，此时 region 已经设置好了
           await nextTick();
           await formApi.setFieldValue('provider', data.provider);
         }
       } else {
-        // 新建时，如果 provider 为 minio，设置默认 region
+        // 新建时，设置业务线默认值和 provider
+        const currentBusinessLine = businessStore.currentBusinessLine;
+        const defaultBusinessLineId = currentBusinessLine?.businessLine.id;
         formApi.setValues({
           provider: 'minio',
           region: 'us-east-1',
+          ...(defaultBusinessLineId
+            ? { businessLineId: defaultBusinessLineId }
+            : {}),
         });
       }
     }
@@ -249,6 +259,7 @@ async function handleConfirm() {
   // 只发送必要的字段
   const submitData: any = {
     name: values.name,
+    businessLineId: values.businessLineId, // 包含业务线ID
     provider: values.provider,
     accessKey: values.accessKey || '',
     accessSecret: values.accessSecret || '',

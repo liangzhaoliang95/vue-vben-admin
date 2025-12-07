@@ -41,9 +41,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
     const values = await formApi.getValues();
     drawerApi.lock();
 
+    // 先转换为数字数组，然后自动补充父级菜单ID
+    const selectedMenuIds = ensureNumberArray(checkedMenuIds.value);
+    const menuIdsWithParents = ensureParentMenus(selectedMenuIds);
+
     const submitData: any = {
       ...values,
-      menuIds: ensureNumberArray(checkedMenuIds.value),
+      menuIds: menuIdsWithParents,
     };
 
     (id.value
@@ -72,19 +76,23 @@ const [Drawer, drawerApi] = useVbenDrawer({
         if (data.id) {
           try {
             const roleMenus = await getRoleMenuApi(data.id);
-            // 提取所有菜单ID（包括子菜单）
+            // 提取所有菜单ID（递归提取后端返回的菜单树中的所有菜单ID）
+            // 后端应该只返回角色关联的菜单，所以这里直接提取所有菜单ID即可
+            // 注意：后端返回的菜单树中，如果父菜单被选中，不应该包含未选中的子菜单
             const extractMenuIds = (menus: any[]): string[] => {
               const ids: string[] = [];
               for (const menu of menus) {
                 // Tree 组件需要字符串 key
                 const menuId = String(menu.id);
                 ids.push(menuId);
+                // 递归提取子菜单ID（只提取后端返回的菜单树中的子菜单）
                 if (menu.children && menu.children.length > 0) {
                   ids.push(...extractMenuIds(menu.children));
                 }
               }
               return ids;
             };
+            // 只设置后端返回的菜单ID，不自动勾选其他菜单
             checkedMenuIds.value = extractMenuIds(roleMenus as any[]);
           } catch (error) {
             console.error('加载角色菜单权限失败:', error);
@@ -158,6 +166,48 @@ function ensureNumberArray(arr: any[]): number[] {
     .filter((item) => item > 0);
 }
 
+// 在菜单树中查找菜单节点（返回节点和其所有父级ID）
+function findMenuWithParents(
+  menuId: number,
+  menuTree: SystemRoleApi.MenuTreeNode[],
+  parentIds: number[] = [],
+): { found: boolean; parentIds: number[] } {
+  for (const menu of menuTree) {
+    if (menu.id === menuId) {
+      // 找到当前菜单，返回已收集的父级ID
+      return { found: true, parentIds };
+    }
+    if (menu.children && menu.children.length > 0) {
+      // 递归查找子菜单，将当前菜单ID加入父级列表
+      const result = findMenuWithParents(menuId, menu.children, [
+        ...parentIds,
+        menu.id,
+      ]);
+      if (result.found) {
+        // 找到了，返回结果
+        return result;
+      }
+    }
+  }
+  return { found: false, parentIds: [] };
+}
+
+// 自动补充父级菜单ID
+function ensureParentMenus(menuIds: number[]): number[] {
+  const resultSet = new Set<number>(menuIds);
+
+  // 为每个选中的菜单ID，查找并添加其所有父级菜单ID
+  for (const menuId of menuIds) {
+    const result = findMenuWithParents(menuId, menuTree.value);
+    if (result.found) {
+      // 添加所有父级菜单ID
+      result.parentIds.forEach((parentId) => resultSet.add(parentId));
+    }
+  }
+
+  return [...resultSet];
+}
+
 function onCheck(checkedKeys: any) {
   const keys = checkedKeys.checked || checkedKeys;
   // Tree 组件返回的是字符串数组，直接使用
@@ -182,6 +232,7 @@ const title = computed(() =>
         v-model:checked-keys="checkedMenuIds"
         v-model:expanded-keys="expandedKeys"
         :checkable="true"
+        :check-strictly="true"
         :tree-data="convertToTreeData(menuTree)"
         @check="onCheck"
       />

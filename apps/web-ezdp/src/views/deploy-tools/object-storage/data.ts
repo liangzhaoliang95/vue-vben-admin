@@ -6,25 +6,36 @@ import { useBusinessStore } from '@vben/stores';
 import { $t } from '#/locales';
 
 export function useFormSchema(): VbenFormSchema[] {
+  const businessStore = useBusinessStore();
+  const isSuperAdmin = businessStore.currentRole?.isSuper === true;
+
   return [
-    {
-      component: 'ApiSelect',
-      componentProps: {
-        api: async () => {
-          const { getBusinessLineList } = await import(
-            '#/api/system/business-line'
-          );
-          const res = await getBusinessLineList({ page: 1, pageSize: 1000 });
-          return res.items || [];
-        },
-        fieldNames: { label: 'name', value: 'id' },
-        style: { width: '100%' },
-        placeholder: '请选择业务线',
-      },
-      fieldName: 'businessLineId',
-      label: $t('system.businessLine.name'),
-      rules: 'required',
-    },
+    // 业务线字段：仅超级管理员可见和可编辑
+    ...(isSuperAdmin
+      ? [
+          {
+            component: 'ApiSelect',
+            componentProps: {
+              api: async () => {
+                const { getBusinessLineList } = await import(
+                  '#/api/system/business-line'
+                );
+                const res = await getBusinessLineList({
+                  page: 1,
+                  pageSize: 1000,
+                });
+                return res.items || [];
+              },
+              fieldNames: { label: 'name', value: 'id' },
+              style: { width: '100%' },
+              placeholder: '请选择业务线',
+            },
+            fieldName: 'businessLineId',
+            label: $t('system.businessLine.name'),
+            rules: 'required',
+          },
+        ]
+      : []),
     {
       component: 'Input',
       fieldName: 'name',

@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { useBusinessStore } from '@vben/stores';
 
 import { Button, message } from 'ant-design-vue';
 
@@ -18,6 +19,7 @@ import { useFormSchema } from '../data';
 
 const emits = defineEmits(['success']);
 
+const businessStore = useBusinessStore();
 const formData = ref<any>();
 
 const [Form, formApi] = useVbenForm({
@@ -46,7 +48,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
       // Wait for Vue to flush DOM updates (form fields mounted)
       await nextTick();
-      if (data) {
+      // 只有在编辑时（有 id）才获取详情
+      if (data && data.id) {
         // 编辑时，获取详情以获取 kubeconfig
         try {
           const detail = await getK8sSecretDetail(data.id);
@@ -59,6 +62,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             ...detail,
             namespaces: namespacesStr,
             kubeconfig: detail.kubeconfig || '', // 显示 kubeconfig
+            businessLineId: detail.businessLineId, // 确保业务线ID被设置
           });
         } catch {
           message.error('获取详情失败，请重试');
@@ -71,6 +75,16 @@ const [Drawer, drawerApi] = useVbenDrawer({
             ...data,
             namespaces: namespacesStr,
             kubeconfig: '',
+            businessLineId: data.businessLineId, // 使用列表数据中的业务线ID
+          });
+        }
+      } else {
+        // 新建时，设置业务线默认值（使用当前业务线ID）
+        const currentBusinessLine = businessStore.currentBusinessLine;
+        const defaultBusinessLineId = currentBusinessLine?.businessLine.id;
+        if (defaultBusinessLineId) {
+          formApi.setValues({
+            businessLineId: defaultBusinessLineId,
           });
         }
       }
@@ -147,6 +161,7 @@ async function handleConfirm() {
   // 只发送必要的字段
   const submitData: any = {
     name: values.name,
+    businessLineId: values.businessLineId, // 包含业务线ID
     server: values.server || '',
     namespaces: namespacesArray,
     kubeconfig: values.kubeconfig || '',

@@ -21,7 +21,7 @@
       "testConnection": "Test Connection"
     },
     "k8sSecret": {
-      "title": "K8s Secret",
+      "title": "K8S Cluster",
       "name": "Name",
       "server": "server",
       "namespaces": "namespace",
@@ -77,6 +77,21 @@
       "basicInfo": "Project Basic Information",
       "buildConfig": "Build Configuration",
       "deployConfig": "Deploy Configuration"
+    },
+    "deployEnvironment": {
+      "title": "Deployment Environment Configuration",
+      "name": "Environment Name",
+      "namePlaceholder": "Please enter environment name",
+      "description": "Description",
+      "descriptionPlaceholder": "Please enter description",
+      "frontendStorage": "Frontend Environment",
+      "frontendStoragePlaceholder": "Please select frontend environment (Object Storage)",
+      "frontendBaseUrl": "Frontend Base URL",
+      "frontendBaseUrlPlaceholder": "Please enter frontend base URL",
+      "backendCluster": "Backend Cluster",
+      "backendClusterPlaceholder": "Please select backend cluster (K8S Cluster)",
+      "backendEnvironment": "Backend NS",
+      "backendEnvironmentPlaceholder": "Please enter backend NS"
     }
   }
 }
