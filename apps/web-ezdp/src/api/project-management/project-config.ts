@@ -4,12 +4,12 @@ import { requestClient } from '#/api/request';
 
 export namespace ProjectConfigApi {
   export interface ProjectConfig {
-    id: number;
+    id: string;
     name: string;
     projectId?: number;
     projectUrl: string;
     type: 'backend' | 'frontend' | 'submodule';
-    group: string;
+    businessLineId: number;
     hasBuildConfig?: boolean;
     hasDeployConfig?: boolean;
     createdAt: number;

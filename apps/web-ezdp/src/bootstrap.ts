@@ -13,6 +13,7 @@ import {
   getBusinessLinesApi,
   getRoleMenuApi,
   getRolePowerCodesApi,
+  switchBusinessLine,
 } from '#/api';
 import { $t, setupI18n } from '#/locales';
 
@@ -55,6 +56,9 @@ async function bootstrap(namespace: string) {
     fetchBusinessLines: getBusinessLinesApi,
     fetchRoleMenu: getRoleMenuApi,
     fetchRolePowerCodes: getRolePowerCodesApi,
+    switchBusinessLine: async (businessLineId: number) => {
+      await switchBusinessLine(businessLineId);
+    },
   });
 
   // 安装权限指令

@@ -15,6 +15,7 @@ import { useAccessStore } from '@vben/stores';
 
 import { message } from 'ant-design-vue';
 
+import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
 
 import { refreshTokenApi } from './core';
@@ -79,6 +80,28 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       successCode: 0,
     }),
   );
+
+  // 处理 code: 2 (token失效) 的情况
+  // 需要在 defaultResponseInterceptor 之后，errorMessageResponseInterceptor 之前
+  // defaultResponseInterceptor 在 code 不为 0 时会抛出错误，错误对象包含 response.data
+  client.addResponseInterceptor({
+    rejected: async (error: any) => {
+      // 检查错误响应中的 code 是否为 2
+      // defaultResponseInterceptor 抛出的错误对象结构：{ response: { data: { code: 2, ... } } }
+      const responseData = error?.response?.data ?? error?.data ?? {};
+      if (responseData?.code === 2) {
+        const authStore = useAuthStore();
+        // 提示登录过期
+        message.warning($t('authentication.loginAgainSubTitle'));
+        // 执行 logout 逻辑，跳转到登录页（不保留当前路由）
+        await authStore.logout(false);
+        // 返回一个被拒绝的 Promise，阻止后续处理
+        throw error;
+      }
+      // 如果不是 code: 2，继续抛出错误，让后续拦截器处理
+      throw error;
+    },
+  });
 
   // token过期的处理
   client.addResponseInterceptor(

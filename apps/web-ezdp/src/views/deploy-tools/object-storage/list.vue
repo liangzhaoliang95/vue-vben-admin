@@ -5,10 +5,11 @@ import type {
 } from '#/adapter/vxe-table';
 import type { ObjectStorageApi } from '#/api/deploy-tools/object-storage';
 
-import { nextTick } from 'vue';
+import { nextTick, onActivated, watch } from 'vue';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
+import { useBusinessStore } from '@vben/stores';
 
 import { Button, message, Modal } from 'ant-design-vue';
 
@@ -28,6 +29,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   destroyOnClose: true,
 });
 
+const businessStore = useBusinessStore();
+
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
@@ -40,11 +43,25 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getObjectStorageList({
+          const isSuperAdmin = businessStore.currentRole?.isSuper === true;
+          const queryParams: any = {
             page: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
-          });
+          };
+
+          // 业务线筛选逻辑：
+          // 1. 超级管理员：如果前端筛选条件中有businessLineId，则使用；否则不传，后端会查所有业务线
+          // 2. 非超级管理员：不传businessLineId，后端会自动使用token中的businessLineID
+          // 注意：formValues中可能包含businessLineId（来自筛选表单），如果是超级管理员则保留，非超级管理员则忽略
+
+          if (!isSuperAdmin) {
+            // 非超级管理员：移除businessLineId，让后端使用token中的
+            delete queryParams.businessLineId;
+          }
+          // 超级管理员：保留formValues中的businessLineId（如果有），如果没有则不传，后端会查所有
+
+          return await getObjectStorageList(queryParams);
         },
       },
     },
@@ -60,6 +77,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
   } as VxeTableGridOptions<ObjectStorageApi.ObjectStorage>,
 });
+
+// 路由激活时刷新数据（用于 keep-alive 场景）
+onActivated(() => {
+  gridApi.query();
+});
+
+// 监听业务线ID变化，自动刷新数据
+watch(
+  () => businessStore.currentBusinessLineId,
+  () => {
+    gridApi.query();
+  },
+);
 
 function onActionClick(e: OnActionClickParams<ObjectStorageApi.ObjectStorage>) {
   switch (e.code) {

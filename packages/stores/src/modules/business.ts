@@ -60,6 +60,7 @@ interface BusinessApiProvider {
   fetchBusinessLines: () => Promise<BusinessLineRoles[]>;
   fetchRoleMenu: (roleId: number) => Promise<MenuTreeNode[]>;
   fetchRolePowerCodes?: (roleId: number) => Promise<string[]>;
+  switchBusinessLine?: (businessLineId: number) => Promise<void>;
 }
 
 let businessApiProvider: BusinessApiProvider | null = null;
@@ -364,6 +365,17 @@ export const useBusinessStore = defineStore(
       );
       if (!target) {
         return;
+      }
+
+      // 调用后端接口切换业务线
+      const apiProvider = getBusinessApiProvider();
+      if (apiProvider.switchBusinessLine) {
+        try {
+          await apiProvider.switchBusinessLine(id);
+        } catch (error) {
+          console.error('切换业务线失败:', error);
+          throw error;
+        }
       }
 
       // 切换业务线前，先清空菜单缓存，确保获取新业务线的菜单

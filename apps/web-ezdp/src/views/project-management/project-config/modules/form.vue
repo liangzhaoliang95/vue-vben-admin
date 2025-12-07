@@ -28,7 +28,7 @@ const [Form, formApi] = useVbenForm({
   wrapperClass: 'grid grid-cols-12 gap-x-4 gap-y-4',
 });
 
-const id = ref<number>();
+const id = ref<string>();
 const loading = ref(false);
 const [Drawer, drawerApi] = useVbenDrawer({
   async onConfirm() {
@@ -59,7 +59,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             projectId: detail.projectId,
             projectUrl: detail.projectUrl,
             type: detail.type,
-            group: detail.group,
+            businessLineId: detail.businessLineId,
           });
         } catch (error: any) {
           console.error('获取详情失败:', error);
@@ -69,16 +69,18 @@ const [Drawer, drawerApi] = useVbenDrawer({
             projectId: data.projectId,
             projectUrl: data.projectUrl,
             type: data.type,
-            group: data.group,
+            businessLineId: data.businessLineId,
           });
         }
       } else {
-        // 新建时，设置业务线默认值
+        // 新建时，设置业务线默认值（使用当前业务线ID）
         const currentBusinessLine = businessStore.currentBusinessLine;
-        const defaultGroup = currentBusinessLine?.businessLine.name || '';
-        formApi.setValues({
-          group: defaultGroup,
-        });
+        const defaultBusinessLineId = currentBusinessLine?.businessLine.id;
+        if (defaultBusinessLineId) {
+          formApi.setValues({
+            businessLineId: defaultBusinessLineId,
+          });
+        }
       }
     }
   },
@@ -106,8 +108,12 @@ async function handleConfirm() {
     name: values.name,
     projectUrl: values.projectUrl,
     type: values.type,
-    group: values.group,
   };
+
+  // 业务线ID（如果表单中有，则使用；否则后端会从context自动获取）
+  if (values.businessLineId) {
+    submitData.businessLineId = values.businessLineId;
+  }
 
   // 项目ID可选
   if (values.projectId) submitData.projectId = values.projectId;

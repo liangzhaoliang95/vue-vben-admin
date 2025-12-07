@@ -55,4 +55,19 @@ async function updateBusinessLine(
   return requestClient.put(`/businessLine/${id}`, data);
 }
 
-export { createBusinessLine, getBusinessLineList, updateBusinessLine };
+/**
+ * 切换当前用户的业务线
+ * @param businessLineId 业务线ID
+ */
+async function switchBusinessLine(businessLineId: number) {
+  return requestClient.post('/businessLine/switch', {
+    businessLineId,
+  });
+}
+
+export {
+  createBusinessLine,
+  getBusinessLineList,
+  switchBusinessLine,
+  updateBusinessLine,
+};

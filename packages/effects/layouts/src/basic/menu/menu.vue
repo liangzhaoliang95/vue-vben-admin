@@ -7,7 +7,7 @@ import { computed, ref } from 'vue';
 
 import { SvgAvatar2Icon } from '@vben/icons';
 import { preferences } from '@vben/preferences';
-import { useAccessStore, useBusinessStore, useTabbarStore } from '@vben/stores';
+import { useBusinessStore } from '@vben/stores';
 
 import { Menu } from '@vben-core/menu-ui';
 import {
@@ -34,7 +34,6 @@ const emit = defineEmits<{
 }>();
 
 const businessStore = useBusinessStore();
-const tabbarStore = useTabbarStore();
 
 // 切换业务线的 loading 状态
 const switchingBusinessLine = ref(false);
@@ -58,22 +57,16 @@ const selectedValue = computed({
       return;
     }
     switchingBusinessLine.value = true;
-    // 清空标签页（只保留固定标签）
-    const affixTabs = tabbarStore.tabs.filter(
-      (tab) => tab?.meta?.affixTab === true,
-    );
-    tabbarStore.tabs = affixTabs.length > 0 ? affixTabs : [];
-    tabbarStore.updateCacheTabs();
-    // 只更新业务线ID和清空角色ID（会持久化），不等待接口调用
-    // 页面刷新后，路由守卫会检测到 isAccessChecked = false，然后调用接口重新生成菜单
-    businessStore.currentBusinessLineId = id;
-    // 清空当前角色ID，让页面加载时根据新业务线重新选择角色
-    businessStore.currentRoleId = null;
-    // 标记需要重新生成路由和菜单
-    const accessStore = useAccessStore();
-    accessStore.setIsAccessChecked(false);
-    // 立即刷新页面，让页面加载时再去调用接口
-    window.location.href = preferences.app.defaultHomePath;
+    try {
+      // 调用store的switchBusinessLine方法，它会调用后端接口并更新状态
+      await businessStore.switchBusinessLine(id);
+      // 切换成功后刷新页面，让页面加载时重新生成菜单
+      window.location.href = preferences.app.defaultHomePath;
+    } catch (error) {
+      console.error('切换业务线失败:', error);
+      // 切换失败时恢复原值
+      switchingBusinessLine.value = false;
+    }
   },
 });
 

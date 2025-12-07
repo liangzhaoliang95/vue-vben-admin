@@ -1,10 +1,30 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeTableGridOptions } from '#/adapter/vxe-table';
 
+import { useBusinessStore } from '@vben/stores';
+
 import { $t } from '#/locales';
 
 export function useFormSchema(): VbenFormSchema[] {
   return [
+    {
+      component: 'ApiSelect',
+      componentProps: {
+        api: async () => {
+          const { getBusinessLineList } = await import(
+            '#/api/system/business-line'
+          );
+          const res = await getBusinessLineList({ page: 1, pageSize: 1000 });
+          return res.items || [];
+        },
+        fieldNames: { label: 'name', value: 'id' },
+        style: { width: '100%' },
+        placeholder: '请选择业务线',
+      },
+      fieldName: 'businessLineId',
+      label: $t('system.businessLine.name'),
+      rules: 'required',
+    },
     {
       component: 'Input',
       fieldName: 'name',
@@ -80,6 +100,9 @@ export function useFormSchema(): VbenFormSchema[] {
 }
 
 export function useGridFormSchema(): VbenFormSchema[] {
+  const businessStore = useBusinessStore();
+  const isSuperAdmin = businessStore.currentRole?.isSuper === true;
+
   return [
     {
       component: 'Input',
@@ -89,6 +112,30 @@ export function useGridFormSchema(): VbenFormSchema[] {
       fieldName: 'keyword',
       label: $t('common.keyword'),
     },
+    ...(isSuperAdmin
+      ? [
+          {
+            component: 'ApiSelect',
+            componentProps: {
+              api: async () => {
+                const { getBusinessLineList } = await import(
+                  '#/api/system/business-line'
+                );
+                const res = await getBusinessLineList({
+                  page: 1,
+                  pageSize: 1000,
+                });
+                return res.items || [];
+              },
+              fieldNames: { label: 'name', value: 'id' },
+              style: { width: '100%' },
+              placeholder: '请选择业务线',
+            },
+            fieldName: 'businessLineId',
+            label: $t('system.businessLine.name'),
+          },
+        ]
+      : []),
     {
       component: 'Select',
       componentProps: {
@@ -109,6 +156,11 @@ export function useColumns(
   onStatusChange: (id: number, status: 0 | 1) => void,
 ): VxeTableGridOptions['columns'] {
   return [
+    {
+      field: 'businessLineName',
+      title: $t('system.businessLine.name'),
+      minWidth: 120,
+    },
     {
       field: 'name',
       title: $t('deploy.tools.objectStorage.name'),

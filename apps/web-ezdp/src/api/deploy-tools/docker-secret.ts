@@ -4,7 +4,8 @@ import { requestClient } from '#/api/request';
 
 export namespace DockerSecretApi {
   export interface DockerSecret {
-    id: number;
+    id: string;
+    businessLineId: number;
     name: string;
     host: string;
     username?: string;

@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 
 import { Page } from '@vben/common-ui';
 import { ArrowLeft } from '@vben/icons';
+import { useBusinessStore } from '@vben/stores';
 
 import {
   Button,
@@ -21,6 +22,7 @@ import DeployConfig from './modules/deploy-config.vue';
 
 const route = useRoute();
 const router = useRouter();
+const businessStore = useBusinessStore();
 
 // 从路由参数或 query 获取项目信息
 const projectId = computed(() => route.query.id as string);
@@ -35,17 +37,22 @@ const activeTab = ref((route.query.tab as string) || 'build');
 
 // 项目基本信息（实际应该从接口获取）
 const projectInfo = reactive({
-  group: route.query.group as string,
+  businessLineId: route.query.businessLineId as string,
   name: route.query.name as string,
   projectId: route.query.projectId as string,
   projectUrl: route.query.projectUrl as string,
   type: route.query.type as string,
 });
 
-// Tab 切换处理 - 只更新本地状态，不触发路由跳转
-function handleTabChange(key: string) {
-  activeTab.value = key;
-}
+// 获取业务线名称
+const businessLineName = computed(() => {
+  if (!projectInfo.businessLineId) return '';
+  const businessLineId = Number(projectInfo.businessLineId);
+  const businessLine = businessStore.businessLines.find(
+    (item) => item.businessLine.id === businessLineId,
+  );
+  return businessLine?.businessLine.name || projectInfo.businessLineId;
+});
 
 // 项目类型显示文本
 const projectTypeText = computed(() => {
@@ -79,7 +86,7 @@ const projectTypeText = computed(() => {
         <DescriptionsItem
           :label="$t('deploy.projectManagement.projectConfig.group')"
         >
-          {{ projectInfo.group }}
+          {{ businessLineName }}
         </DescriptionsItem>
         <DescriptionsItem
           :label="$t('deploy.projectManagement.projectConfig.name')"

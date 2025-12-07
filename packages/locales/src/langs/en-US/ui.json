@@ -33,7 +33,8 @@
   "successMessage": {
     "create": "Created successfully",
     "update": "Updated successfully",
-    "delete": "Deleted successfully"
+    "delete": "Deleted successfully",
+    "save": "Saved successfully"
   },
   "placeholder": {
     "input": "Please enter",

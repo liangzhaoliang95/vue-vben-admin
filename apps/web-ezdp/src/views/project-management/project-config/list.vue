@@ -5,6 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { ProjectConfigApi } from '#/api/project-management/project-config';
 
+import { onActivated, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
@@ -51,13 +52,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...formValues,
           };
 
-          // 非超级管理员时，自动过滤当前业务线
+          // 业务线筛选逻辑：
+          // 1. 超级管理员：如果前端筛选条件中有businessLineId，则使用；否则不传，后端会查所有业务线
+          // 2. 非超级管理员：不传businessLineId，后端会自动使用token中的businessLineID
+          // 注意：formValues中可能包含businessLineId（来自筛选表单），如果是超级管理员则保留，非超级管理员则忽略
+
           if (!isSuperAdmin) {
-            const currentBusinessLine = businessStore.currentBusinessLine;
-            if (currentBusinessLine?.businessLine.name) {
-              queryParams.group = currentBusinessLine.businessLine.name;
-            }
+            // 非超级管理员：移除businessLineId，让后端使用token中的
+            delete queryParams.businessLineId;
           }
+          // 超级管理员：保留formValues中的businessLineId（如果有），如果没有则不传，后端会查所有
 
           return await getProjectConfigList(queryParams);
         },
@@ -75,6 +79,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
   } as VxeTableGridOptions<ProjectConfigApi.ProjectConfig>,
 });
+
+// 路由激活时刷新数据（用于 keep-alive 场景）
+onActivated(() => {
+  gridApi.query();
+});
+
+// 监听业务线ID变化，自动刷新数据
+watch(
+  () => businessStore.currentBusinessLineId,
+  () => {
+    gridApi.query();
+  },
+);
 
 function onActionClick(e: OnActionClickParams<ProjectConfigApi.ProjectConfig>) {
   switch (e.code) {
@@ -144,7 +161,7 @@ async function onBuildConfigClick(row: ProjectConfigApi.ProjectConfig) {
     query: {
       pageKey: '/project-management/project-config', // 使用列表页的 path 作为 Tab key
       id: row.id,
-      group: row.group,
+      businessLineId: row.businessLineId,
       name: row.name,
       projectId: row.projectId,
       projectUrl: row.projectUrl,
@@ -162,7 +179,7 @@ async function onDeployConfigClick(row: ProjectConfigApi.ProjectConfig) {
     query: {
       pageKey: '/project-management/project-config', // 使用列表页的 path 作为 Tab key
       id: row.id,
-      group: row.group,
+      businessLineId: row.businessLineId,
       name: row.name,
       projectId: row.projectId,
       projectUrl: row.projectUrl,

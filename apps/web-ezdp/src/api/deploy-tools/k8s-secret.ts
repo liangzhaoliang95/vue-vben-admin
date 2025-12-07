@@ -4,7 +4,8 @@ import { requestClient } from '#/api/request';
 
 export namespace K8sSecretApi {
   export interface K8sSecret {
-    id: number;
+    id: string;
+    businessLineId: number;
     name: string;
     server?: string;
     namespaces: string[];

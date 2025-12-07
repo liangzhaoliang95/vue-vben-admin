@@ -4,24 +4,19 @@ import { requestClient } from '#/api/request';
 
 export namespace DeployConfigApi {
   export interface DeployConfig {
-    id: number;
-    projectConfigId: number;
+    id: string;
+    projectConfigId: string;
+    deployType: 'k8s' | 'oss';
+    k8sType?: 'cronjob' | 'deployment';
     k8sName?: string;
     ossName?: string;
-    dockerfilePath?: string;
-    upimeDeployName?: string;
-    k8sType?: 'cronjob' | 'deployment';
-    dockerRepo?: string;
-    dockerRepoPath?: string;
-    hasBuildConfig: boolean;
-    hasDeployConfig: boolean;
     createdAt: number;
     updatedAt: number;
   }
 }
 
 /**
- * 获取打包发布配置列表数据
+ * 获取发布配置列表数据
  */
 async function getDeployConfigList(params: Recordable<any>) {
   return requestClient.post<{
@@ -31,7 +26,7 @@ async function getDeployConfigList(params: Recordable<any>) {
 }
 
 /**
- * 根据项目配置ID获取打包发布配置
+ * 根据项目配置ID获取发布配置
  */
 async function getDeployConfigByProjectConfigId(
   projectConfigId: number | string,
@@ -43,43 +38,29 @@ async function getDeployConfigByProjectConfigId(
 }
 
 /**
- * 创建打包发布配置
- * @param data 打包发布配置数据
+ * 创建或更新发布配置
+ * @param data 发布配置数据
  */
-async function createDeployConfig(
-  data: Omit<
-    DeployConfigApi.DeployConfig,
-    'createdAt' | 'hasBuildConfig' | 'hasDeployConfig' | 'id' | 'updatedAt'
-  >,
-) {
-  return requestClient.post('/projectManagement/deployConfig/create', data);
-}
-
-/**
- * 更新打包发布配置
- *
- * @param id 打包发布配置 ID
- * @param data 打包发布配置数据
- */
-async function updateDeployConfig(
-  id: number | string,
+async function createOrUpdateDeployConfig(
   data: Partial<
-    Omit<
-      DeployConfigApi.DeployConfig,
-      'createdAt' | 'hasBuildConfig' | 'hasDeployConfig' | 'id' | 'updatedAt'
-    >
-  >,
+    Omit<DeployConfigApi.DeployConfig, 'createdAt' | 'id' | 'updatedAt'>
+  > & {
+    projectConfigId: number | string;
+  },
 ) {
-  return requestClient.post('/projectManagement/deployConfig/update', {
-    id: String(id),
-    ...data,
-  });
+  return requestClient.post<DeployConfigApi.DeployConfig>(
+    '/projectManagement/deployConfig/createOrUpdate',
+    {
+      ...data,
+      projectConfigId: String(data.projectConfigId),
+    },
+  );
 }
 
 /**
- * 删除打包发布配置
+ * 删除发布配置
  *
- * @param id 打包发布配置 ID
+ * @param id 发布配置 ID
  */
 async function deleteDeployConfig(id: number | string) {
   return requestClient.post('/projectManagement/deployConfig/delete', {
@@ -88,9 +69,9 @@ async function deleteDeployConfig(id: number | string) {
 }
 
 /**
- * 获取打包发布配置详情
+ * 获取发布配置详情
  *
- * @param id 打包发布配置 ID
+ * @param id 发布配置 ID
  */
 async function getDeployConfigDetail(id: number | string) {
   return requestClient.post<DeployConfigApi.DeployConfig>(
@@ -100,10 +81,9 @@ async function getDeployConfigDetail(id: number | string) {
 }
 
 export {
-  createDeployConfig,
+  createOrUpdateDeployConfig,
   deleteDeployConfig,
   getDeployConfigByProjectConfigId,
   getDeployConfigDetail,
   getDeployConfigList,
-  updateDeployConfig,
 };

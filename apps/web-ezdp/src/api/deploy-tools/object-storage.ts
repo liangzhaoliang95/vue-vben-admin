@@ -4,7 +4,8 @@ import { requestClient } from '#/api/request';
 
 export namespace ObjectStorageApi {
   export interface ObjectStorage {
-    id: number;
+    id: string;
+    businessLineId: number;
     name: string;
     provider: 'ali' | 'ecloudObs' | 'minio';
     bucket: string;

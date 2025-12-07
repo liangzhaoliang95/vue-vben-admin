@@ -11,26 +11,29 @@ export function useFormSchema(): VbenFormSchema[] {
   const businessStore = useBusinessStore();
   const isSuperAdmin = businessStore.currentRole?.isSuper === true;
 
-  // 获取业务线选项列表
+  // 获取业务线选项列表（使用ID作为value）
   const businessLineOptions = businessStore.businessLines.map((item) => ({
     label: item.businessLine.name,
-    value: item.businessLine.name,
+    value: item.businessLine.id,
   }));
 
   return [
-    {
-      component: 'Select',
-      fieldName: 'group',
-      label: $t('deploy.projectManagement.projectConfig.group'),
-      rules: 'required',
-      formItemClass: 'col-span-12',
-      componentProps: {
-        options: businessLineOptions,
-        placeholder: $t('deploy.projectManagement.projectConfig.group'),
-        style: { width: '100%' },
-        disabled: !isSuperAdmin,
-      },
-    },
+    ...(isSuperAdmin
+      ? [
+          {
+            component: 'Select',
+            fieldName: 'businessLineId',
+            label: $t('deploy.projectManagement.projectConfig.group'),
+            rules: 'required',
+            formItemClass: 'col-span-12',
+            componentProps: {
+              options: businessLineOptions,
+              placeholder: $t('deploy.projectManagement.projectConfig.group'),
+              style: { width: '100%' },
+            },
+          },
+        ]
+      : []),
     {
       component: 'Input',
       fieldName: 'name',
@@ -105,10 +108,10 @@ export function useGridFormSchema(): VbenFormSchema[] {
   const businessStore = useBusinessStore();
   const isSuperAdmin = businessStore.currentRole?.isSuper === true;
 
-  // 获取业务线选项列表
+  // 获取业务线选项列表（使用ID作为value）
   const businessLineOptions = businessStore.businessLines.map((item) => ({
     label: item.businessLine.name,
-    value: item.businessLine.name,
+    value: item.businessLine.id,
   }));
 
   return [
@@ -130,7 +133,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
               style: { width: '100%' },
               allowClear: true,
             },
-            fieldName: 'group',
+            fieldName: 'businessLineId',
             label: $t('deploy.projectManagement.projectConfig.group'),
           },
         ]
@@ -169,9 +172,16 @@ export function useColumns(
 ): VxeTableGridOptions['columns'] {
   return [
     {
-      field: 'group',
+      field: 'businessLineId',
       title: $t('deploy.projectManagement.projectConfig.group'),
       minWidth: 120,
+      formatter: ({ cellValue }) => {
+        const businessStore = useBusinessStore();
+        const businessLine = businessStore.businessLines.find(
+          (item) => item.businessLine.id === cellValue,
+        );
+        return businessLine?.businessLine.name || cellValue;
+      },
     },
     {
       field: 'name',
