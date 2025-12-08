@@ -93,6 +93,58 @@
       "backendEnvironment": "后端NS",
       "backendEnvironmentPlaceholder": "请输入后端NS"
     }
+  },
+  "packageDeployManagement": {
+    "title": "打包发布管理",
+    "projectPackage": {
+      "title": "项目打包",
+      "branch": "分支",
+      "branchPlaceholder": "请选择分支",
+      "buildTime": "构建时间",
+      "version": "版本号",
+      "isDeployed": "是否已发布",
+      "deployEnvironment": "发布环境",
+      "deployEnvironmentPlaceholder": "请选择发布环境",
+      "deploy": "发布",
+      "deployConfirm": "确定要发布该版本到【{0}】环境吗？",
+      "deploying": "正在发布...",
+      "deploySuccess": "发布成功",
+      "selectEnvironmentFirst": "请先选择发布环境"
+    },
+    "branchManagement": {
+      "title": "分支管理",
+      "name": "分支名称",
+      "namePlaceholder": "请输入分支名称",
+      "projectName": "项目名称",
+      "projectNamePlaceholder": "请选择项目",
+      "branchType": "分支类型",
+      "branchTypePlaceholder": "请选择分支类型",
+      "targetBranch": "目标分支",
+      "targetBranchPlaceholder": "请输入目标分支",
+      "description": "描述",
+      "descriptionPlaceholder": "请输入描述",
+      "type": {
+        "feature": "特性分支",
+        "bugfix": "修复分支",
+        "release": "发布分支",
+        "hotfix": "热修复分支"
+      }
+    },
+    "environmentConfig": {
+      "title": "环境配置",
+      "name": "环境名称",
+      "namePlaceholder": "请输入环境名称",
+      "description": "描述",
+      "descriptionPlaceholder": "请输入描述",
+      "frontendStorage": "前端环境",
+      "frontendStoragePlaceholder": "请选择前端环境（对象存储）",
+      "frontendBaseUrl": "前端基础地址",
+      "frontendBaseUrlPlaceholder": "请输入前端基础地址",
+      "backendCluster": "后端集群",
+      "backendClusterPlaceholder": "请选择后端集群（K8S集群）",
+      "backendEnvironment": "后端NS",
+      "backendEnvironmentPlaceholder": "请输入后端NS"
+    }
   }
 }
 

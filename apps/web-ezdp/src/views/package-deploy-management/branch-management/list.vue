@@ -3,7 +3,7 @@ import type {
   OnActionClickParams,
   VxeTableGridOptions,
 } from '#/adapter/vxe-table';
-import type { DeployEnvironmentApi } from '#/api/project-management/deploy-environment';
+import type { BranchManagementApi } from '#/api/package-deploy-management/branch-management';
 
 import { onActivated, watch } from 'vue';
 
@@ -15,20 +15,20 @@ import { Button, message, Modal } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  deleteDeployEnvironment,
-  getDeployEnvironmentList,
-} from '#/api/project-management/deploy-environment';
+  deleteBranchManagement,
+  getBranchManagementList,
+} from '#/api/package-deploy-management/branch-management';
 import { $t } from '#/locales';
 
-import { loadReferenceData, useColumns, useGridFormSchema } from './data';
+import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
-
-const businessStore = useBusinessStore();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
   destroyOnClose: true,
 });
+
+const businessStore = useBusinessStore();
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
@@ -51,14 +51,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
           // 业务线筛选逻辑：
           // 1. 超级管理员：如果前端筛选条件中有businessLineId，则使用；否则不传，后端会查所有业务线
-          // 2. 非超级管理员：不传businessLineId，后端会自动使用token中的businessLineID
+          // 2. 非超级管理员：不传businessLineId，让后端使用token中的
           if (!isSuperAdmin) {
-            // 非超级管理员：移除businessLineId，让后端使用token中的
             delete queryParams.businessLineId;
           }
-          // 超级管理员：保留formValues中的businessLineId（如果有），如果没有则不传，后端会查所有
 
-          return await getDeployEnvironmentList(queryParams);
+          return await getBranchManagementList(queryParams);
         },
       },
     },
@@ -72,28 +70,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
       zoom: true,
     },
-  } as VxeTableGridOptions<DeployEnvironmentApi.DeployEnvironment>,
+  } as VxeTableGridOptions<BranchManagementApi.BranchManagement>,
 });
 
-// 路由激活时刷新数据（用于 keep-alive 场景）
+// 路由激活时刷新数据
 onActivated(() => {
-  // 重新加载参考数据（对象存储和K8S集群列表）
-  loadReferenceData();
   gridApi.query();
 });
 
-// 监听业务线ID变化，自动刷新数据
+// 监听业务线ID变化,自动刷新数据
 watch(
   () => businessStore.currentBusinessLineId,
   () => {
-    // 业务线变化时，重新加载参考数据（因为不同业务线的K8S集群和对象存储可能不同）
-    loadReferenceData();
     gridApi.query();
   },
 );
 
 function onActionClick(
-  e: OnActionClickParams<DeployEnvironmentApi.DeployEnvironment>,
+  e: OnActionClickParams<BranchManagementApi.BranchManagement>,
 ) {
   switch (e.code) {
     case 'delete': {
@@ -107,42 +101,37 @@ function onActionClick(
   }
 }
 
-/**
- * 将Antd的Modal.confirm封装为promise，方便在异步函数中调用。
- * @param content 提示内容
- * @param title 提示标题
- */
 function confirm(content: string, title: string) {
-  return new Promise((reslove, reject) => {
+  return new Promise((resolve, reject) => {
     Modal.confirm({
       content,
       onCancel() {
         reject(new Error('已取消'));
       },
       onOk() {
-        reslove(true);
+        resolve(true);
       },
       title,
     });
   });
 }
 
-function onEdit(row: DeployEnvironmentApi.DeployEnvironment) {
+function onEdit(row: BranchManagementApi.BranchManagement) {
   formDrawerApi.setData(row).open();
 }
 
-function onDelete(row: DeployEnvironmentApi.DeployEnvironment) {
+function onDelete(row: BranchManagementApi.BranchManagement) {
   confirm(
     $t('ui.confirmContent.delete', [row.name]),
     $t('ui.confirmTitle.delete'),
   )
     .then(async () => {
-      await deleteDeployEnvironment(row.id);
+      await deleteBranchManagement(row.id);
       message.success($t('ui.successMessage.delete'));
       gridApi.query();
     })
     .catch(() => {
-      // 用户取消，不做任何操作
+      // 用户取消,不做任何操作
     });
 }
 
@@ -154,14 +143,15 @@ function onCreate() {
   formDrawerApi.setData({}).open();
 }
 </script>
+
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <Grid table-title="发布环境配置">
+    <Grid :table-title="$t('deploy.packageDeployManagement.branchManagement.title')">
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
-          {{ $t('ui.actionTitle.create', ['发布环境配置']) }}
+          {{ $t('ui.actionTitle.create', [$t('deploy.packageDeployManagement.branchManagement.title')]) }}
         </Button>
       </template>
     </Grid>

@@ -76,24 +76,25 @@ const [Drawer, drawerApi] = useVbenDrawer({
         if (data.id) {
           try {
             const roleMenus = await getRoleMenuApi(data.id);
-            // 提取所有菜单ID（递归提取后端返回的菜单树中的所有菜单ID）
-            // 后端应该只返回角色关联的菜单，所以这里直接提取所有菜单ID即可
-            // 注意：后端返回的菜单树中，如果父菜单被选中，不应该包含未选中的子菜单
-            const extractMenuIds = (menus: any[]): string[] => {
+            // 只提取叶子节点（没有子节点的菜单）
+            // 因为 Tree 组件在非 check-strictly 模式下会自动级联
+            // 如果我们勾选了父节点，Tree 会自动勾选所有子节点
+            // 所以我们只勾选叶子节点，让 Tree 自动计算父节点的状态
+            const extractLeafMenuIds = (menus: any[]): string[] => {
               const ids: string[] = [];
               for (const menu of menus) {
-                // Tree 组件需要字符串 key
-                const menuId = String(menu.id);
-                ids.push(menuId);
-                // 递归提取子菜单ID（只提取后端返回的菜单树中的子菜单）
-                if (menu.children && menu.children.length > 0) {
-                  ids.push(...extractMenuIds(menu.children));
+                if (!menu.children || menu.children.length === 0) {
+                  // 这是叶子节点，添加到选中列表
+                  ids.push(String(menu.id));
+                } else {
+                  // 这是父节点，递归处理子节点
+                  ids.push(...extractLeafMenuIds(menu.children));
                 }
               }
               return ids;
             };
-            // 只设置后端返回的菜单ID，不自动勾选其他菜单
-            checkedMenuIds.value = extractMenuIds(roleMenus as any[]);
+            // 只勾选叶子节点
+            checkedMenuIds.value = extractLeafMenuIds(roleMenus as any[]);
           } catch (error) {
             console.error('加载角色菜单权限失败:', error);
           }
@@ -232,7 +233,7 @@ const title = computed(() =>
         v-model:checked-keys="checkedMenuIds"
         v-model:expanded-keys="expandedKeys"
         :checkable="true"
-        :check-strictly="true"
+        :check-strictly="false"
         :tree-data="convertToTreeData(menuTree)"
         @check="onCheck"
       />

@@ -93,6 +93,58 @@
       "backendEnvironment": "Backend NS",
       "backendEnvironmentPlaceholder": "Please enter backend NS"
     }
+  },
+  "packageDeployManagement": {
+    "title": "Package & Deploy Management",
+    "projectPackage": {
+      "title": "Project Package",
+      "branch": "Branch",
+      "branchPlaceholder": "Please select branch",
+      "buildTime": "Build Time",
+      "version": "Version",
+      "isDeployed": "Deployed",
+      "deployEnvironment": "Deploy Environment",
+      "deployEnvironmentPlaceholder": "Please select deploy environment",
+      "deploy": "Deploy",
+      "deployConfirm": "Are you sure to deploy this version to [{0}] environment?",
+      "deploying": "Deploying...",
+      "deploySuccess": "Deploy successfully",
+      "selectEnvironmentFirst": "Please select deploy environment first"
+    },
+    "branchManagement": {
+      "title": "Branch Management",
+      "name": "Branch Name",
+      "namePlaceholder": "Please enter branch name",
+      "projectName": "Project Name",
+      "projectNamePlaceholder": "Please select project",
+      "branchType": "Branch Type",
+      "branchTypePlaceholder": "Please select branch type",
+      "targetBranch": "Target Branch",
+      "targetBranchPlaceholder": "Please enter target branch",
+      "description": "Description",
+      "descriptionPlaceholder": "Please enter description",
+      "type": {
+        "feature": "Feature Branch",
+        "bugfix": "Bugfix Branch",
+        "release": "Release Branch",
+        "hotfix": "Hotfix Branch"
+      }
+    },
+    "environmentConfig": {
+      "title": "Environment Configuration",
+      "name": "Environment Name",
+      "namePlaceholder": "Please enter environment name",
+      "description": "Description",
+      "descriptionPlaceholder": "Please enter description",
+      "frontendStorage": "Frontend Environment",
+      "frontendStoragePlaceholder": "Please select frontend environment (Object Storage)",
+      "frontendBaseUrl": "Frontend Base URL",
+      "frontendBaseUrlPlaceholder": "Please enter frontend base URL",
+      "backendCluster": "Backend Cluster",
+      "backendClusterPlaceholder": "Please select backend cluster (K8S Cluster)",
+      "backendEnvironment": "Backend NS",
+      "backendEnvironmentPlaceholder": "Please enter backend NS"
+    }
   }
 }
 

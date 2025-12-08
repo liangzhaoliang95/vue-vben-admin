@@ -36,6 +36,29 @@
     "delete": "Deleted successfully",
     "save": "Saved successfully"
   },
+  "button": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "reset": "Reset",
+    "save": "Save",
+    "close": "Close",
+    "back": "Back",
+    "search": "Search",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "export": "Export",
+    "import": "Import"
+  },
+  "table": {
+    "action": "Action",
+    "createdTime": "Created Time",
+    "updatedTime": "Updated Time",
+    "status": "Status",
+    "remark": "Remark",
+    "operation": "Operation"
+  },
   "placeholder": {
     "input": "Please enter",
     "select": "Please select"

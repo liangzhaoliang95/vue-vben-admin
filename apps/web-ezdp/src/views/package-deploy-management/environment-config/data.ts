@@ -84,22 +84,22 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'name',
-      label: $t('deploy.projectManagement.deployEnvironment.name'),
+      label: $t('deploy.packageDeployManagement.environmentConfig.name'),
       rules: 'required',
       componentProps: {
         placeholder: $t(
-          'deploy.projectManagement.deployEnvironment.namePlaceholder',
+          'deploy.packageDeployManagement.environmentConfig.namePlaceholder',
         ),
       },
     },
     {
       component: 'Textarea',
       fieldName: 'description',
-      label: $t('deploy.projectManagement.deployEnvironment.description'),
+      label: $t('deploy.packageDeployManagement.environmentConfig.description'),
       rules: 'required',
       componentProps: {
         placeholder: $t(
-          'deploy.projectManagement.deployEnvironment.descriptionPlaceholder',
+          'deploy.packageDeployManagement.environmentConfig.descriptionPlaceholder',
         ),
         rows: 3,
       },
@@ -107,7 +107,7 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'ApiSelect',
       fieldName: 'frontendStorageId',
-      label: $t('deploy.projectManagement.deployEnvironment.frontendStorage'),
+      label: $t('deploy.packageDeployManagement.environmentConfig.frontendStorage'),
       rules: 'required',
       componentProps: {
         api: async (params?: any) => {
@@ -126,7 +126,7 @@ export function useFormSchema(): VbenFormSchema[] {
         fieldNames: { label: 'name', value: 'id' },
         style: { width: '100%' },
         placeholder: $t(
-          'deploy.projectManagement.deployEnvironment.frontendStoragePlaceholder',
+          'deploy.packageDeployManagement.environmentConfig.frontendStoragePlaceholder',
         ),
         allowClear: true,
       },
@@ -145,18 +145,18 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'frontendBaseUrl',
-      label: $t('deploy.projectManagement.deployEnvironment.frontendBaseUrl'),
+      label: $t('deploy.packageDeployManagement.environmentConfig.frontendBaseUrl'),
       rules: 'required',
       componentProps: {
         placeholder: $t(
-          'deploy.projectManagement.deployEnvironment.frontendBaseUrlPlaceholder',
+          'deploy.packageDeployManagement.environmentConfig.frontendBaseUrlPlaceholder',
         ),
       },
     },
     {
       component: 'ApiSelect',
       fieldName: 'backendSecretId',
-      label: $t('deploy.projectManagement.deployEnvironment.backendCluster'),
+      label: $t('deploy.packageDeployManagement.environmentConfig.backendCluster'),
       rules: 'required',
       componentProps: {
         api: async (params?: any) => {
@@ -175,7 +175,7 @@ export function useFormSchema(): VbenFormSchema[] {
         fieldNames: { label: 'name', value: 'id' },
         style: { width: '100%' },
         placeholder: $t(
-          'deploy.projectManagement.deployEnvironment.backendClusterPlaceholder',
+          'deploy.packageDeployManagement.environmentConfig.backendClusterPlaceholder',
         ),
         allowClear: true,
       },
@@ -195,12 +195,12 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Input',
       fieldName: 'backendNamespace',
       label: $t(
-        'deploy.projectManagement.deployEnvironment.backendEnvironment',
+        'deploy.packageDeployManagement.environmentConfig.backendEnvironment',
       ),
       rules: 'required',
       componentProps: {
         placeholder: $t(
-          'deploy.projectManagement.deployEnvironment.backendEnvironmentPlaceholder',
+          'deploy.packageDeployManagement.environmentConfig.backendEnvironmentPlaceholder',
         ),
       },
     },
@@ -265,17 +265,17 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
     },
     {
       field: 'name',
-      title: $t('deploy.projectManagement.deployEnvironment.name'),
+      title: $t('deploy.packageDeployManagement.environmentConfig.name'),
       minWidth: 120,
     },
     {
       field: 'description',
-      title: $t('deploy.projectManagement.deployEnvironment.description'),
+      title: $t('deploy.packageDeployManagement.environmentConfig.description'),
       minWidth: 200,
     },
     {
       field: 'frontendStorageId',
-      title: $t('deploy.projectManagement.deployEnvironment.frontendStorage'),
+      title: $t('deploy.packageDeployManagement.environmentConfig.frontendStorage'),
       minWidth: 150,
       formatter: ({ row }) => {
         if (!row.frontendStorageId) return '-';
@@ -287,12 +287,12 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
     },
     {
       field: 'frontendBaseUrl',
-      title: $t('deploy.projectManagement.deployEnvironment.frontendBaseUrl'),
+      title: $t('deploy.packageDeployManagement.environmentConfig.frontendBaseUrl'),
       minWidth: 200,
     },
     {
       field: 'backendSecretId',
-      title: $t('deploy.projectManagement.deployEnvironment.backendCluster'),
+      title: $t('deploy.packageDeployManagement.environmentConfig.backendCluster'),
       minWidth: 150,
       formatter: ({ row }) => {
         if (!row.backendSecretId) return '-';
@@ -304,7 +304,7 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
     {
       field: 'backendNamespace',
       title: $t(
-        'deploy.projectManagement.deployEnvironment.backendEnvironment',
+        'deploy.packageDeployManagement.environmentConfig.backendEnvironment',
       ),
       minWidth: 150,
     },
