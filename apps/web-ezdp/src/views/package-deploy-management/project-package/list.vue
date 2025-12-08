@@ -4,25 +4,43 @@ import type {
   VxeTableGridOptions,
 } from '#/adapter/vxe-table';
 
-import { computed, nextTick, onActivated, ref, watch } from 'vue';
+import {
+  computed,
+  nextTick,
+  onActivated,
+  ref,
+  watch,
+} from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { useBusinessStore } from '@vben/stores';
 
-import { message, Modal, Select } from 'ant-design-vue';
+import { Button, message, Modal, Select } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
+import {
+  getBuildTaskList,
+  startBuildTask,
+} from '#/api/package-deploy-management/project-package';
 import { getDeployEnvironmentList } from '#/api/project-management/deploy-environment';
+import LogViewer from '#/components/log-viewer/index.vue';
+import { useWebSocketStore } from '#/store/websocket';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 
 const businessStore = useBusinessStore();
+const wsStore = useWebSocketStore();
 
 // 发布环境列表
 const deployEnvironments = ref<any[]>([]);
 const selectedEnvironmentId = ref<string>();
+
+// 实时日志相关
+const showLogViewer = ref(false);
+const logViewerSubscriptionId = ref<string>('');
+const logViewerTitle = ref('');
 
 // 页面初始化状态
 const isInitialized = ref(false);
@@ -185,6 +203,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: useColumns(onActionClick),
     height: 'auto',
     keepSource: true,
+    treeConfig: {
+      children: 'children', // 指定子节点字段
+      indent: 20, // 树节点缩进距离
+      showIcon: true, // 显示树节点图标
+      expandAll: false, // 默认不展开所有节点
+      trigger: 'row', // 触发方式：点击整行都可以展开/折叠
+    },
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
@@ -208,13 +233,33 @@ const [Grid, gridApi] = useVbenVxeGrid({
             delete queryParams.businessLineId;
           }
 
-          // TODO: 实现获取打包列表的API调用
-          // return await getProjectPackageList(queryParams);
+          // 转换分页参数
+          const buildTaskParams = {
+            pageIndex: queryParams.page || 1,
+            pageSize: queryParams.pageSize || 10,
+            projectConfigId: queryParams.projectConfigId,
+            branchId: queryParams.branchId,
+            businessLineId: queryParams.businessLineId,
+          };
 
-          // 临时返回空数据
+          const res = await getBuildTaskList(buildTaskParams);
+          // 处理树形数据，为每行添加唯一ID
+          const treeItems = (res.items || []).map((versionGroup) => {
+            // 为父级添加唯一ID
+            const parentId = `version-${versionGroup.version}-${versionGroup.buildTime}`;
+            return {
+              ...versionGroup,
+              id: parentId,
+              // 处理子级，为每个子项添加唯一ID
+              children: (versionGroup.children || []).map((child, index) => ({
+                ...child,
+                id: `${parentId}-child-${index}`,
+              })),
+            };
+          });
           return {
-            items: [],
-            total: 0,
+            items: treeItems,
+            total: res.total || 0,
           };
         },
       },
@@ -331,7 +376,12 @@ async function setDefaultFormValues() {
 // 监听业务线ID变化,自动刷新数据
 watch(
   () => businessStore.currentBusinessLineId,
-  async () => {
+  async (newBusinessLineId, oldBusinessLineId) => {
+    // 如果业务线没有真正变化，不执行
+    if (newBusinessLineId === oldBusinessLineId) {
+      return;
+    }
+    
     isInitialized.value = false;
     await loadDeployEnvironments();
     await loadAllBranches();
@@ -350,6 +400,34 @@ function onActionClick(e: OnActionClickParams<any>) {
       break;
     }
   }
+}
+
+// 打开实时日志
+function openLogViewer(taskType: 1 | 2) {
+  // 生成唯一的订阅 ID
+  const subscriptionId = `log-viewer-${taskType}-${Date.now()}`;
+  
+  // 设置日志查看器参数
+  logViewerSubscriptionId.value = subscriptionId;
+  
+  // 设置标题
+  logViewerTitle.value =
+    taskType === 1
+      ? $t('deploy.packageDeployManagement.projectPackage.buildLog')
+      : $t('deploy.packageDeployManagement.projectPackage.deployLog');
+
+  // 显示日志查看器（组件内部会自动订阅）
+  showLogViewer.value = true;
+}
+
+// 关闭实时日志
+function closeLogViewer() {
+  // 取消订阅（由组件内部处理）
+  if (logViewerSubscriptionId.value) {
+    wsStore.unsubscribe(logViewerSubscriptionId.value);
+    logViewerSubscriptionId.value = '';
+  }
+  showLogViewer.value = false;
 }
 
 function confirm(content: string, title: string) {
@@ -416,8 +494,57 @@ async function onDeploy(row: any) {
             :placeholder="$t('deploy.packageDeployManagement.projectPackage.deployEnvironmentPlaceholder')"
             class="w-48"
           />
+          <Button
+            type="primary"
+            @click="openLogViewer(1)"
+          >
+            {{ $t('deploy.packageDeployManagement.projectPackage.realtimeLog') }}
+          </Button>
         </div>
       </template>
     </Grid>
+    <!-- 实时日志悬浮窗 -->
+    <Teleport to="body">
+      <div
+        v-if="showLogViewer"
+        class="log-viewer-overlay"
+        @click.self="closeLogViewer"
+      >
+        <div class="log-viewer-container">
+          <LogViewer
+            v-if="logViewerSubscriptionId"
+            :subscription-id="logViewerSubscriptionId"
+            :title="logViewerTitle"
+            @close="closeLogViewer"
+          />
+        </div>
+      </div>
+    </Teleport>
   </Page>
 </template>
+
+<style scoped>
+.log-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.log-viewer-container {
+  width: 90%;
+  max-width: 1200px;
+  height: 80%;
+  max-height: 800px;
+  background: #1e1e1e;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+</style>

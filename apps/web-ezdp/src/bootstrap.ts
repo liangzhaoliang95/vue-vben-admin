@@ -52,6 +52,11 @@ async function bootstrap(namespace: string) {
   // 配置 pinia-tore
   await initStores(app, { namespace });
 
+  // 初始化全局 WebSocket 连接
+  const { useWebSocketStore } = await import('#/store/websocket');
+  const wsStore = useWebSocketStore();
+  wsStore.initGlobalWebSocket();
+
   registerBusinessApiProvider({
     fetchBusinessLines: getBusinessLinesApi,
     fetchRoleMenu: getRoleMenuApi,

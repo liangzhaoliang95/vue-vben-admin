@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router';
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
+import { useWebSocketStore } from './websocket';
 
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
@@ -23,6 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
   const businessStore = useBusinessStore();
+  const wsStore = useWebSocketStore();
   const router = useRouter();
 
   const loginLoading = ref(false);
@@ -113,7 +115,10 @@ export const useAuthStore = defineStore('auth', () => {
     // 3. 清除 businessStore（使用 reset 方法，不是 $reset）
     businessStore.reset();
 
-    // 4. 清除当前 authStore
+    // 4. 清除 WebSocket 连接
+    wsStore.disconnectAll();
+
+    // 5. 清除当前 authStore
     loginLoading.value = false;
 
     // 直接使用 window.location.replace 强制跳转，确保页面刷新

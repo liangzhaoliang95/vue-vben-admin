@@ -79,41 +79,70 @@ export function useColumns<T = any>(
 
   return [
     {
-      field: 'businessLineId',
-      title: $t('system.businessLine.name'),
-      minWidth: 150,
+      field: 'version',
+      title: $t('deploy.packageDeployManagement.projectPackage.version'),
+      minWidth: 200,
+      treeNode: true, // 设置为树节点列
       formatter: ({ row }) => {
-        const businessLine = businessStore.businessLines.find(
-          (item) => item.businessLine.id === row.businessLineId,
-        );
-        return businessLine?.businessLine.name || '-';
+        // 如果是父级（版本组），显示版本号
+        if (row.children && row.children.length > 0) {
+          return row.version || '-';
+        }
+        // 如果是子级（项目），显示项目名称
+        return row.projectName || '-';
       },
     },
     {
-      field: 'version',
-      title: $t('deploy.packageDeployManagement.projectPackage.version'),
-      minWidth: 150,
+      field: 'projectType',
+      title: $t('deploy.packageDeployManagement.projectPackage.projectType'),
+      minWidth: 120,
+      formatter: ({ row }) => {
+        // 如果是父级，不显示
+        if (row.children && row.children.length > 0) {
+          return '-';
+        }
+        // 如果是子级，显示项目类型
+        const typeMap: Record<string, string> = {
+          backend: '服务端',
+          frontend: '前端',
+          submodule: '子模块',
+        };
+        return typeMap[row.projectType] || row.projectType || '-';
+      },
     },
     {
       field: 'buildTime',
       title: $t('deploy.packageDeployManagement.projectPackage.buildTime'),
       minWidth: 180,
-      formatter: ({ cellValue }) => {
-        if (!cellValue) return '-';
-        return new Date(cellValue).toLocaleString('zh-CN');
+      formatter: ({ row }) => {
+        // 如果是父级，显示构建时间
+        if (row.children && row.children.length > 0) {
+          if (!row.buildTime) return '-';
+          const date = new Date(row.buildTime);
+          return date.toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+        }
+        // 如果是子级，显示子项目的版本号
+        return row.version || '-';
       },
     },
     {
-      field: 'isDeployed',
-      title: $t('deploy.packageDeployManagement.projectPackage.isDeployed'),
+      field: 'status',
+      title: $t('deploy.packageDeployManagement.projectPackage.status.label'),
       minWidth: 120,
       slots: {
         default: ({ row }: any) => {
-          return h(
-            Tag,
-            { color: row.isDeployed ? 'success' : 'default' },
-            () => row.isDeployed ? '已发布' : '未发布',
-          );
+          // 如果是父级，不显示状态
+          if (row.children && row.children.length > 0) {
+            return '-';
+          }
+          // 如果是子级，显示状态
+          return renderStatusTag(row.status);
         },
       },
     },

@@ -102,6 +102,7 @@
       "branchPlaceholder": "Please select branch",
       "buildTime": "Build Time",
       "version": "Version",
+      "projectType": "Project Type",
       "isDeployed": "Deployed",
       "deployEnvironment": "Deploy Environment",
       "deployEnvironmentPlaceholder": "Please select deploy environment",
@@ -109,7 +110,32 @@
       "deployConfirm": "Are you sure to deploy this version to [{0}] environment?",
       "deploying": "Deploying...",
       "deploySuccess": "Deploy successfully",
-      "selectEnvironmentFirst": "Please select deploy environment first"
+      "selectEnvironmentFirst": "Please select deploy environment first",
+      "realtimeLog": "Realtime Log",
+      "buildLog": "Build Log",
+      "deployLog": "Deploy Log",
+      "selectBusinessLineFirst": "Please select business line first",
+      "status": {
+        "label": "Status",
+        "pending": "Pending",
+        "running": "Running",
+        "success": "Success",
+        "failed": "Failed"
+      },
+      "logViewer": {
+        "title": "Realtime Log",
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "totalLines": "Total Lines",
+        "clearLog": "Clear Log",
+        "autoScroll": "Auto Scroll",
+        "search": "Search",
+        "searchPlaceholder": "Enter search keyword",
+        "searchNext": "Next",
+        "searchPrev": "Previous",
+        "noResults": "No results found",
+        "waitingForData": "Waiting for log data..."
+      }
     },
     "branchManagement": {
       "title": "Branch Management",

@@ -1,0 +1,542 @@
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+
+import { Terminal } from 'xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import { SearchAddon } from '@xterm/addon-search';
+
+import 'xterm/css/xterm.css';
+
+import { Button, Input, Switch } from 'ant-design-vue';
+
+import type { WebSocketMessage } from '#/store/websocket';
+import { useWebSocketStore } from '#/store/websocket';
+import { $t } from '#/locales';
+
+interface Props {
+  subscriptionId: string;
+  title?: string;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  title: '实时日志',
+});
+
+const emit = defineEmits<{
+  close: [];
+}>();
+
+const terminalRef = ref<HTMLDivElement>();
+const searchInputRef = ref<InstanceType<typeof Input>>();
+let terminal: Terminal | null = null;
+let fitAddon: FitAddon | null = null;
+let searchAddon: SearchAddon | null = null;
+let unsubscribe: (() => void) | null = null;
+let hasOnlyWaitingMessage = true; // 标记是否只有等待提示
+
+// 状态
+const isConnected = ref(false);
+const totalLines = ref(0);
+const autoScroll = ref(true);
+const searchKeyword = ref('');
+const showSearch = ref(false);
+const searchResultCount = ref(0);
+const currentSearchIndex = ref(0);
+
+const wsStore = useWebSocketStore();
+
+// 连接状态 - 直接使用 store 中的响应式状态
+const connectionStatus = computed(() => wsStore.connectionStatus);
+
+// 监听连接状态变化
+watch(
+  connectionStatus,
+  (connected) => {
+    isConnected.value = connected;
+  },
+  { immediate: true },
+);
+
+onMounted(async () => {
+  if (!terminalRef.value) return;
+
+  // 创建终端实例
+  terminal = new Terminal({
+    fontSize: 14,
+    fontFamily: 'Consolas, "Courier New", monospace',
+    cursorBlink: true,
+    cursorStyle: 'block',
+    scrollback: 10000, // 保留更多历史记录
+    theme: {
+      background: '#1e1e1e',
+      foreground: '#d4d4d4',
+      cursor: '#aeafad',
+      selection: '#3a3d41',
+      black: '#000000',
+      red: '#cd3131',
+      green: '#0dbc79',
+      yellow: '#e5e510',
+      blue: '#2472c8',
+      magenta: '#bc3fbc',
+      cyan: '#11a8cd',
+      white: '#e5e5e5',
+      brightBlack: '#666666',
+      brightRed: '#f14c4c',
+      brightGreen: '#23d18b',
+      brightYellow: '#f5f543',
+      brightBlue: '#3b8eea',
+      brightMagenta: '#d670d6',
+      brightCyan: '#29b8db',
+      brightWhite: '#e5e5e5',
+    },
+  });
+
+  // 添加插件
+  fitAddon = new FitAddon();
+  terminal.loadAddon(fitAddon);
+  terminal.loadAddon(new WebLinksAddon());
+  searchAddon = new SearchAddon();
+  terminal.loadAddon(searchAddon);
+
+  // 打开终端
+  terminal.open(terminalRef.value);
+
+  // 自适应大小
+  fitAddon.fit();
+
+  // 监听窗口大小变化
+  const resizeObserver = new ResizeObserver(() => {
+    fitAddon?.fit();
+  });
+  resizeObserver.observe(terminalRef.value);
+
+  // 监听滚动事件，更新自动滚动状态
+  terminal.onScroll(() => {
+    if (!terminal) return;
+    const viewportY = terminal.buffer.active.viewportY;
+    const baseY = terminal.buffer.active.baseY;
+    // 如果用户手动滚动到底部，自动开启自动滚动
+    if (viewportY === baseY) {
+      autoScroll.value = true;
+    } else {
+      autoScroll.value = false;
+    }
+  });
+
+  // 清除 terminal 内容，确保从干净状态开始
+  terminal.clear();
+  totalLines.value = 0;
+  hasOnlyWaitingMessage = true;
+
+  // 显示等待提示
+  terminal.writeln('\x1b[90m' + $t('deploy.packageDeployManagement.projectPackage.logViewer.waitingForData') + '\x1b[0m');
+
+  // 订阅 WebSocket 消息
+  try {
+    unsubscribe = await wsStore.subscribe(
+      props.subscriptionId,
+      handleMessage,
+    );
+    isConnected.value = wsStore.isConnected();
+  } catch (error) {
+    console.error('订阅 WebSocket 消息失败:', error);
+  }
+
+  onBeforeUnmount(() => {
+    resizeObserver.disconnect();
+  });
+});
+
+onBeforeUnmount(() => {
+  if (unsubscribe) {
+    unsubscribe();
+    unsubscribe = null;
+  }
+  terminal?.dispose();
+});
+
+function handleMessage(message: WebSocketMessage) {
+  if (!terminal) return;
+
+  if (message.commandType === 'log') {
+    const content = message.data?.content || '';
+    const runningTime = message.data?.runningTime || 0;
+
+    // 如果之前只有等待提示，清除它
+    if (hasOnlyWaitingMessage) {
+      terminal.clear();
+      hasOnlyWaitingMessage = false;
+      totalLines.value = 0; // 重置计数器
+    }
+
+    // 写入日志内容
+    terminal.writeln(content);
+    // 只统计 WebSocket 下发的实际日志行数（每收到一条日志消息，增加一行）
+    totalLines.value++;
+
+    // 自动滚动到底部
+    if (autoScroll.value) {
+      terminal.scrollToBottom();
+    }
+  } else if (message.commandType === 'event') {
+    const eventType = message.commandId;
+    const data = message.data || {};
+
+    // 根据事件类型显示不同颜色
+    if (eventType === 1 || eventType === 3) {
+      // 成功事件（发布成功、构建成功）
+      terminal.writeln(`\x1b[32m✓ ${data.status || '成功'}\x1b[0m`);
+    } else if (eventType === 2 || eventType === 4) {
+      // 失败事件（发布失败、构建失败）
+      terminal.writeln(`\x1b[31m✗ ${data.status || '失败'}: ${data.error || ''}\x1b[0m`);
+    }
+    // 事件消息也计入日志行数
+    totalLines.value++;
+
+    // 自动滚动到底部
+    if (autoScroll.value) {
+      terminal.scrollToBottom();
+    }
+  }
+}
+
+function handleClose() {
+  emit('close');
+}
+
+function clearLog() {
+  if (terminal) {
+    terminal.clear();
+    totalLines.value = 0;
+    hasOnlyWaitingMessage = true;
+    // 重新显示等待提示
+    terminal.writeln('\x1b[90m' + $t('deploy.packageDeployManagement.projectPackage.logViewer.waitingForData') + '\x1b[0m');
+  }
+}
+
+function toggleAutoScroll(checked: boolean) {
+  autoScroll.value = checked;
+  if (checked && terminal) {
+    terminal.scrollToBottom();
+  }
+}
+
+function toggleSearch() {
+  showSearch.value = !showSearch.value;
+  if (!showSearch.value) {
+    searchKeyword.value = '';
+    searchResultCount.value = 0;
+    currentSearchIndex.value = 0;
+    if (searchAddon) {
+      searchAddon.clearDecorations();
+    }
+  } else {
+    // 聚焦搜索输入框
+    nextTick(() => {
+      searchInputRef.value?.focus();
+    });
+  }
+}
+
+function handleSearch() {
+  if (!searchAddon || !searchKeyword.value.trim()) {
+    searchResultCount.value = 0;
+    currentSearchIndex.value = 0;
+    return;
+  }
+
+  // 执行搜索
+  const results = searchAddon.findNext(searchKeyword.value, {
+    regex: false,
+    wholeWord: false,
+    caseSensitive: false,
+  });
+
+  // 统计搜索结果
+  // 注意：xterm.js 的 SearchAddon 不直接提供总数，我们需要通过其他方式统计
+  // 这里简化处理，只显示当前匹配
+  if (results) {
+    currentSearchIndex.value = currentSearchIndex.value + 1;
+  } else {
+    currentSearchIndex.value = 0;
+  }
+}
+
+function handleSearchKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter') {
+    if (event.shiftKey) {
+      searchPrev();
+    } else {
+      searchNext();
+    }
+  } else if (event.key === 'Escape') {
+    toggleSearch();
+  }
+}
+
+function searchNext() {
+  if (!searchAddon || !searchKeyword.value.trim()) return;
+  searchAddon.findNext(searchKeyword.value, {
+    regex: false,
+    wholeWord: false,
+    caseSensitive: false,
+  });
+}
+
+function searchPrev() {
+  if (!searchAddon || !searchKeyword.value.trim()) return;
+  searchAddon.findPrevious(searchKeyword.value, {
+    regex: false,
+    wholeWord: false,
+    caseSensitive: false,
+  });
+}
+
+// 监听搜索关键词变化
+watch(searchKeyword, () => {
+  if (!searchKeyword.value.trim()) {
+    searchResultCount.value = 0;
+    currentSearchIndex.value = 0;
+    if (searchAddon) {
+      searchAddon.clearDecorations();
+    }
+  } else {
+    handleSearch();
+  }
+});
+</script>
+
+<template>
+  <div class="log-viewer">
+    <!-- 头部 -->
+    <div class="log-viewer-header">
+      <div class="log-viewer-header-left">
+        <span class="log-viewer-title">{{ title }}</span>
+        <div class="log-viewer-status">
+          <span
+            class="status-dot"
+            :class="{ connected: isConnected, disconnected: !isConnected }"
+          />
+          <span class="status-text">
+            {{ isConnected ? $t('deploy.packageDeployManagement.projectPackage.logViewer.connected') : $t('deploy.packageDeployManagement.projectPackage.logViewer.disconnected') }}
+          </span>
+        </div>
+        <span class="log-viewer-lines">
+          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.totalLines') }}: {{ totalLines }}
+        </span>
+      </div>
+      <div class="log-viewer-header-right">
+        <Button
+          size="small"
+          @click="toggleSearch"
+        >
+          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.search') }}
+        </Button>
+        <Button
+          size="small"
+          @click="clearLog"
+        >
+          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.clearLog') }}
+        </Button>
+        <div class="auto-scroll-switch">
+          <span class="switch-label">{{ $t('deploy.packageDeployManagement.projectPackage.logViewer.autoScroll') }}</span>
+          <Switch
+            v-model:checked="autoScroll"
+            size="small"
+            @change="toggleAutoScroll"
+          />
+        </div>
+        <button
+          class="log-viewer-close"
+          @click="handleClose"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+
+    <!-- 搜索栏 -->
+    <div
+      v-if="showSearch"
+      class="log-viewer-search"
+    >
+      <Input
+        ref="searchInputRef"
+        v-model:value="searchKeyword"
+        :placeholder="$t('deploy.packageDeployManagement.projectPackage.logViewer.searchPlaceholder')"
+        class="search-input"
+        @keydown="handleSearchKeydown"
+      />
+      <div class="search-actions">
+        <Button
+          size="small"
+          :disabled="!searchKeyword.trim()"
+          @click="searchPrev"
+        >
+          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.searchPrev') }}
+        </Button>
+        <Button
+          size="small"
+          :disabled="!searchKeyword.trim()"
+          @click="searchNext"
+        >
+          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.searchNext') }}
+        </Button>
+        <Button
+          size="small"
+          @click="toggleSearch"
+        >
+          关闭
+        </Button>
+      </div>
+    </div>
+
+    <!-- 终端 -->
+    <div
+      ref="terminalRef"
+      class="log-viewer-terminal"
+    />
+  </div>
+</template>
+
+<style scoped>
+.log-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.log-viewer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #2d2d2d;
+  border-bottom: 1px solid #3a3d41;
+  flex-shrink: 0;
+}
+
+.log-viewer-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.log-viewer-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #d4d4d4;
+}
+
+.log-viewer-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-dot.connected {
+  background: #0dbc79;
+  box-shadow: 0 0 4px rgba(13, 188, 121, 0.5);
+}
+
+.status-dot.disconnected {
+  background: #cd3131;
+}
+
+.status-text {
+  font-size: 12px;
+  color: #d4d4d4;
+}
+
+.log-viewer-lines {
+  font-size: 12px;
+  color: #858585;
+}
+
+.log-viewer-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auto-scroll-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switch-label {
+  font-size: 12px;
+  color: #d4d4d4;
+}
+
+.log-viewer-close {
+  background: none;
+  border: none;
+  color: #d4d4d4;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+  border-radius: 4px;
+}
+
+.log-viewer-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.log-viewer-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #252526;
+  border-bottom: 1px solid #3a3d41;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.log-viewer-terminal {
+  flex: 1;
+  padding: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* xterm.js 样式覆盖 */
+:deep(.xterm) {
+  height: 100%;
+}
+
+:deep(.xterm-viewport) {
+  background: #1e1e1e !important;
+}
+
+:deep(.xterm-screen) {
+  background: #1e1e1e !important;
+}
+</style>
