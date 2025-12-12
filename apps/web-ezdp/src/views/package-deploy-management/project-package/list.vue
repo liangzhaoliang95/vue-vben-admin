@@ -1,12 +1,7 @@
 <script lang="ts" setup>
-import type {
-  OnActionClickParams,
-  VxeTableGridOptions,
-} from '#/adapter/vxe-table';
-
 import {
   computed,
-  nextTick,
+  h,
   onActivated,
   ref,
   watch,
@@ -15,9 +10,8 @@ import {
 import { Page } from '@vben/common-ui';
 import { useBusinessStore } from '@vben/stores';
 
-import { Button, message, Modal, Select } from 'ant-design-vue';
+import { Badge, Button, Card, Collapse, CollapsePanel, Empty, message, Modal, Select, Space, Spin, Tag } from 'ant-design-vue';
 
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
 import {
   getBuildTaskList,
@@ -28,10 +22,13 @@ import LogViewer from '#/components/log-viewer/index.vue';
 import { useWebSocketStore } from '#/store/websocket';
 import { $t } from '#/locales';
 
-import { useColumns, useGridFormSchema } from './data';
-
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
+
+// 数据和加载状态
+const versionList = ref<any[]>([]);
+const loading = ref(false);
+const activeKeys = ref<string[]>([]); // 展开的版本面板
 
 // 发布环境列表
 const deployEnvironments = ref<any[]>([]);
@@ -42,18 +39,16 @@ const showLogViewer = ref(false);
 const logViewerSubscriptionId = ref<string>('');
 const logViewerTitle = ref('');
 
-// 页面初始化状态
-const isInitialized = ref(false);
-
-// 上一次的业务线ID，用于判断是否真正变化
-let lastBusinessLineId: number | undefined;
+// 筛选条件
+const selectedBusinessLineId = ref<number | undefined>();
+const selectedBranchId = ref<string | undefined>();
 
 // 所有分支数据（按业务线分组）
 const allBranchesMap = ref<Map<number, any[]>>(new Map());
 
 // 当前业务线的分支选项
 const currentBranchOptions = computed(() => {
-  const businessLineId = lastBusinessLineId;
+  const businessLineId = selectedBusinessLineId.value;
   if (!businessLineId) return [];
 
   const branches = allBranchesMap.value.get(businessLineId) || [];
@@ -62,6 +57,17 @@ const currentBranchOptions = computed(() => {
     value: item.id,
   }));
 });
+
+// 业务线选项
+const businessLineOptions = computed(() => {
+  return businessStore.businessLines.map((item) => ({
+    label: item.businessLine.name,
+    value: item.businessLine.id,
+  }));
+});
+
+// 是否是超级管理员
+const isSuperAdmin = computed(() => businessStore.currentRole?.isSuper === true);
 
 // 加载发布环境列表
 async function loadDeployEnvironments() {
@@ -91,7 +97,6 @@ const environmentOptions = computed(() => {
 // 加载所有业务线的分支数据
 async function loadAllBranches() {
   const businessLines = businessStore.businessLines;
-  console.log('开始加载所有业务线的分支，业务线列表:', businessLines);
 
   for (const bl of businessLines) {
     const businessLineId = bl.businessLine.id;
@@ -101,306 +106,87 @@ async function loadAllBranches() {
         pageSize: 1000,
         businessLineId,
       });
-      console.log(`业务线 ${businessLineId} 的分支数据:`, res.items);
       allBranchesMap.value.set(businessLineId, res.items || []);
     } catch (error) {
       console.error(`加载业务线 ${businessLineId} 的分支失败:`, error);
     }
   }
-
-  console.log('所有分支加载完成，allBranchesMap:', allBranchesMap.value);
 }
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
-    submitOnChange: false, // 关闭自动提交，手动控制查询时机
-    // 监听表单值变化
-    handleValuesChange: async (values, allValues) => {
-      console.log('表单值变化:', values, 'allValues:', allValues);
+// 加载版本列表
+async function loadVersionList() {
+  if (!selectedBranchId.value) {
+    versionList.value = [];
+    return;
+  }
 
-      // 当业务线变化时，自动加载分支并选中第一个
-      if (values.businessLineId !== undefined) {
-        const businessLineId = values.businessLineId;
+  loading.value = true;
+  try {
+    const queryParams: any = {
+      pageIndex: 1,
+      pageSize: 1000,
+      branchId: selectedBranchId.value,
+    };
 
-        // 只在业务线真正变化时才执行
-        if (businessLineId === lastBusinessLineId) {
-          return;
-        }
-        lastBusinessLineId = businessLineId;
+    // 超级管理员可以传业务线ID
+    if (isSuperAdmin.value && selectedBusinessLineId.value) {
+      queryParams.businessLineId = selectedBusinessLineId.value;
+    }
 
-        if (businessLineId) {
-          // 从缓存中获取分支数据
-          const branches = allBranchesMap.value.get(businessLineId) || [];
-          console.log('从缓存获取分支:', branches);
+    const res = await getBuildTaskList(queryParams);
+    versionList.value = res.items || [];
+  } catch (error) {
+    console.error('加载版本列表失败:', error);
+    message.error('加载版本列表失败');
+  } finally {
+    loading.value = false;
+  }
+}
 
-          // 转换为 Select 组件需要的格式
-          const branchOptions = branches.map((item: any) => ({
-            label: item.name,
-            value: item.id,
-          }));
+// 业务线变化时，更新分支选项
+watch(selectedBusinessLineId, async (newId) => {
+  if (newId) {
+    const branches = allBranchesMap.value.get(newId) || [];
+    if (branches.length > 0) {
+      selectedBranchId.value = branches[0].id;
+    } else {
+      selectedBranchId.value = undefined;
+    }
+  } else {
+    selectedBranchId.value = undefined;
+  }
+});
 
-          console.log('转换后的选项:', branchOptions);
-
-          // 获取当前 schema 中 branchId 的配置
-          const currentSchema = gridApi.formApi.state?.schema || [];
-          const branchSchema = currentSchema.find((s: any) => s.fieldName === 'branchId');
-
-          // 使用 updateSchema 更新分支字段
-          await gridApi.formApi.updateSchema([
-            {
-              fieldName: 'branchId',
-              componentProps: {
-                ...(branchSchema?.componentProps || {}),
-                options: branchOptions,
-              },
-            },
-          ]);
-
-          const updatedBranchSchema = gridApi.formApi.state?.schema?.find((s: any) => s.fieldName === 'branchId');
-          console.log('updateSchema 后，检查 schema:', updatedBranchSchema);
-          console.log('updateSchema 后，componentProps.options:', JSON.stringify(updatedBranchSchema?.componentProps?.options));
-
-          await nextTick();
-
-          // 自动选中第一个分支
-          if (branches.length > 0) {
-            console.log('自动选中分支ID:', branches[0].id);
-            await gridApi.formApi.setFieldValue('branchId', branches[0].id);
-
-            // 选中分支后触发查询
-            await nextTick();
-            gridApi.query();
-          } else {
-            console.log('没有分支数据，清空选择');
-            await gridApi.formApi.setFieldValue('branchId', undefined);
-          }
-        } else {
-          // 业务线为空时清空分支选项和值
-          await gridApi.formApi.updateSchema([
-            {
-              fieldName: 'branchId',
-              componentProps: {
-                options: [],
-              },
-            },
-          ]);
-
-          await nextTick();
-          await gridApi.formApi.setFieldValue('branchId', undefined);
-        }
-      }
-
-      // 当分支变化时，触发查询
-      if (values.branchId !== undefined && isInitialized.value) {
-        console.log('分支变化，触发查询');
-        await nextTick();
-        gridApi.query();
-      }
-    },
-  },
-  gridOptions: {
-    columns: useColumns(onActionClick),
-    height: 'auto',
-    keepSource: true,
-    treeConfig: {
-      children: 'children', // 指定子节点字段
-      indent: 20, // 树节点缩进距离
-      showIcon: true, // 显示树节点图标
-      expandAll: false, // 默认不展开所有节点
-      trigger: 'row', // 触发方式：点击整行都可以展开/折叠
-    },
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }, formValues) => {
-          // 如果还未初始化完成，不执行查询
-          if (!isInitialized.value) {
-            return {
-              items: [],
-              total: 0,
-            };
-          }
-
-          const isSuperAdmin = businessStore.currentRole?.isSuper === true;
-          const queryParams: any = {
-            page: page.currentPage,
-            pageSize: page.pageSize,
-            ...formValues,
-          };
-
-          // 业务线筛选逻辑
-          if (!isSuperAdmin) {
-            delete queryParams.businessLineId;
-          }
-
-          // 转换分页参数
-          const buildTaskParams = {
-            pageIndex: queryParams.page || 1,
-            pageSize: queryParams.pageSize || 10,
-            projectConfigId: queryParams.projectConfigId,
-            branchId: queryParams.branchId,
-            businessLineId: queryParams.businessLineId,
-          };
-
-          const res = await getBuildTaskList(buildTaskParams);
-          // 处理树形数据，为每行添加唯一ID
-          const treeItems = (res.items || []).map((versionGroup) => {
-            // 为父级添加唯一ID
-            const parentId = `version-${versionGroup.version}-${versionGroup.buildTime}`;
-            return {
-              ...versionGroup,
-              id: parentId,
-              // 处理子级，为每个子项添加唯一ID
-              children: (versionGroup.children || []).map((child, index) => ({
-                ...child,
-                id: `${parentId}-child-${index}`,
-              })),
-            };
-          });
-          return {
-            items: treeItems,
-            total: res.total || 0,
-          };
-        },
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-    },
-    toolbarConfig: {
-      custom: true,
-      export: false,
-      refresh: true,
-      search: true,
-      zoom: true,
-    },
-  } as VxeTableGridOptions<any>,
+// 分支变化时，加载版本列表
+watch(selectedBranchId, async () => {
+  await loadVersionList();
 });
 
 // 路由激活时刷新数据
 onActivated(async () => {
-  // 重置初始化状态
-  isInitialized.value = false;
-
-  // 1. 先加载发布环境数据
   await loadDeployEnvironments();
-
-  // 2. 加载所有业务线的分支数据
   await loadAllBranches();
 
-  // 3. 等待下一个tick确保Grid已挂载
-  await nextTick();
-
-  // 4. 设置默认表单值
-  await setDefaultFormValues();
-
-  // 5. 标记初始化完成，并触发查询
-  isInitialized.value = true;
-
-  // 6. 等待状态更新后触发查询
-  await nextTick();
-  gridApi.query();
-});
-
-// 设置默认表单值（不触发查询）
-async function setDefaultFormValues() {
-  const isSuperAdmin = businessStore.currentRole?.isSuper === true;
-
-  // 获取默认业务线ID
-  let defaultBusinessLineId: number | undefined;
-
-  if (isSuperAdmin) {
-    // 超级管理员：使用第一个业务线
+  // 设置默认业务线和分支
+  if (isSuperAdmin.value) {
     const businessLines = businessStore.businessLines;
-    if (businessLines.length > 0) {
-      defaultBusinessLineId = businessLines[0].businessLine.id;
+    if (businessLines && businessLines.length > 0) {
+      selectedBusinessLineId.value = businessLines[0]?.businessLine.id;
     }
   } else {
-    // 非超级管理员：使用当前业务线
-    defaultBusinessLineId = businessStore.currentBusinessLineId;
+    selectedBusinessLineId.value = businessStore.currentBusinessLineId ?? undefined;
   }
+});
 
-  // 更新 lastBusinessLineId
-  lastBusinessLineId = defaultBusinessLineId;
-
-  // 如果有业务线ID，设置默认分支
-  if (defaultBusinessLineId) {
-    // 从缓存中获取分支数据
-    const branches = allBranchesMap.value.get(defaultBusinessLineId) || [];
-    console.log('初始化 - 从缓存获取分支:', branches);
-
-    // 转换为 Select 组件需要的格式
-    const branchOptions = branches.map((item: any) => ({
-      label: item.name,
-      value: item.id,
-    }));
-
-    // 获取当前 schema 中 branchId 的配置
-    const currentSchema = gridApi.formApi.state?.schema || [];
-    const branchSchema = currentSchema.find((s: any) => s.fieldName === 'branchId');
-
-    // 更新分支下拉框选项
-    await gridApi.formApi.updateSchema([
-      {
-        fieldName: 'branchId',
-        componentProps: {
-          ...(branchSchema?.componentProps || {}),
-          options: branchOptions,
-        },
-      },
-    ]);
-
-    const updatedBranchSchema = gridApi.formApi.state?.schema?.find((s: any) => s.fieldName === 'branchId');
-    console.log('初始化 - updateSchema 后，检查 schema:', updatedBranchSchema);
-    console.log('初始化 - componentProps.options:', updatedBranchSchema?.componentProps?.options);
-
-    const firstBranchId = branches.length > 0 ? branches[0].id : undefined;
-
-    // 构建表单默认值
-    const defaultValues: any = {
-      branchId: firstBranchId,
-    };
-
-    // 如果是超级管理员，也设置业务线
-    if (isSuperAdmin) {
-      defaultValues.businessLineId = defaultBusinessLineId;
-    }
-
-    // 设置表单字段值
-    console.log('初始化 - 即将设置表单值:', defaultValues);
-    await gridApi.formApi.setValues(defaultValues);
-    console.log('初始化 - 表单值设置完成');
-  }
-}
-
-// 监听业务线ID变化,自动刷新数据
+// 监听业务线变化
 watch(
   () => businessStore.currentBusinessLineId,
-  async (newBusinessLineId, oldBusinessLineId) => {
-    // 如果业务线没有真正变化，不执行
-    if (newBusinessLineId === oldBusinessLineId) {
-      return;
+  async (newBusinessLineId) => {
+    if (!isSuperAdmin.value) {
+      selectedBusinessLineId.value = newBusinessLineId;
     }
-    
-    isInitialized.value = false;
-    await loadDeployEnvironments();
-    await loadAllBranches();
-    await nextTick();
-    await setDefaultFormValues();
-    isInitialized.value = true;
-    await nextTick();
-    gridApi.query();
   },
-);
-
-function onActionClick(e: OnActionClickParams<any>) {
-  switch (e.code) {
-    case 'deploy': {
-      onDeploy(e.row);
-      break;
-    }
-  }
-}
+)
 
 // 打开实时日志
 function openLogViewer(taskType: 1 | 2) {
@@ -445,7 +231,88 @@ function confirm(content: string, title: string) {
   });
 }
 
-async function onDeploy(row: any) {
+// 格式化时间
+function formatTime(timestamp: number) {
+  if (!timestamp) return '-';
+  const date = new Date(timestamp);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+// 获取项目类型名称
+function getProjectTypeName(type: string) {
+  const typeMap: Record<string, string> = {
+    backend: '服务端',
+    frontend: '前端',
+    submodule: '子模块',
+  };
+  return typeMap[type] || type || '-';
+}
+
+// 获取状态标签配置
+function getStatusConfig(status: string) {
+  const statusConfig: Record<string, { color: string; text: string }> = {
+    pending: { color: 'default', text: $t('deploy.packageDeployManagement.projectPackage.status.pending') },
+    running: { color: 'processing', text: $t('deploy.packageDeployManagement.projectPackage.status.running') },
+    success: { color: 'success', text: $t('deploy.packageDeployManagement.projectPackage.status.success') },
+    failed: { color: 'error', text: $t('deploy.packageDeployManagement.projectPackage.status.failed') },
+  };
+  return statusConfig[status] || statusConfig.pending;
+}
+
+// 刷新列表
+async function handleRefresh() {
+  await loadVersionList();
+  message.success('刷新成功');
+}
+
+// 开始构建
+async function handleBuild() {
+  if (!selectedBranchId.value) {
+    message.warning('请先选择分支');
+    return;
+  }
+
+  try {
+    await confirm(
+      '确定要开始构建吗？构建过程可能需要几分钟时间。',
+      '开始构建',
+    );
+
+    const queryParams: any = {
+      branchId: selectedBranchId.value,
+    };
+
+    // 超级管理员可以传业务线ID
+    if (isSuperAdmin.value && selectedBusinessLineId.value) {
+      queryParams.businessLineId = selectedBusinessLineId.value;
+    }
+
+    await startBuildTask(queryParams);
+    message.success('构建任务已启动，请查看实时日志');
+
+    // 打开实时日志
+    openLogViewer(1);
+
+    // 延迟刷新列表
+    setTimeout(() => {
+      loadVersionList();
+    }, 2000);
+  } catch (error) {
+    if (error instanceof Error && error.message !== '已取消') {
+      console.error('启动构建失败:', error);
+      message.error('启动构建失败');
+    }
+  }
+}
+
+// 发布版本或项目
+async function onDeploy(row: any, isVersion: boolean = false) {
   if (!selectedEnvironmentId.value) {
     message.warning(
       $t('deploy.packageDeployManagement.projectPackage.selectEnvironmentFirst'),
@@ -459,22 +326,45 @@ async function onDeploy(row: any) {
   const environmentName = environment?.name || '';
 
   try {
+    let confirmMessage = '';
+    if (isVersion) {
+      // 父级: 发布整个版本的所有项目
+      const projectCount = row.children?.length || 0;
+      confirmMessage = `确定要将版本 ${row.version} 的所有项目（共 ${projectCount} 个）发布到【${environmentName}】环境吗？`;
+    } else {
+      // 子级: 只发布单个项目
+      confirmMessage = `确定要将项目【${row.projectName}】(版本 ${row.version}) 发布到【${environmentName}】环境吗？`;
+    }
+
     await confirm(
-      $t('deploy.packageDeployManagement.projectPackage.deployConfirm', [
-        environmentName,
-      ]),
+      confirmMessage,
       $t('deploy.packageDeployManagement.projectPackage.deploy'),
     );
 
-    // TODO: 实现发布API调用
-    // await deployPackage(row.id, selectedEnvironmentId.value);
+    if (isVersion) {
+      // TODO: 实现父级发布API调用
+      console.log('发布整个版本:', {
+        versionId: row.id,
+        version: row.version,
+        environmentId: selectedEnvironmentId.value,
+        projects: row.children,
+      });
+    } else {
+      // TODO: 实现子级发布API调用
+      console.log('发布单个项目:', {
+        projectId: row.id,
+        projectConfigId: row.projectConfigId,
+        projectName: row.projectName,
+        version: row.version,
+        environmentId: selectedEnvironmentId.value,
+      });
+    }
 
     message.success(
       $t('deploy.packageDeployManagement.projectPackage.deploySuccess'),
     );
-    gridApi.query();
+    await loadVersionList();
   } catch (error) {
-    // 用户取消或发布失败
     if (error instanceof Error && error.message !== '已取消') {
       console.error('发布失败:', error);
     }
@@ -484,25 +374,141 @@ async function onDeploy(row: any) {
 
 <template>
   <Page auto-content-height>
-    <Grid :table-title="$t('deploy.packageDeployManagement.projectPackage.title')">
-      <template #toolbar-tools>
+    <!-- 筛选条件区 -->
+    <Card class="mb-4">
+      <div class="flex items-center justify-between w-full gap-4">
+        <div class="flex items-center gap-4 flex-wrap">
+          <!-- 业务线筛选(仅超级管理员) -->
+          <div v-if="isSuperAdmin" class="flex items-center gap-2">
+            <span class="filter-label">{{ $t('system.businessLine.name') }}:</span>
+            <Select
+              v-model:value="selectedBusinessLineId"
+              :options="businessLineOptions"
+              :placeholder="$t('system.businessLine.name')"
+              class="w-48"
+            />
+          </div>
+
+          <!-- 分支筛选 -->
+          <div class="flex items-center gap-2">
+            <span class="filter-label">{{ $t('deploy.packageDeployManagement.projectPackage.branch') }}:</span>
+            <Select
+              v-model:value="selectedBranchId"
+              :options="currentBranchOptions"
+              :placeholder="$t('deploy.packageDeployManagement.projectPackage.branchPlaceholder')"
+              class="w-48"
+            />
+          </div>
+        </div>
+
+        <!-- 刷新按钮 -->
+        <Button type="primary" @click="handleRefresh" class="flex-shrink-0">
+          刷新
+        </Button>
+      </div>
+    </Card>
+
+    <!-- 工具栏 -->
+    <Card class="mb-4">
+      <div class="flex items-center justify-between w-full gap-4">
+        <!-- 发布环境选择 -->
         <div class="flex items-center gap-2">
-          <span>{{ $t('deploy.packageDeployManagement.projectPackage.deployEnvironment') }}:</span>
+          <span class="filter-label">{{ $t('deploy.packageDeployManagement.projectPackage.deployEnvironment') }}:</span>
           <Select
             v-model:value="selectedEnvironmentId"
             :options="environmentOptions"
             :placeholder="$t('deploy.packageDeployManagement.projectPackage.deployEnvironmentPlaceholder')"
             class="w-48"
           />
-          <Button
-            type="primary"
-            @click="openLogViewer(1)"
-          >
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex items-center gap-3 flex-shrink-0">
+          <Button type="primary" @click="handleBuild">
+            开始构建
+          </Button>
+          <Button @click="openLogViewer(1)">
             {{ $t('deploy.packageDeployManagement.projectPackage.realtimeLog') }}
           </Button>
         </div>
-      </template>
-    </Grid>
+      </div>
+    </Card>
+
+    <!-- 版本列表 -->
+    <Spin :spinning="loading">
+      <div v-if="versionList.length === 0" class="flex justify-center items-center py-20">
+        <Empty :description="$t('common.noData')" />
+      </div>
+
+      <Collapse
+        v-else
+        v-model:activeKey="activeKeys"
+        :bordered="false"
+        :expand-icon-position="'start'"
+        class="version-collapse"
+      >
+        <CollapsePanel
+          v-for="version in versionList"
+          :key="version.id"
+        >
+          <template #header>
+            <div class="flex items-center justify-between w-full pr-4">
+              <div class="flex items-center gap-4">
+                <Badge
+                  :count="version.children?.length || 0"
+                  :overflow-count="99"
+                  :number-style="{ backgroundColor: '#52c41a' }"
+                >
+                  <div class="version-title">
+                    {{ version.version }}
+                  </div>
+                </Badge>
+                <span class="version-time">
+                  {{ formatTime(version.buildTime) }}
+                </span>
+              </div>
+
+              <Button
+                type="primary"
+                size="small"
+                @click.stop="onDeploy(version, true)"
+              >
+                {{ $t('deploy.packageDeployManagement.projectPackage.deploy') }}
+              </Button>
+            </div>
+          </template>
+
+          <!-- 项目列表 -->
+          <div class="project-list">
+            <div
+              v-for="project in version.children"
+              :key="project.id"
+              class="project-item"
+            >
+              <div class="project-info">
+                <span class="project-name">{{ project.projectName || '-' }}</span>
+                <Tag color="blue" class="project-type-tag">
+                  {{ getProjectTypeName(project.projectType || '') }}
+                </Tag>
+                <span class="version-text">版本: {{ project.version || '-' }}</span>
+                <Tag :color="getStatusConfig(project.status || 'pending').color" class="status-tag">
+                  {{ getStatusConfig(project.status || 'pending').text }}
+                </Tag>
+              </div>
+
+              <Button
+                type="primary"
+                size="small"
+                @click="onDeploy(project, false)"
+              >
+                {{ $t('deploy.packageDeployManagement.projectPackage.deploy') }}
+              </Button>
+            </div>
+          </div>
+        </CollapsePanel>
+      </Collapse>
+    </Spin>
+
     <!-- 实时日志悬浮窗 -->
     <Teleport to="body">
       <div
@@ -530,7 +536,7 @@ async function onDeploy(row: any) {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: hsl(var(--overlay));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -542,9 +548,176 @@ async function onDeploy(row: any) {
   max-width: 1200px;
   height: 80%;
   max-height: 800px;
-  background: #1e1e1e;
-  border-radius: 8px;
+  background: hsl(var(--background-deep));
+  border-radius: var(--radius);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px hsl(0 0% 0% / 30%);
+}
+
+/* 版本折叠面板样式 */
+.version-collapse {
+  background: transparent;
+}
+
+/* 重置 Ant Design Collapse 的默认样式 */
+:deep(.ant-collapse) {
+  border: none;
+  background: transparent;
+}
+
+:deep(.ant-collapse > .ant-collapse-item) {
+  border: none;
+  margin-bottom: 16px;
+  background: hsl(var(--card));
+  border-radius: var(--radius) !important;
+  border: 1px solid hsl(var(--border));
+  overflow: hidden;
+  box-shadow: 0 1px 2px hsl(0 0% 0% / 3%);
+}
+
+:deep(.ant-collapse > .ant-collapse-item:last-child) {
+  margin-bottom: 0;
+}
+
+/* 修复：移除 Ant Design 的底部边框 */
+:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header) {
+  padding: 16px 20px;
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  border-radius: var(--radius) var(--radius) 0 0 !important;
+  border-bottom: 1px solid hsl(var(--border));
+  display: flex !important;
+  align-items: center !important;
+}
+
+:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header:hover) {
+  background: hsl(var(--accent));
+}
+
+/* 展开后的内容区域 */
+:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-content) {
+  border-top: none;
+  background: hsl(var(--accent-lighter));
+}
+
+:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box) {
+  padding: 0;
+}
+
+/* 展开图标 */
+:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-expand-icon) {
+  color: hsl(var(--muted-foreground)) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+}
+
+/* 确保展开图标容器垂直居中 */
+:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-arrow) {
+  display: inline-flex !important;
+  align-items: center !important;
+  align-self: center !important;
+}
+
+/* Header 内容区域也要垂直居中 */
+:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-header-text) {
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* 确保展开状态下的头部也有正确的圆角 */
+:deep(.ant-collapse > .ant-collapse-item.ant-collapse-item-active > .ant-collapse-header) {
+  border-radius: var(--radius) var(--radius) 0 0 !important;
+}
+
+/* 版本号标签 */
+.version-title {
+  font-size: 20px;
+  font-weight: 700;
+  padding: 8px 16px;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+  border-radius: calc(var(--radius) - 2px);
+  line-height: 1;
+}
+
+/* 版本时间 */
+.version-time {
+  font-size: 14px;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+}
+
+/* 项目列表样式 */
+.project-list {
+  padding: 8px;
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  background: hsl(var(--card));
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.project-item:hover {
+  border-color: hsl(var(--primary));
+  box-shadow: 0 2px 8px hsl(var(--primary) / 20%);
+  transform: translateY(-1px);
+}
+
+.project-item:last-child {
+  margin-bottom: 0;
+}
+
+.project-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.project-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: hsl(var(--primary));
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.project-type-tag {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.version-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.status-tag {
+  flex-shrink: 0;
+}
+
+/* 筛选标签样式 */
+.filter-label {
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+  white-space: nowrap;
 }
 </style>

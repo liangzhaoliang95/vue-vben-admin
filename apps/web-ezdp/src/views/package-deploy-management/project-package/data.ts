@@ -84,11 +84,12 @@ export function useColumns<T = any>(
       minWidth: 200,
       treeNode: true, // 设置为树节点列
       formatter: ({ row }) => {
-        // 如果是父级（版本组），显示版本号
-        if (row.children && row.children.length > 0) {
+        console.log('Rendering version column, row:', row);
+        // 如果有children字段（无论是否为空数组），说明是父级（版本组）
+        if (row.children !== undefined && Array.isArray(row.children)) {
           return row.version || '-';
         }
-        // 如果是子级（项目），显示项目名称
+        // 否则是子级（项目），显示项目名称
         return row.projectName || '-';
       },
     },
@@ -97,8 +98,8 @@ export function useColumns<T = any>(
       title: $t('deploy.packageDeployManagement.projectPackage.projectType'),
       minWidth: 120,
       formatter: ({ row }) => {
-        // 如果是父级，不显示
-        if (row.children && row.children.length > 0) {
+        // 如果有children字段，说明是父级，不显示
+        if (row.children !== undefined && Array.isArray(row.children)) {
           return '-';
         }
         // 如果是子级，显示项目类型
@@ -115,8 +116,8 @@ export function useColumns<T = any>(
       title: $t('deploy.packageDeployManagement.projectPackage.buildTime'),
       minWidth: 180,
       formatter: ({ row }) => {
-        // 如果是父级，显示构建时间
-        if (row.children && row.children.length > 0) {
+        // 如果有children字段，说明是父级，显示构建时间
+        if (row.children !== undefined && Array.isArray(row.children)) {
           if (!row.buildTime) return '-';
           const date = new Date(row.buildTime);
           return date.toLocaleString('zh-CN', {
@@ -137,8 +138,8 @@ export function useColumns<T = any>(
       minWidth: 120,
       slots: {
         default: ({ row }: any) => {
-          // 如果是父级，不显示状态
-          if (row.children && row.children.length > 0) {
+          // 如果有children字段，说明是父级，不显示状态
+          if (row.children !== undefined && Array.isArray(row.children)) {
             return '-';
           }
           // 如果是子级，显示状态
@@ -148,17 +149,25 @@ export function useColumns<T = any>(
     },
     {
       align: 'center',
-      cellRender: {
-        attrs: {
-          onClick: onActionClick,
-        },
-        name: 'CellOperation',
-        options: ['deploy'],
-      },
       field: 'operation',
       fixed: 'right',
       title: $t('common.action'),
       width: 120,
+      slots: {
+        default: ({ row }: any) => {
+          // 父级和子级都显示发布按钮
+          // 父级: 发布整个版本的所有项目
+          // 子级: 只发布单个项目
+          return h(
+            'a',
+            {
+              class: 'text-primary cursor-pointer hover:text-primary-hover',
+              onClick: () => onActionClick({ code: 'deploy', row }),
+            },
+            $t('deploy.packageDeployManagement.projectPackage.deploy'),
+          );
+        },
+      },
     },
   ];
 }

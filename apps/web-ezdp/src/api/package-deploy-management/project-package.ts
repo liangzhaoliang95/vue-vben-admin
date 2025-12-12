@@ -42,8 +42,8 @@ export namespace ProjectPackageApi {
   }
 
   export interface StartBuildTaskParams {
-    projectConfigId: string;
     branchId: string;
+    businessLineId?: number;
   }
 }
 
