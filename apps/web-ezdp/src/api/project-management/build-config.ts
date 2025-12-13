@@ -8,6 +8,7 @@ export namespace BuildConfigApi {
     buildContext: string;
     buildArgs?: string;
     imageName: string;
+    dockerSecretId?: string;
     createdAt: number;
     updatedAt: number;
   }

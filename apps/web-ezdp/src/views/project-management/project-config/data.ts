@@ -58,8 +58,12 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'projectId',
       label: $t('deploy.projectManagement.projectConfig.projectId'),
       formItemClass: 'col-span-12',
+      rules: z.number({
+        required_error: 'GitLab项目ID不能为空',
+      }).min(1, '项目ID必须大于0'),
       componentProps: {
         min: 1,
+        placeholder: '请输入GitLab项目ID（必填）',
         style: { width: '100%' },
       },
     },

@@ -22,9 +22,12 @@ export namespace ProjectPackageApi {
   }
 
   export interface VersionGroupItem {
+    id: string; // 版本ID
     version: string; // 版本号
+    status: 'building' | 'success' | 'failed'; // 构建状态
     buildTime: number; // 构建时间
-    businessLineId: number; // 业务线ID
+    businessLineId?: number; // 业务线ID
+    description?: string; // 版本描述
     children: BuildTask[]; // 子项目列表
   }
 

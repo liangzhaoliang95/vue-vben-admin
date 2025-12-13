@@ -143,9 +143,12 @@ async function loadVersionList() {
   }
 }
 
-// 业务线变化时，更新分支选项
+// 业务线变化时，更新分支选项并自动订阅该业务线的日志
 watch(selectedBusinessLineId, async (newId) => {
   if (newId) {
+    // 订阅新业务线的构建日志（自动取消旧订阅）
+    wsStore.subscribeBusinessLine(newId);
+
     const branches = allBranchesMap.value.get(newId) || [];
     if (branches.length > 0) {
       selectedBranchId.value = branches[0].id;
@@ -176,6 +179,12 @@ onActivated(async () => {
   } else {
     selectedBusinessLineId.value = businessStore.currentBusinessLineId ?? undefined;
   }
+
+  // 如果已经有选中的分支，手动触发加载版本列表
+  // 因为watch可能因为值没变化而不触发
+  if (selectedBranchId.value) {
+    await loadVersionList();
+  }
 });
 
 // 监听业务线变化
@@ -192,17 +201,17 @@ watch(
 function openLogViewer(taskType: 1 | 2) {
   // 生成唯一的订阅 ID
   const subscriptionId = `log-viewer-${taskType}-${Date.now()}`;
-  
+
   // 设置日志查看器参数
   logViewerSubscriptionId.value = subscriptionId;
-  
+
   // 设置标题
   logViewerTitle.value =
     taskType === 1
       ? $t('deploy.packageDeployManagement.projectPackage.buildLog')
       : $t('deploy.packageDeployManagement.projectPackage.deployLog');
 
-  // 显示日志查看器（组件内部会自动订阅）
+  // 显示日志查看器（业务线订阅已在 watch 中自动处理）
   showLogViewer.value = true;
 }
 
@@ -214,6 +223,7 @@ function closeLogViewer() {
     logViewerSubscriptionId.value = '';
   }
   showLogViewer.value = false;
+  // 注意：不取消业务线订阅，保持连接以便下次打开日志时能立即接收
 }
 
 function confirm(content: string, title: string) {
@@ -254,19 +264,40 @@ function getProjectTypeName(type: string) {
   return typeMap[type] || type || '-';
 }
 
-// 获取状态标签配置
+// 获取状态标签配置（项目构建任务状态）
 function getStatusConfig(status: string) {
   const statusConfig: Record<string, { color: string; text: string }> = {
     pending: { color: 'default', text: $t('deploy.packageDeployManagement.projectPackage.status.pending') },
+    building: { color: 'processing', text: $t('deploy.packageDeployManagement.projectPackage.status.building') },
     running: { color: 'processing', text: $t('deploy.packageDeployManagement.projectPackage.status.running') },
     success: { color: 'success', text: $t('deploy.packageDeployManagement.projectPackage.status.success') },
     failed: { color: 'error', text: $t('deploy.packageDeployManagement.projectPackage.status.failed') },
+    skipped: { color: 'warning', text: $t('deploy.packageDeployManagement.projectPackage.status.skipped') },
   };
   return statusConfig[status] || statusConfig.pending;
 }
 
+// 获取大版本状态标签配置
+function getVersionStatusConfig(status: string) {
+  const statusConfig: Record<string, { color: string; text: string }> = {
+    building: { color: 'processing', text: $t('deploy.packageDeployManagement.projectPackage.versionStatus.building') },
+    success: { color: 'success', text: $t('deploy.packageDeployManagement.projectPackage.versionStatus.success') },
+    failed: { color: 'error', text: $t('deploy.packageDeployManagement.projectPackage.versionStatus.failed') },
+  };
+  return statusConfig[status] || statusConfig.building;
+}
+
+// 判断版本是否可以发布（只有成功状态才能发布）
+function canDeploy(version: any) {
+  return version.status === 'success';
+}
+
 // 刷新列表
 async function handleRefresh() {
+  if (!selectedBranchId.value) {
+    message.warning('请先选择分支');
+    return;
+  }
   await loadVersionList();
   message.success('刷新成功');
 }
@@ -463,6 +494,9 @@ async function onDeploy(row: any, isVersion: boolean = false) {
                     {{ version.version }}
                   </div>
                 </Badge>
+                <Tag :color="getVersionStatusConfig(version.status || 'building').color" class="version-status-tag">
+                  {{ getVersionStatusConfig(version.status || 'building').text }}
+                </Tag>
                 <span class="version-time">
                   {{ formatTime(version.buildTime) }}
                 </span>
@@ -471,6 +505,7 @@ async function onDeploy(row: any, isVersion: boolean = false) {
               <Button
                 type="primary"
                 size="small"
+                :disabled="!canDeploy(version)"
                 @click.stop="onDeploy(version, true)"
               >
                 {{ $t('deploy.packageDeployManagement.projectPackage.deploy') }}
@@ -514,7 +549,6 @@ async function onDeploy(row: any, isVersion: boolean = false) {
       <div
         v-if="showLogViewer"
         class="log-viewer-overlay"
-        @click.self="closeLogViewer"
       >
         <div class="log-viewer-container">
           <LogViewer
@@ -712,6 +746,12 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
 .status-tag {
   flex-shrink: 0;
+}
+
+/* 版本状态标签 */
+.version-status-tag {
+  flex-shrink: 0;
+  font-weight: 500;
 }
 
 /* 筛选标签样式 */

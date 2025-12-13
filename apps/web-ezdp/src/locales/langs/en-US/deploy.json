@@ -118,7 +118,14 @@
       "status": {
         "label": "Status",
         "pending": "Pending",
+        "building": "Building",
         "running": "Running",
+        "success": "Success",
+        "failed": "Failed",
+        "skipped": "Skipped"
+      },
+      "versionStatus": {
+        "building": "Building",
         "success": "Success",
         "failed": "Failed"
       },

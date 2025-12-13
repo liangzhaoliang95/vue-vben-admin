@@ -39,18 +39,21 @@ interface WebSocketConnection {
 export const useWebSocketStore = defineStore('websocket', () => {
   // 全局唯一连接
   const connection = ref<WebSocketConnection | null>(null);
-  
+
   // 连接状态（独立的响应式状态，用于触发 UI 更新）
   const connectionStatus = ref(false);
-  
+
   // 订阅者：key 为订阅者 ID
   const subscriptions = ref<Map<string, Subscription>>(new Map());
-  
+
   // 正在连接标记，用于防止重复连接
   const isConnecting = ref(false);
-  
+
   // 全局初始化标记，防止重复初始化
   let isGlobalInitialized = false;
+
+  // 当前订阅的业务线ID
+  const currentBusinessLineId = ref<number | null>(null);
   
   const maxReconnectAttempts = 5;
   const reconnectDelay = 3000;
@@ -600,6 +603,86 @@ export const useWebSocketStore = defineStore('websocket', () => {
     });
   }
 
+  /**
+   * 发送消息到WebSocket
+   * @param message 消息数组 [commandType, commandId, data]
+   */
+  function send(message: any[]) {
+    const conn = connection.value;
+    if (!conn || !conn.ws || conn.ws.readyState !== WebSocket.OPEN) {
+      console.warn('WebSocket 未连接，无法发送消息');
+      return;
+    }
+
+    try {
+      const messageStr = JSON.stringify(message);
+      conn.ws.send(messageStr);
+      console.log('发送WebSocket消息:', message);
+    } catch (error) {
+      console.error('发送WebSocket消息失败:', error);
+    }
+  }
+
+  /**
+   * 订阅业务线日志（一个连接只能订阅一个业务线）
+   * 切换业务线时会自动取消旧订阅
+   */
+  async function subscribeBusinessLine(businessLineId: number) {
+    console.log(`[WebSocket] 订阅业务线: ${businessLineId}`);
+
+    // 如果已订阅相同业务线，直接返回
+    if (currentBusinessLineId.value === businessLineId) {
+      console.log(`[WebSocket] 已订阅该业务线，跳过: ${businessLineId}`);
+      return;
+    }
+
+    // 确保连接已建立
+    const conn = connection.value;
+    if (!conn || !conn.isConnected || !conn.ws || conn.ws.readyState !== WebSocket.OPEN) {
+      console.log(`[WebSocket] 连接未建立，先建立连接`);
+      await connect();
+    }
+
+    // 发送订阅消息（使用数组格式：["subscribe", 0, {businessLineId: 2}]）
+    const subscribeMsg = ['subscribe', 0, { businessLineId: businessLineId }];
+
+    const messageConn = connection.value;
+    if (messageConn && messageConn.ws && messageConn.ws.readyState === WebSocket.OPEN) {
+      const msgStr = JSON.stringify(subscribeMsg);
+      messageConn.ws.send(msgStr);
+      console.log('[WebSocket] 发送订阅消息:', subscribeMsg);
+    }
+
+    // 更新当前订阅的业务线ID
+    currentBusinessLineId.value = businessLineId;
+
+    console.log(`[WebSocket] 订阅业务线成功: ${businessLineId}`);
+  }
+
+  /**
+   * 取消订阅当前业务线
+   */
+  function unsubscribeBusinessLine() {
+    if (currentBusinessLineId.value === null) {
+      return;
+    }
+
+    console.log(`[WebSocket] 取消订阅业务线: ${currentBusinessLineId.value}`);
+
+    // 发送取消订阅消息（使用数组格式：["unsubscribe", 0, {businessLineId: 2}]）
+    const unsubscribeMsg = ['unsubscribe', 0, { businessLineId: currentBusinessLineId.value }];
+
+    const conn = connection.value;
+    if (conn && conn.ws && conn.ws.readyState === WebSocket.OPEN) {
+      const msgStr = JSON.stringify(unsubscribeMsg);
+      conn.ws.send(msgStr);
+      console.log('[WebSocket] 发送取消订阅消息:', unsubscribeMsg);
+    }
+
+    // 清除当前订阅
+    currentBusinessLineId.value = null;
+  }
+
   return {
     subscribe,
     unsubscribe,
@@ -608,6 +691,10 @@ export const useWebSocketStore = defineStore('websocket', () => {
     disconnectAll,
     isConnected,
     initGlobalWebSocket,
+    send,
+    subscribeBusinessLine,
+    unsubscribeBusinessLine,
+    currentBusinessLineId, // 暴露当前订阅的业务线ID
     connectionStatus, // 暴露响应式状态，供组件直接使用
   };
 });

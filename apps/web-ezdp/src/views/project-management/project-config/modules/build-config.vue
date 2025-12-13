@@ -1,12 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref } from 'vue';
 
-import { Button, Form, FormItem, Input, message } from 'ant-design-vue';
+import { Button, Form, FormItem, Input, message, Select } from 'ant-design-vue';
 
 import {
   createOrUpdateBuildConfig,
   getBuildConfigByProjectConfigId,
 } from '#/api/project-management/build-config';
+import { getDockerSecretList } from '#/api/deploy-tools/docker-secret';
 import { $t } from '#/locales';
 
 interface Props {
@@ -21,9 +22,11 @@ const formState = reactive({
   buildContext: '.', // 构建上下文路径
   buildArgs: '', // 构建参数（JSON格式）
   imageName: '', // 镜像名称
+  dockerSecretId: '', // Docker 仓库配置ID
 });
 
 const loading = ref(false);
+const dockerSecretList = ref<Array<{ id: string; name: string }>>([]);
 
 // 构建参数的 placeholder（使用计算属性避免引号冲突）
 const buildArgsPlaceholder = computed(
@@ -40,6 +43,7 @@ async function handleSave() {
       buildContext: formState.buildContext || undefined,
       buildArgs: formState.buildArgs || undefined,
       imageName: formState.imageName || undefined,
+      dockerSecretId: formState.dockerSecretId || undefined,
     });
     message.success($t('ui.successMessage.save'));
   } catch (error) {
@@ -60,6 +64,7 @@ async function loadConfig() {
       formState.buildContext = config.buildContext || '.';
       formState.buildArgs = config.buildArgs || '';
       formState.imageName = config.imageName || '';
+      formState.dockerSecretId = config.dockerSecretId || '';
     }
   } catch (error) {
     console.error('加载配置失败:', error);
@@ -68,9 +73,27 @@ async function loadConfig() {
   }
 }
 
+// 加载 Docker 仓库配置列表
+async function loadDockerSecretList() {
+  try {
+    const response = await getDockerSecretList({
+      page: 1,
+      pageSize: 100,
+      status: 1, // 只加载启用状态的配置
+    });
+    dockerSecretList.value = response.items.map((item: any) => ({
+      id: item.id,
+      name: item.name,
+    }));
+  } catch (error) {
+    console.error('加载 Docker 仓库配置失败:', error);
+  }
+}
+
 // 组件挂载时加载配置
 onMounted(() => {
   loadConfig();
+  loadDockerSecretList();
 });
 </script>
 
@@ -101,6 +124,22 @@ onMounted(() => {
           v-model:value="formState.imageName"
           placeholder="例如: myapp 或 registry.example.com/myapp"
         />
+      </FormItem>
+
+      <FormItem label="仓库配置" name="dockerSecretId">
+        <Select
+          v-model:value="formState.dockerSecretId"
+          placeholder="请选择 Docker 仓库配置（可选）"
+          allow-clear
+        >
+          <Select.Option
+            v-for="item in dockerSecretList"
+            :key="item.id"
+            :value="item.id"
+          >
+            {{ item.name }}
+          </Select.Option>
+        </Select>
       </FormItem>
 
       <FormItem label="构建参数" name="buildArgs">

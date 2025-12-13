@@ -115,8 +115,8 @@ async function handleConfirm() {
     submitData.businessLineId = values.businessLineId;
   }
 
-  // 项目ID可选
-  if (values.projectId) submitData.projectId = values.projectId;
+  // 项目ID必填
+  submitData.projectId = values.projectId;
 
   try {
     if (id.value) {
