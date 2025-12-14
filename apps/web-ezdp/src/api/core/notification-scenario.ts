@@ -29,7 +29,7 @@ export namespace NotificationScenarioApi {
   }
 
   /** 获取场景配置列表参数 */
-  export type GetListParams = Record<string, never>
+  export type GetListParams = Record<string, never>;
 
   /** 更新场景配置参数 */
   export interface UpdateParams {
