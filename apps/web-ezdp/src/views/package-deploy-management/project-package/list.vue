@@ -433,12 +433,12 @@ function handleWebSocketMessage(message: any) {
     const { eventType } = message.data;
 
     // 处理构建完成事件
-    if (eventType === 'buildCompleted') {
-      // 刷新版本列表
-      if (isComponentActive.value) {
-        loadVersionList();
-        message.success('构建已完成，版本列表已更新');
-      }
+    if (
+      eventType === 'buildCompleted' && // 刷新版本列表
+      isComponentActive.value
+    ) {
+      loadVersionList();
+      message.success('构建已完成，版本列表已更新');
     }
   }
 }
