@@ -434,7 +434,7 @@ function handleWebSocketMessage(message: any) {
 
     // 处理构建完成事件
     if (
-      eventType === 'buildCompleted' && // 刷新版本列表
+      eventType === 'build_completed' && // 刷新版本列表
       isComponentActive.value
     ) {
       loadVersionList();
