@@ -1,12 +1,10 @@
 <script lang="ts" setup>
 import type { NotificationItem } from '@vben/layouts';
 
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { AuthenticationLoginExpiredModal } from '@vben/common-ui';
-import { VBEN_DOC_URL, VBEN_GITHUB_URL } from '@vben/constants';
 import { useWatermark } from '@vben/hooks';
-import { BookOpenText, CircleHelp, SvgGithubIcon } from '@vben/icons';
 import {
   BasicLayout,
   LockScreen,
@@ -15,42 +13,16 @@ import {
 } from '@vben/layouts';
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
-import { openWindow } from '@vben/utils';
 
-import { $t } from '#/locales';
+import {
+  clearReadNotifications,
+  getNotificationList,
+  markAllAsRead,
+} from '#/api/core/notification';
 import { useAuthStore } from '#/store';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
-const notifications = ref<NotificationItem[]>([
-  {
-    avatar: 'https://avatar.vercel.sh/vercel.svg?text=VB',
-    date: '3小时前',
-    isRead: true,
-    message: '描述信息描述信息描述信息',
-    title: '收到了 14 份新周报',
-  },
-  {
-    avatar: 'https://avatar.vercel.sh/1',
-    date: '刚刚',
-    isRead: false,
-    message: '描述信息描述信息描述信息',
-    title: '朱偏右 回复了你',
-  },
-  {
-    avatar: 'https://avatar.vercel.sh/1',
-    date: '2024-01-01',
-    isRead: false,
-    message: '描述信息描述信息描述信息',
-    title: '曲丽丽 评论了你',
-  },
-  {
-    avatar: 'https://avatar.vercel.sh/satori',
-    date: '1天前',
-    isRead: false,
-    message: '描述信息描述信息描述信息',
-    title: '代办提醒',
-  },
-]);
+const notifications = ref<NotificationItem[]>([]);
 
 const userStore = useUserStore();
 const authStore = useAuthStore();
@@ -61,33 +33,34 @@ const showDot = computed(() =>
 );
 
 const menus = computed(() => [
-  {
-    handler: () => {
-      openWindow(VBEN_DOC_URL, {
-        target: '_blank',
-      });
-    },
-    icon: BookOpenText,
-    text: $t('ui.widgets.document'),
-  },
-  {
-    handler: () => {
-      openWindow(VBEN_GITHUB_URL, {
-        target: '_blank',
-      });
-    },
-    icon: SvgGithubIcon,
-    text: 'GitHub',
-  },
-  {
-    handler: () => {
-      openWindow(`${VBEN_GITHUB_URL}/issues`, {
-        target: '_blank',
-      });
-    },
-    icon: CircleHelp,
-    text: $t('ui.widgets.qa'),
-  },
+  // 隐藏文档、GitHub、问题&帮助
+  // {
+  //   handler: () => {
+  //     openWindow(VBEN_DOC_URL, {
+  //       target: '_blank',
+  //     });
+  //   },
+  //   icon: BookOpenText,
+  //   text: $t('ui.widgets.document'),
+  // },
+  // {
+  //   handler: () => {
+  //     openWindow(VBEN_GITHUB_URL, {
+  //       target: '_blank',
+  //     });
+  //   },
+  //   icon: SvgGithubIcon,
+  //   text: 'GitHub',
+  // },
+  // {
+  //   handler: () => {
+  //     openWindow(`${VBEN_GITHUB_URL}/issues`, {
+  //       target: '_blank',
+  //     });
+  //   },
+  //   icon: CircleHelp,
+  //   text: $t('ui.widgets.qa'),
+  // },
 ]);
 
 const avatar = computed(() => {
@@ -98,13 +71,66 @@ async function handleLogout() {
   await authStore.logout(false);
 }
 
-function handleNoticeClear() {
-  notifications.value = [];
+// 加载通知列表
+async function loadNotifications() {
+  try {
+    const res = await getNotificationList({
+      pageIndex: 1,
+      pageSize: 20,
+    });
+
+    // 转换为 NotificationItem 格式
+    notifications.value = res.items.map((item) => ({
+      avatar: preferences.app.defaultAvatar,
+      date: formatTime(item.createdAt),
+      isRead: item.isRead,
+      message: item.content,
+      title: item.title,
+    }));
+  } catch (error) {
+    console.error('加载通知失败:', error);
+  }
 }
 
-function handleMakeAll() {
-  notifications.value.forEach((item) => (item.isRead = true));
+// 格式化时间为相对时间
+function formatTime(timestamp: number) {
+  const now = Date.now();
+  const diff = now - timestamp;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) return `${days}天前`;
+  if (hours > 0) return `${hours}小时前`;
+  if (minutes > 0) return `${minutes}分钟前`;
+  return '刚刚';
 }
+
+// 清空通知
+async function handleNoticeClear() {
+  try {
+    await clearReadNotifications();
+    notifications.value = [];
+  } catch (error) {
+    console.error('清空通知失败:', error);
+  }
+}
+
+// 全部标记为已读
+async function handleMakeAll() {
+  try {
+    await markAllAsRead();
+    notifications.value.forEach((item) => (item.isRead = true));
+  } catch (error) {
+    console.error('标记已读失败:', error);
+  }
+}
+
+// 组件挂载时加载通知
+onMounted(() => {
+  loadNotifications();
+});
 watch(
   () => ({
     enable: preferences.app.watermark,
@@ -135,7 +161,7 @@ watch(
         :menus
         :text="userStore.userInfo?.realName"
         description=""
-        tag-text="Pro"
+        tag-text="VVVVIP"
         @logout="handleLogout"
       />
     </template>
