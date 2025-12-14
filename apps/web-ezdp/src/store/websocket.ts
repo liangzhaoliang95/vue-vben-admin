@@ -2,6 +2,7 @@
  * WebSocket 全局管理器 Store
  * 管理全局 WebSocket 连接，所有业务共用一个连接
  */
+
 import { ref } from 'vue';
 
 import { useAppConfig } from '@vben/hooks';

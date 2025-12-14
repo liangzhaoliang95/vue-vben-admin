@@ -26,32 +26,6 @@ const id = ref<string>();
 const loading = ref(false);
 
 const formSchema = computed(() => [
-  // 业务线字段：仅超级管理员可见和可编辑
-  ...(isSuperAdmin
-    ? [
-        {
-          component: 'ApiSelect',
-          componentProps: {
-            api: async () => {
-              const { getBusinessLineList } = await import(
-                '#/api/system/business-line'
-              );
-              const res = await getBusinessLineList({
-                page: 1,
-                pageSize: 1000,
-              });
-              return res.items || [];
-            },
-            fieldNames: { label: 'name', value: 'id' },
-            style: { width: '100%' },
-            placeholder: $t('system.businessLine.name'),
-          },
-          fieldName: 'businessLineId',
-          label: $t('system.businessLine.name'),
-          rules: 'required',
-        },
-      ]
-    : []),
   {
     component: 'Input',
     componentProps: {

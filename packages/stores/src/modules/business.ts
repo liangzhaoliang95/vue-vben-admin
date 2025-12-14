@@ -147,20 +147,20 @@ function toRouteNodes(nodes: MenuTreeNode[] | undefined) {
       delete route.meta.permissions;
     }
 
-    if (!route.meta?.title) {
-      delete route.meta?.title;
+    if (route.meta && !route.meta.title) {
+      delete route.meta.title;
     }
 
-    if (!route.meta?.order && route.meta?.order !== 0) {
-      delete route.meta?.order;
+    if (route.meta && !route.meta.order && route.meta.order !== 0) {
+      delete route.meta.order;
     }
 
     // 清理未定义的 meta 字段
-    if (!route.meta?.iframeSrc) {
-      delete route.meta?.iframeSrc;
+    if (route.meta && !route.meta.iframeSrc) {
+      delete route.meta.iframeSrc;
     }
-    if (!route.meta?.link) {
-      delete route.meta?.link;
+    if (route.meta && !route.meta.link) {
+      delete route.meta.link;
     }
 
     if (node.children?.length) {

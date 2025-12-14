@@ -10,29 +10,7 @@ import { $t } from '#/locales';
  * 表格搜索表单配置
  */
 export function useGridFormSchema(): VbenFormSchema[] {
-  const businessStore = useBusinessStore();
-  const isSuperAdmin = businessStore.currentRole?.isSuper === true;
-
   return [
-    {
-      // 业务线筛选:仅超级管理员可见
-      ifShow: () => isSuperAdmin,
-      component: 'ApiSelect',
-      componentProps: {
-        api: async () => {
-          const { getBusinessLineList } = await import(
-            '#/api/system/business-line'
-          );
-          const res = await getBusinessLineList({ page: 1, pageSize: 1000 });
-          return res.items || [];
-        },
-        fieldNames: { label: 'name', value: 'id' },
-        style: { width: '100%' },
-        placeholder: $t('system.businessLine.name'),
-      },
-      fieldName: 'businessLineId',
-      label: $t('system.businessLine.name'),
-    },
     {
       component: 'Input',
       fieldName: 'name',

@@ -41,6 +41,7 @@ let fitAddon: FitAddon | null = null;
 let searchAddon: null | SearchAddon = null;
 let unsubscribe: (() => void) | null = null;
 let hasOnlyWaitingMessage = true; // 标记是否只有等待提示
+let resizeObserver: null | ResizeObserver = null; // 提升到组件作用域
 
 // 状态
 const isConnected = ref(false);
@@ -113,7 +114,7 @@ onMounted(async () => {
   fitAddon.fit();
 
   // 监听窗口大小变化
-  const resizeObserver = new ResizeObserver(() => {
+  resizeObserver = new ResizeObserver(() => {
     fitAddon?.fit();
   });
   resizeObserver.observe(terminalRef.value);
@@ -159,18 +160,27 @@ onMounted(async () => {
   } catch (error) {
     console.error('订阅 WebSocket 消息失败:', error);
   }
-
-  onBeforeUnmount(() => {
-    resizeObserver.disconnect();
-  });
 });
 
+// 组件卸载时清理资源（放在组件顶层，不要放在onMounted内部）
 onBeforeUnmount(() => {
+  // 清理 ResizeObserver
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
+  }
+
+  // 清理 WebSocket 订阅
   if (unsubscribe) {
     unsubscribe();
     unsubscribe = null;
   }
-  terminal?.dispose();
+
+  // 清理 Terminal
+  if (terminal) {
+    terminal.dispose();
+    terminal = null;
+  }
 });
 
 // 渲染日志消息到终端

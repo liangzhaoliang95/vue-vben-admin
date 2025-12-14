@@ -40,6 +40,37 @@ async function bootstrap(namespace: string) {
 
   const app = createApp(App);
 
+  // 添加全局错误处理
+  app.config.errorHandler = (err, instance, info) => {
+    console.error('[全局错误捕获]', err);
+    console.error('[错误组件]', instance);
+    console.error('[错误信息]', info);
+  };
+
+  app.config.warnHandler = (msg, instance, trace) => {
+    console.warn('[Vue警告]', msg);
+    console.warn('[警告组件]', instance);
+    console.warn('[警告追踪]', trace);
+  };
+
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('[未处理的Promise拒绝]', event.reason);
+  });
+
+  window.addEventListener('error', (event) => {
+    console.error('[全局错误]', event.error);
+    console.error('[错误信息]', event.message);
+    console.error('[错误源]', event.filename);
+    console.error('[错误行号]', event.lineno);
+    console.error('[错误列号]', event.colno);
+    console.error('[完整事件]', event);
+
+    // 如果错误是null，可能是某个资源加载失败
+    if (event.error === null) {
+      console.error('[可能的资源加载错误]', event.target);
+    }
+  });
+
   // 注册v-loading指令
   registerLoadingDirective(app, {
     loading: 'loading', // 在这里可以自定义指令名称，也可以明确提供false表示不注册这个指令
