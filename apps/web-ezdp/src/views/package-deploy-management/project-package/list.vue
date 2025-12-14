@@ -426,6 +426,23 @@ function getVersionStatusConfig(status: string) {
   return statusConfig[status] || statusConfig.building;
 }
 
+// WebSocket 消息处理器
+function handleWebSocketMessage(message: any) {
+  // 只处理事件类型的消息
+  if (message.commandType === 'event' && message.commandId === 1) {
+    const { eventType } = message.data;
+
+    // 处理构建完成事件
+    if (eventType === 'buildCompleted') {
+      // 刷新版本列表
+      if (isComponentActive.value) {
+        loadVersionList();
+        message.success('构建已完成，版本列表已更新');
+      }
+    }
+  }
+}
+
 // 路由激活时初始化
 onActivated(async () => {
   // 标记组件为激活状态
@@ -433,6 +450,9 @@ onActivated(async () => {
 
   try {
     await init();
+
+    // 订阅 WebSocket 事件消息（用于接收构建完成等事件）
+    await wsStore.subscribe('build-event-listener', handleWebSocketMessage);
   } catch (error) {
     console.error('onActivated 初始化失败:', error);
   }
@@ -454,6 +474,9 @@ onDeactivated(() => {
       wsStore.unsubscribe(logViewerSubscriptionId.value);
       logViewerSubscriptionId.value = '';
     }
+
+    // 取消构建事件监听
+    wsStore.unsubscribe('build-event-listener');
 
     // 注意：不要调用 unsubscribeBusinessLine()
     // WebSocket 连接是全局共享的，其他页面可能还在使用

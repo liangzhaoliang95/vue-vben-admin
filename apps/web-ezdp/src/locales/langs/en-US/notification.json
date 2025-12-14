@@ -1,0 +1,36 @@
+{
+  "management": {
+    "title": "Notification Management"
+  },
+  "scenario": {
+    "title": "Scenario Configuration",
+    "name": "Scenario Name",
+    "description": "Description",
+    "scenarioType": "Scenario Type",
+    "channel": "Notification Channel",
+    "enabled": "Status",
+    "searchPlaceholder": "Search by scenario name",
+    "namePlaceholder": "Enter scenario name",
+    "descriptionPlaceholder": "Enter description",
+    "nameRequired": "Scenario name is required",
+    "channelRequired": "Please select a notification channel"
+  },
+  "channel": {
+    "title": "Channel Configuration",
+    "name": "Channel Name",
+    "type": "Channel Type",
+    "config": "Configuration",
+    "enabled": "Status",
+    "wecom": "WeCom",
+    "webhook": "Webhook URL",
+    "searchPlaceholder": "Search by channel name",
+    "namePlaceholder": "Enter channel name",
+    "webhookPlaceholder": "Enter WeCom robot webhook URL",
+    "nameRequired": "Channel name is required",
+    "webhookRequired": "Webhook URL is required",
+    "webhookInvalid": "Invalid webhook URL format",
+    "testChannel": "Test Channel",
+    "testSuccess": "Channel test successful",
+    "testFailed": "Channel test failed"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "management": {
+    "title": "通知管理"
+  },
+  "scenario": {
+    "title": "场景配置",
+    "name": "场景名称",
+    "description": "场景描述",
+    "scenarioType": "场景类型",
+    "channel": "通知渠道",
+    "enabled": "启用状态",
+    "searchPlaceholder": "请输入场景名称搜索",
+    "namePlaceholder": "请输入场景名称",
+    "descriptionPlaceholder": "请输入场景描述",
+    "nameRequired": "场景名称不能为空",
+    "channelRequired": "请选择通知渠道"
+  },
+  "channel": {
+    "title": "渠道配置",
+    "name": "渠道名称",
+    "type": "渠道类型",
+    "config": "配置信息",
+    "enabled": "启用状态",
+    "wecom": "企业微信",
+    "webhook": "Webhook地址",
+    "searchPlaceholder": "请输入渠道名称搜索",
+    "namePlaceholder": "请输入渠道名称",
+    "webhookPlaceholder": "请输入企业微信机器人Webhook地址",
+    "nameRequired": "渠道名称不能为空",
+    "webhookRequired": "Webhook地址不能为空",
+    "webhookInvalid": "Webhook地址格式不正确",
+    "testChannel": "测试渠道",
+    "testSuccess": "渠道测试成功",
+    "testFailed": "渠道测试失败"
+  }
+}
