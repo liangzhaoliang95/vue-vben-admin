@@ -6,7 +6,6 @@ import { useRouter } from 'vue-router';
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
-import { useWebSocketStore } from './websocket';
 
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
@@ -19,6 +18,8 @@ import {
   logoutApi,
 } from '#/api';
 import { $t } from '#/locales';
+
+import { useWebSocketStore } from './websocket';
 
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();

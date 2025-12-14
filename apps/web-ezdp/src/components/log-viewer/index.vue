@@ -1,18 +1,25 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import type { WebSocketMessage } from '#/store/websocket';
 
-import { Terminal } from 'xterm';
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from 'vue';
+
 import { FitAddon } from '@xterm/addon-fit';
-import { WebLinksAddon } from '@xterm/addon-web-links';
 import { SearchAddon } from '@xterm/addon-search';
+import { WebLinksAddon } from '@xterm/addon-web-links';
+import { Button, Input, Switch } from 'ant-design-vue';
+import { Terminal } from 'xterm';
+
+import { $t } from '#/locales';
+import { useWebSocketStore } from '#/store/websocket';
 
 import 'xterm/css/xterm.css';
-
-import { Button, Input, Switch } from 'ant-design-vue';
-
-import type { WebSocketMessage } from '#/store/websocket';
-import { useWebSocketStore } from '#/store/websocket';
-import { $t } from '#/locales';
 
 interface Props {
   subscriptionId: string;
@@ -29,9 +36,9 @@ const emit = defineEmits<{
 
 const terminalRef = ref<HTMLDivElement>();
 const searchInputRef = ref<InstanceType<typeof Input>>();
-let terminal: Terminal | null = null;
+let terminal: null | Terminal = null;
 let fitAddon: FitAddon | null = null;
-let searchAddon: SearchAddon | null = null;
+let searchAddon: null | SearchAddon = null;
 let unsubscribe: (() => void) | null = null;
 let hasOnlyWaitingMessage = true; // 标记是否只有等待提示
 
@@ -67,7 +74,7 @@ onMounted(async () => {
     fontFamily: 'Consolas, "Courier New", monospace',
     cursorBlink: true,
     cursorStyle: 'block',
-    scrollback: 10000, // 保留更多历史记录
+    scrollback: 10_000, // 保留更多历史记录
     theme: {
       background: '#1e1e1e',
       foreground: '#d4d4d4',
@@ -117,27 +124,37 @@ onMounted(async () => {
     const viewportY = terminal.buffer.active.viewportY;
     const baseY = terminal.buffer.active.baseY;
     // 如果用户手动滚动到底部，自动开启自动滚动
-    if (viewportY === baseY) {
-      autoScroll.value = true;
-    } else {
-      autoScroll.value = false;
-    }
+    autoScroll.value = viewportY === baseY;
   });
 
   // 清除 terminal 内容，确保从干净状态开始
   terminal.clear();
   totalLines.value = 0;
-  hasOnlyWaitingMessage = true;
 
-  // 显示等待提示
-  terminal.writeln('\x1b[90m' + $t('deploy.packageDeployManagement.projectPackage.logViewer.waitingForData') + '\x1b[0m');
+  // 加载缓存的历史日志
+  const cachedLogs = wsStore.getCachedLogs(wsStore.currentBusinessLineId);
+  if (cachedLogs && cachedLogs.length > 0) {
+    hasOnlyWaitingMessage = false;
+    cachedLogs.forEach((message) => {
+      renderLogMessage(message);
+    });
+    // 自动滚动到底部
+    if (autoScroll.value) {
+      terminal.scrollToBottom();
+    }
+  } else {
+    hasOnlyWaitingMessage = true;
+    // 显示等待提示
+    terminal.writeln(
+      `\u001B[90m${$t(
+        'deploy.packageDeployManagement.projectPackage.logViewer.waitingForData',
+      )}\u001B[0m`,
+    );
+  }
 
   // 订阅 WebSocket 消息
   try {
-    unsubscribe = await wsStore.subscribe(
-      props.subscriptionId,
-      handleMessage,
-    );
+    unsubscribe = await wsStore.subscribe(props.subscriptionId, handleMessage);
     isConnected.value = wsStore.isConnected();
   } catch (error) {
     console.error('订阅 WebSocket 消息失败:', error);
@@ -156,29 +173,17 @@ onBeforeUnmount(() => {
   terminal?.dispose();
 });
 
-function handleMessage(message: WebSocketMessage) {
+// 渲染日志消息到终端
+function renderLogMessage(message: WebSocketMessage) {
   if (!terminal) return;
 
   if (message.commandType === 'log') {
     const content = message.data?.content || '';
-    const runningTime = message.data?.runningTime || 0;
-
-    // 如果之前只有等待提示，清除它
-    if (hasOnlyWaitingMessage) {
-      terminal.clear();
-      hasOnlyWaitingMessage = false;
-      totalLines.value = 0; // 重置计数器
-    }
 
     // 写入日志内容
     terminal.writeln(content);
     // 只统计 WebSocket 下发的实际日志行数（每收到一条日志消息，增加一行）
     totalLines.value++;
-
-    // 自动滚动到底部
-    if (autoScroll.value) {
-      terminal.scrollToBottom();
-    }
   } else if (message.commandType === 'event') {
     const eventType = message.commandId;
     const data = message.data || {};
@@ -186,18 +191,34 @@ function handleMessage(message: WebSocketMessage) {
     // 根据事件类型显示不同颜色
     if (eventType === 1 || eventType === 3) {
       // 成功事件（发布成功、构建成功）
-      terminal.writeln(`\x1b[32m✓ ${data.status || '成功'}\x1b[0m`);
+      terminal.writeln(`\u001B[32m✓ ${data.status || '成功'}\u001B[0m`);
     } else if (eventType === 2 || eventType === 4) {
       // 失败事件（发布失败、构建失败）
-      terminal.writeln(`\x1b[31m✗ ${data.status || '失败'}: ${data.error || ''}\x1b[0m`);
+      terminal.writeln(
+        `\u001B[31m✗ ${data.status || '失败'}: ${data.error || ''}\u001B[0m`,
+      );
     }
     // 事件消息也计入日志行数
     totalLines.value++;
+  }
+}
 
-    // 自动滚动到底部
-    if (autoScroll.value) {
-      terminal.scrollToBottom();
-    }
+function handleMessage(message: WebSocketMessage) {
+  if (!terminal) return;
+
+  // 如果之前只有等待提示，清除它
+  if (hasOnlyWaitingMessage) {
+    terminal.clear();
+    hasOnlyWaitingMessage = false;
+    totalLines.value = 0; // 重置计数器
+  }
+
+  // 渲染日志消息
+  renderLogMessage(message);
+
+  // 自动滚动到底部
+  if (autoScroll.value) {
+    terminal.scrollToBottom();
   }
 }
 
@@ -211,7 +232,13 @@ function clearLog() {
     totalLines.value = 0;
     hasOnlyWaitingMessage = true;
     // 重新显示等待提示
-    terminal.writeln('\x1b[90m' + $t('deploy.packageDeployManagement.projectPackage.logViewer.waitingForData') + '\x1b[0m');
+    terminal.writeln(
+      `\u001B[90m${$t(
+        'deploy.packageDeployManagement.projectPackage.logViewer.waitingForData',
+      )}\u001B[0m`,
+    );
+    // 清除 WebSocket store 中的缓存
+    wsStore.clearLogCache(wsStore.currentBusinessLineId);
   }
 }
 
@@ -224,18 +251,18 @@ function toggleAutoScroll(checked: boolean) {
 
 function toggleSearch() {
   showSearch.value = !showSearch.value;
-  if (!showSearch.value) {
+  if (showSearch.value) {
+    // 聚焦搜索输入框
+    nextTick(() => {
+      searchInputRef.value?.focus();
+    });
+  } else {
     searchKeyword.value = '';
     searchResultCount.value = 0;
     currentSearchIndex.value = 0;
     if (searchAddon) {
       searchAddon.clearDecorations();
     }
-  } else {
-    // 聚焦搜索输入框
-    nextTick(() => {
-      searchInputRef.value?.focus();
-    });
   }
 }
 
@@ -256,11 +283,7 @@ function handleSearch() {
   // 统计搜索结果
   // 注意：xterm.js 的 SearchAddon 不直接提供总数，我们需要通过其他方式统计
   // 这里简化处理，只显示当前匹配
-  if (results) {
-    currentSearchIndex.value = currentSearchIndex.value + 1;
-  } else {
-    currentSearchIndex.value = 0;
-  }
+  currentSearchIndex.value = results ? currentSearchIndex.value + 1 : 0;
 }
 
 function handleSearchKeydown(event: KeyboardEvent) {
@@ -295,14 +318,14 @@ function searchPrev() {
 
 // 监听搜索关键词变化
 watch(searchKeyword, () => {
-  if (!searchKeyword.value.trim()) {
+  if (searchKeyword.value.trim()) {
+    handleSearch();
+  } else {
     searchResultCount.value = 0;
     currentSearchIndex.value = 0;
     if (searchAddon) {
       searchAddon.clearDecorations();
     }
-  } else {
-    handleSearch();
   }
 });
 </script>
@@ -317,54 +340,66 @@ watch(searchKeyword, () => {
           <span
             class="status-dot"
             :class="{ connected: isConnected, disconnected: !isConnected }"
-          />
+          ></span>
           <span class="status-text">
-            {{ isConnected ? $t('deploy.packageDeployManagement.projectPackage.logViewer.connected') : $t('deploy.packageDeployManagement.projectPackage.logViewer.disconnected') }}
+            {{
+              isConnected
+                ? $t(
+                    'deploy.packageDeployManagement.projectPackage.logViewer.connected',
+                  )
+                : $t(
+                    'deploy.packageDeployManagement.projectPackage.logViewer.disconnected',
+                  )
+            }}
           </span>
         </div>
         <span class="log-viewer-lines">
-          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.totalLines') }}: {{ totalLines }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.projectPackage.logViewer.totalLines',
+            )
+          }}: {{ totalLines }}
         </span>
       </div>
       <div class="log-viewer-header-right">
-        <Button
-          size="small"
-          @click="toggleSearch"
-        >
-          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.search') }}
+        <Button size="small" @click="toggleSearch">
+          {{
+            $t('deploy.packageDeployManagement.projectPackage.logViewer.search')
+          }}
         </Button>
-        <Button
-          size="small"
-          @click="clearLog"
-        >
-          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.clearLog') }}
+        <Button size="small" @click="clearLog">
+          {{
+            $t(
+              'deploy.packageDeployManagement.projectPackage.logViewer.clearLog',
+            )
+          }}
         </Button>
         <div class="auto-scroll-switch">
-          <span class="switch-label">{{ $t('deploy.packageDeployManagement.projectPackage.logViewer.autoScroll') }}</span>
+          <span class="switch-label">{{
+            $t(
+              'deploy.packageDeployManagement.projectPackage.logViewer.autoScroll',
+            )
+          }}</span>
           <Switch
             v-model:checked="autoScroll"
             size="small"
             @change="toggleAutoScroll"
           />
         </div>
-        <button
-          class="log-viewer-close"
-          @click="handleClose"
-        >
-          ×
-        </button>
+        <button class="log-viewer-close" @click="handleClose">×</button>
       </div>
     </div>
 
     <!-- 搜索栏 -->
-    <div
-      v-if="showSearch"
-      class="log-viewer-search"
-    >
+    <div v-if="showSearch" class="log-viewer-search">
       <Input
         ref="searchInputRef"
         v-model:value="searchKeyword"
-        :placeholder="$t('deploy.packageDeployManagement.projectPackage.logViewer.searchPlaceholder')"
+        :placeholder="
+          $t(
+            'deploy.packageDeployManagement.projectPackage.logViewer.searchPlaceholder',
+          )
+        "
         class="search-input"
         @keydown="handleSearchKeydown"
       />
@@ -374,29 +409,29 @@ watch(searchKeyword, () => {
           :disabled="!searchKeyword.trim()"
           @click="searchPrev"
         >
-          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.searchPrev') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.projectPackage.logViewer.searchPrev',
+            )
+          }}
         </Button>
         <Button
           size="small"
           :disabled="!searchKeyword.trim()"
           @click="searchNext"
         >
-          {{ $t('deploy.packageDeployManagement.projectPackage.logViewer.searchNext') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.projectPackage.logViewer.searchNext',
+            )
+          }}
         </Button>
-        <Button
-          size="small"
-          @click="toggleSearch"
-        >
-          关闭
-        </Button>
+        <Button size="small" @click="toggleSearch"> 关闭 </Button>
       </div>
     </div>
 
     <!-- 终端 -->
-    <div
-      ref="terminalRef"
-      class="log-viewer-terminal"
-    />
+    <div ref="terminalRef" class="log-viewer-terminal"></div>
   </div>
 </template>
 
@@ -405,25 +440,25 @@ watch(searchKeyword, () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
   background: #1e1e1e;
   border-radius: 4px;
-  overflow: hidden;
 }
 
 .log-viewer-header {
   display: flex;
-  justify-content: space-between;
+  flex-shrink: 0;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
   background: #2d2d2d;
   border-bottom: 1px solid #3a3d41;
-  flex-shrink: 0;
 }
 
 .log-viewer-header-left {
   display: flex;
-  align-items: center;
   gap: 16px;
+  align-items: center;
 }
 
 .log-viewer-title {
@@ -434,20 +469,20 @@ watch(searchKeyword, () => {
 
 .log-viewer-status {
   display: flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
 }
 
 .status-dot {
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .status-dot.connected {
   background: #0dbc79;
-  box-shadow: 0 0 4px rgba(13, 188, 121, 0.5);
+  box-shadow: 0 0 4px rgb(13 188 121 / 50%);
 }
 
 .status-dot.disconnected {
@@ -466,14 +501,14 @@ watch(searchKeyword, () => {
 
 .log-viewer-header-right {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
 }
 
 .auto-scroll-switch {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
 }
 
 .switch-label {
@@ -482,32 +517,32 @@ watch(searchKeyword, () => {
 }
 
 .log-viewer-close {
-  background: none;
-  border: none;
-  color: #d4d4d4;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s;
+  padding: 4px;
+  font-size: 16px;
+  color: #d4d4d4;
+  cursor: pointer;
+  background: none;
+  border: none;
   border-radius: 4px;
+  transition: color 0.2s;
 }
 
 .log-viewer-close:hover {
   color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgb(255 255 255 / 10%);
 }
 
 .log-viewer-search {
   display: flex;
-  align-items: center;
+  flex-shrink: 0;
   gap: 12px;
+  align-items: center;
   padding: 12px 16px;
   background: #252526;
   border-bottom: 1px solid #3a3d41;
-  flex-shrink: 0;
 }
 
 .search-input {
@@ -521,10 +556,10 @@ watch(searchKeyword, () => {
 }
 
 .log-viewer-terminal {
+  position: relative;
   flex: 1;
   padding: 8px;
   overflow: hidden;
-  position: relative;
 }
 
 /* xterm.js 样式覆盖 */

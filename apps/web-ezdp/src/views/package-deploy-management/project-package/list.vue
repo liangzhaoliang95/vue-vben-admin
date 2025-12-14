@@ -1,16 +1,22 @@
 <script lang="ts" setup>
-import {
-  computed,
-  h,
-  onActivated,
-  ref,
-  watch,
-} from 'vue';
+import { computed, onActivated, ref, watch } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { useBusinessStore } from '@vben/stores';
 
-import { Badge, Button, Card, Collapse, CollapsePanel, Empty, message, Modal, Select, Space, Spin, Tag } from 'ant-design-vue';
+import {
+  Badge,
+  Button,
+  Card,
+  Collapse,
+  CollapsePanel,
+  Empty,
+  message,
+  Modal,
+  Select,
+  Spin,
+  Tag,
+} from 'ant-design-vue';
 
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
 import {
@@ -19,8 +25,8 @@ import {
 } from '#/api/package-deploy-management/project-package';
 import { getDeployEnvironmentList } from '#/api/project-management/deploy-environment';
 import LogViewer from '#/components/log-viewer/index.vue';
-import { useWebSocketStore } from '#/store/websocket';
 import { $t } from '#/locales';
+import { useWebSocketStore } from '#/store/websocket';
 
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
@@ -67,7 +73,9 @@ const businessLineOptions = computed(() => {
 });
 
 // 是否是超级管理员
-const isSuperAdmin = computed(() => businessStore.currentRole?.isSuper === true);
+const isSuperAdmin = computed(
+  () => businessStore.currentRole?.isSuper === true,
+);
 
 // 加载发布环境列表
 async function loadDeployEnvironments() {
@@ -150,11 +158,7 @@ watch(selectedBusinessLineId, async (newId) => {
     wsStore.subscribeBusinessLine(newId);
 
     const branches = allBranchesMap.value.get(newId) || [];
-    if (branches.length > 0) {
-      selectedBranchId.value = branches[0].id;
-    } else {
-      selectedBranchId.value = undefined;
-    }
+    selectedBranchId.value = branches.length > 0 ? branches[0].id : undefined;
   } else {
     selectedBranchId.value = undefined;
   }
@@ -177,7 +181,8 @@ onActivated(async () => {
       selectedBusinessLineId.value = businessLines[0]?.businessLine.id;
     }
   } else {
-    selectedBusinessLineId.value = businessStore.currentBusinessLineId ?? undefined;
+    selectedBusinessLineId.value =
+      businessStore.currentBusinessLineId ?? undefined;
   }
 
   // 如果已经有选中的分支，手动触发加载版本列表
@@ -195,7 +200,7 @@ watch(
       selectedBusinessLineId.value = newBusinessLineId;
     }
   },
-)
+);
 
 // 打开实时日志
 function openLogViewer(taskType: 1 | 2) {
@@ -264,15 +269,67 @@ function getProjectTypeName(type: string) {
   return typeMap[type] || type || '-';
 }
 
+// 获取项目类型图标（emoji）
+function getProjectTypeIcon(type: string) {
+  const iconMap: Record<string, string> = {
+    backend: '⚙️', // 服务端
+    frontend: '🎨', // 前端
+    submodule: '📦', // 子模块
+  };
+  return iconMap[type] || '📁';
+}
+
+// 排序项目列表：服务端在前，前端在后
+function getSortedProjects(projects: any[]) {
+  if (!projects || !Array.isArray(projects)) {
+    return [];
+  }
+
+  return [...projects].sort((a, b) => {
+    const typeOrder: Record<string, number> = {
+      backend: 1, // 服务端排第一
+      submodule: 2, // 子模块排第二
+      frontend: 3, // 前端排第三
+    };
+
+    const orderA = typeOrder[a.projectType] || 999;
+    const orderB = typeOrder[b.projectType] || 999;
+
+    // 按类型排序，类型相同则按名称排序
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    return (a.projectName || '').localeCompare(b.projectName || '');
+  });
+}
+
 // 获取状态标签配置（项目构建任务状态）
 function getStatusConfig(status: string) {
   const statusConfig: Record<string, { color: string; text: string }> = {
-    pending: { color: 'default', text: $t('deploy.packageDeployManagement.projectPackage.status.pending') },
-    building: { color: 'processing', text: $t('deploy.packageDeployManagement.projectPackage.status.building') },
-    running: { color: 'processing', text: $t('deploy.packageDeployManagement.projectPackage.status.running') },
-    success: { color: 'success', text: $t('deploy.packageDeployManagement.projectPackage.status.success') },
-    failed: { color: 'error', text: $t('deploy.packageDeployManagement.projectPackage.status.failed') },
-    skipped: { color: 'warning', text: $t('deploy.packageDeployManagement.projectPackage.status.skipped') },
+    pending: {
+      color: 'default',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.pending'),
+    },
+    building: {
+      color: 'processing',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.building'),
+    },
+    running: {
+      color: 'processing',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.running'),
+    },
+    success: {
+      color: 'success',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.success'),
+    },
+    failed: {
+      color: 'error',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.failed'),
+    },
+    skipped: {
+      color: 'warning',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.skipped'),
+    },
   };
   return statusConfig[status] || statusConfig.pending;
 }
@@ -280,9 +337,24 @@ function getStatusConfig(status: string) {
 // 获取大版本状态标签配置
 function getVersionStatusConfig(status: string) {
   const statusConfig: Record<string, { color: string; text: string }> = {
-    building: { color: 'processing', text: $t('deploy.packageDeployManagement.projectPackage.versionStatus.building') },
-    success: { color: 'success', text: $t('deploy.packageDeployManagement.projectPackage.versionStatus.success') },
-    failed: { color: 'error', text: $t('deploy.packageDeployManagement.projectPackage.versionStatus.failed') },
+    building: {
+      color: 'processing',
+      text: $t(
+        'deploy.packageDeployManagement.projectPackage.versionStatus.building',
+      ),
+    },
+    success: {
+      color: 'success',
+      text: $t(
+        'deploy.packageDeployManagement.projectPackage.versionStatus.success',
+      ),
+    },
+    failed: {
+      color: 'error',
+      text: $t(
+        'deploy.packageDeployManagement.projectPackage.versionStatus.failed',
+      ),
+    },
   };
   return statusConfig[status] || statusConfig.building;
 }
@@ -310,10 +382,7 @@ async function handleBuild() {
   }
 
   try {
-    await confirm(
-      '确定要开始构建吗？构建过程可能需要几分钟时间。',
-      '开始构建',
-    );
+    await confirm('确定要开始构建吗？构建过程可能需要几分钟时间。', '开始构建');
 
     const queryParams: any = {
       branchId: selectedBranchId.value,
@@ -346,7 +415,9 @@ async function handleBuild() {
 async function onDeploy(row: any, isVersion: boolean = false) {
   if (!selectedEnvironmentId.value) {
     message.warning(
-      $t('deploy.packageDeployManagement.projectPackage.selectEnvironmentFirst'),
+      $t(
+        'deploy.packageDeployManagement.projectPackage.selectEnvironmentFirst',
+      ),
     );
     return;
   }
@@ -374,21 +445,21 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
     if (isVersion) {
       // TODO: 实现父级发布API调用
-      console.log('发布整个版本:', {
-        versionId: row.id,
-        version: row.version,
-        environmentId: selectedEnvironmentId.value,
-        projects: row.children,
-      });
+      // console.warn('发布整个版本:', {
+      //   versionId: row.id,
+      //   version: row.version,
+      //   environmentId: selectedEnvironmentId.value,
+      //   projects: row.children,
+      // });
     } else {
       // TODO: 实现子级发布API调用
-      console.log('发布单个项目:', {
-        projectId: row.id,
-        projectConfigId: row.projectConfigId,
-        projectName: row.projectName,
-        version: row.version,
-        environmentId: selectedEnvironmentId.value,
-      });
+      // console.warn('发布单个项目:', {
+      //   projectId: row.id,
+      //   projectConfigId: row.projectConfigId,
+      //   projectName: row.projectName,
+      //   version: row.version,
+      //   environmentId: selectedEnvironmentId.value,
+      // });
     }
 
     message.success(
@@ -404,14 +475,17 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 </script>
 
 <template>
+  <!-- eslint-disable vue/html-closing-bracket-newline -->
   <Page auto-content-height>
     <!-- 筛选条件区 -->
     <Card class="mb-4">
-      <div class="flex items-center justify-between w-full gap-4">
-        <div class="flex items-center gap-4 flex-wrap">
+      <div class="flex w-full items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4">
           <!-- 业务线筛选(仅超级管理员) -->
           <div v-if="isSuperAdmin" class="flex items-center gap-2">
-            <span class="filter-label">{{ $t('system.businessLine.name') }}:</span>
+            <span class="filter-label"
+              >{{ $t('system.businessLine.name') }}:</span
+            >
             <Select
               v-model:value="selectedBusinessLineId"
               :options="businessLineOptions"
@@ -422,11 +496,19 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
           <!-- 分支筛选 -->
           <div class="flex items-center gap-2">
-            <span class="filter-label">{{ $t('deploy.packageDeployManagement.projectPackage.branch') }}:</span>
+            <span class="filter-label"
+              >{{
+                $t('deploy.packageDeployManagement.projectPackage.branch')
+              }}:</span
+            >
             <Select
               v-model:value="selectedBranchId"
               :options="currentBranchOptions"
-              :placeholder="$t('deploy.packageDeployManagement.projectPackage.branchPlaceholder')"
+              :placeholder="
+                $t(
+                  'deploy.packageDeployManagement.projectPackage.branchPlaceholder',
+                )
+              "
               class="w-48"
             />
           </div>
@@ -441,25 +523,35 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
     <!-- 工具栏 -->
     <Card class="mb-4">
-      <div class="flex items-center justify-between w-full gap-4">
+      <div class="flex w-full items-center justify-between gap-4">
         <!-- 发布环境选择 -->
         <div class="flex items-center gap-2">
-          <span class="filter-label">{{ $t('deploy.packageDeployManagement.projectPackage.deployEnvironment') }}:</span>
+          <span class="filter-label"
+            >{{
+              $t(
+                'deploy.packageDeployManagement.projectPackage.deployEnvironment',
+              )
+            }}:</span
+          >
           <Select
             v-model:value="selectedEnvironmentId"
             :options="environmentOptions"
-            :placeholder="$t('deploy.packageDeployManagement.projectPackage.deployEnvironmentPlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.packageDeployManagement.projectPackage.deployEnvironmentPlaceholder',
+              )
+            "
             class="w-48"
           />
         </div>
 
         <!-- 操作按钮 -->
-        <div class="flex items-center gap-3 flex-shrink-0">
-          <Button type="primary" @click="handleBuild">
-            开始构建
-          </Button>
+        <div class="flex flex-shrink-0 items-center gap-3">
+          <Button type="primary" @click="handleBuild"> 开始构建 </Button>
           <Button @click="openLogViewer(1)">
-            {{ $t('deploy.packageDeployManagement.projectPackage.realtimeLog') }}
+            {{
+              $t('deploy.packageDeployManagement.projectPackage.realtimeLog')
+            }}
           </Button>
         </div>
       </div>
@@ -467,23 +559,23 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
     <!-- 版本列表 -->
     <Spin :spinning="loading">
-      <div v-if="versionList.length === 0" class="flex justify-center items-center py-20">
+      <div
+        v-if="versionList.length === 0"
+        class="flex items-center justify-center py-20"
+      >
         <Empty :description="$t('common.noData')" />
       </div>
 
       <Collapse
         v-else
-        v-model:activeKey="activeKeys"
+        v-model:active-key="activeKeys"
         :bordered="false"
-        :expand-icon-position="'start'"
+        expand-icon-position="start"
         class="version-collapse"
       >
-        <CollapsePanel
-          v-for="version in versionList"
-          :key="version.id"
-        >
+        <CollapsePanel v-for="version in versionList" :key="version.id">
           <template #header>
-            <div class="flex items-center justify-between w-full pr-4">
+            <div class="flex w-full items-center justify-between pr-4">
               <div class="flex items-center gap-4">
                 <Badge
                   :count="version.children?.length || 0"
@@ -494,8 +586,15 @@ async function onDeploy(row: any, isVersion: boolean = false) {
                     {{ version.version }}
                   </div>
                 </Badge>
-                <Tag :color="getVersionStatusConfig(version.status || 'building').color" class="version-status-tag">
-                  {{ getVersionStatusConfig(version.status || 'building').text }}
+                <Tag
+                  :color="
+                    getVersionStatusConfig(version.status || 'building').color
+                  "
+                  class="version-status-tag"
+                >
+                  {{
+                    getVersionStatusConfig(version.status || 'building').text
+                  }}
                 </Tag>
                 <span class="version-time">
                   {{ formatTime(version.buildTime) }}
@@ -515,22 +614,28 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
           <!-- 项目列表 -->
           <div class="project-list">
+            <!-- 项目数据行 -->
             <div
-              v-for="project in version.children"
+              v-for="project in getSortedProjects(version.children)"
               :key="project.id"
               class="project-item"
+              :class="[`project-type-${project.projectType || 'default'}`]"
             >
-              <div class="project-info">
-                <span class="project-name">{{ project.projectName || '-' }}</span>
-                <Tag color="blue" class="project-type-tag">
-                  {{ getProjectTypeName(project.projectType || '') }}
-                </Tag>
-                <span class="version-text">版本: {{ project.version || '-' }}</span>
-                <Tag :color="getStatusConfig(project.status || 'pending').color" class="status-tag">
-                  {{ getStatusConfig(project.status || 'pending').text }}
-                </Tag>
-              </div>
-
+              <span class="project-name">{{ project.projectName || '-' }}</span>
+              <Tag color="blue" class="project-type-tag">
+                {{ getProjectTypeIcon(project.projectType || '') }}
+                {{ getProjectTypeName(project.projectType || '') }}
+              </Tag>
+              <Tag color="red" class="version-tag">
+                {{ project.version || '-' }}
+              </Tag>
+              <Tag
+                :color="getStatusConfig(project.status || 'pending').color"
+                class="status-tag"
+              >
+                {{ getStatusConfig(project.status || 'pending').text }}
+              </Tag>
+              <div></div>
               <Button
                 type="primary"
                 size="small"
@@ -546,10 +651,7 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
     <!-- 实时日志悬浮窗 -->
     <Teleport to="body">
-      <div
-        v-if="showLogViewer"
-        class="log-viewer-overlay"
-      >
+      <div v-if="showLogViewer" class="log-viewer-overlay">
         <div class="log-viewer-container">
           <LogViewer
             v-if="logViewerSubscriptionId"
@@ -566,15 +668,12 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 <style scoped>
 .log-viewer-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: hsl(var(--overlay));
+  inset: 0;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  background: hsl(var(--overlay));
 }
 
 .log-viewer-container {
@@ -582,10 +681,10 @@ async function onDeploy(row: any, isVersion: boolean = false) {
   max-width: 1200px;
   height: 80%;
   max-height: 800px;
+  overflow: hidden;
   background: hsl(var(--background-deep));
   border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: 0 4px 20px hsl(0 0% 0% / 30%);
+  box-shadow: 0 4px 20px hsl(0deg 0% 0% / 30%);
 }
 
 /* 版本折叠面板样式 */
@@ -595,18 +694,18 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
 /* 重置 Ant Design Collapse 的默认样式 */
 :deep(.ant-collapse) {
-  border: none;
   background: transparent;
+  border: none;
 }
 
 :deep(.ant-collapse > .ant-collapse-item) {
-  border: none;
   margin-bottom: 16px;
-  background: hsl(var(--card));
-  border-radius: var(--radius) !important;
-  border: 1px solid hsl(var(--border));
   overflow: hidden;
-  box-shadow: 0 1px 2px hsl(0 0% 0% / 3%);
+  background: hsl(var(--card));
+  border: none;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius) !important;
+  box-shadow: 0 1px 2px hsl(0deg 0% 0% / 3%);
 }
 
 :deep(.ant-collapse > .ant-collapse-item:last-child) {
@@ -615,14 +714,14 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
 /* 修复：移除 Ant Design 的底部边框 */
 :deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header) {
-  padding: 16px 20px;
-  background: hsl(var(--muted));
-  color: hsl(var(--foreground));
-  font-weight: 600;
-  border-radius: var(--radius) var(--radius) 0 0 !important;
-  border-bottom: 1px solid hsl(var(--border));
   display: flex !important;
   align-items: center !important;
+  padding: 16px 20px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  background: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
+  border-radius: var(--radius) var(--radius) 0 0 !important;
 }
 
 :deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header:hover) {
@@ -631,51 +730,72 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
 /* 展开后的内容区域 */
 :deep(.ant-collapse > .ant-collapse-item > .ant-collapse-content) {
-  border-top: none;
   background: hsl(var(--accent-lighter));
+  border-top: none;
 }
 
-:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-content > .ant-collapse-content-box) {
+:deep(
+  .ant-collapse
+    > .ant-collapse-item
+    > .ant-collapse-content
+    > .ant-collapse-content-box
+) {
   padding: 0;
 }
 
 /* 展开图标 */
-:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-expand-icon) {
-  color: hsl(var(--muted-foreground)) !important;
+:deep(
+  .ant-collapse
+    > .ant-collapse-item
+    > .ant-collapse-header
+    .ant-collapse-expand-icon
+) {
   display: inline-flex !important;
   align-items: center !important;
-  justify-content: center !important;
   align-self: center !important;
+  justify-content: center !important;
+  color: hsl(var(--muted-foreground)) !important;
 }
 
 /* 确保展开图标容器垂直居中 */
-:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-arrow) {
+:deep(
+  .ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-arrow
+) {
   display: inline-flex !important;
   align-items: center !important;
   align-self: center !important;
 }
 
 /* Header 内容区域也要垂直居中 */
-:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-header-text) {
+:deep(
+  .ant-collapse
+    > .ant-collapse-item
+    > .ant-collapse-header
+    .ant-collapse-header-text
+) {
   display: flex !important;
   align-items: center !important;
   width: 100% !important;
 }
 
 /* 确保展开状态下的头部也有正确的圆角 */
-:deep(.ant-collapse > .ant-collapse-item.ant-collapse-item-active > .ant-collapse-header) {
+:deep(
+  .ant-collapse
+    > .ant-collapse-item.ant-collapse-item-active
+    > .ant-collapse-header
+) {
   border-radius: var(--radius) var(--radius) 0 0 !important;
 }
 
 /* 版本号标签 */
 .version-title {
+  padding: 8px 16px;
   font-size: 20px;
   font-weight: 700;
-  padding: 8px 16px;
-  background: hsl(var(--primary));
-  color: hsl(var(--primary-foreground));
-  border-radius: calc(var(--radius) - 2px);
   line-height: 1;
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary));
+  border-radius: calc(var(--radius) - 2px);
 }
 
 /* 版本时间 */
@@ -687,65 +807,143 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
 /* 项目列表样式 */
 .project-list {
-  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
 }
 
 .project-item {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: 200px 90px 100px 110px 1fr 80px;
+  column-gap: 16px;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 18px;
-  margin-bottom: 8px;
-  background: hsl(var(--card));
-  border-radius: calc(var(--radius) - 2px);
-  border: 1px solid hsl(var(--border));
-  transition: all 0.2s ease;
+  padding: 16px 20px;
   cursor: default;
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-left: 4px solid hsl(var(--border));
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
+  transition: all 0.2s ease;
 }
 
+/* 服务端项目：蓝色边框 */
+.project-item.project-type-backend {
+  background: linear-gradient(
+    to right,
+    rgb(24 144 255 / 4%),
+    hsl(var(--card)) 180px
+  );
+  border-left-color: #1890ff;
+}
+
+.project-item.project-type-backend:hover {
+  background: linear-gradient(
+    to right,
+    rgb(24 144 255 / 8%),
+    hsl(var(--card)) 180px
+  );
+  border-color: rgb(24 144 255 / 30%);
+  box-shadow: 0 4px 12px rgb(24 144 255 / 20%);
+  transform: translateX(4px);
+}
+
+/* 前端项目：粉色边框 */
+.project-item.project-type-frontend {
+  background: linear-gradient(
+    to right,
+    rgb(235 47 150 / 4%),
+    hsl(var(--card)) 180px
+  );
+  border-left-color: #eb2f96;
+}
+
+.project-item.project-type-frontend:hover {
+  background: linear-gradient(
+    to right,
+    rgb(235 47 150 / 8%),
+    hsl(var(--card)) 180px
+  );
+  border-color: rgb(235 47 150 / 30%);
+  box-shadow: 0 4px 12px rgb(235 47 150 / 20%);
+  transform: translateX(4px);
+}
+
+/* 子模块项目：紫色边框 */
+.project-item.project-type-submodule {
+  background: linear-gradient(
+    to right,
+    rgb(114 46 209 / 4%),
+    hsl(var(--card)) 180px
+  );
+  border-left-color: #722ed1;
+}
+
+.project-item.project-type-submodule:hover {
+  background: linear-gradient(
+    to right,
+    rgb(114 46 209 / 8%),
+    hsl(var(--card)) 180px
+  );
+  border-color: rgb(114 46 209 / 30%);
+  box-shadow: 0 4px 12px rgb(114 46 209 / 20%);
+  transform: translateX(4px);
+}
+
+/* 默认项目样式 */
 .project-item:hover {
-  border-color: hsl(var(--primary));
-  box-shadow: 0 2px 8px hsl(var(--primary) / 20%);
-  transform: translateY(-1px);
-}
-
-.project-item:last-child {
-  margin-bottom: 0;
-}
-
-.project-info {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: nowrap;
-  overflow: hidden;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+  transform: translateX(4px);
 }
 
 .project-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 15px;
   font-weight: 600;
-  color: hsl(var(--primary));
+  color: hsl(var(--foreground));
   white-space: nowrap;
-  min-width: 0;
-  flex-shrink: 0;
 }
 
 .project-type-tag {
-  font-size: 12px;
-  flex-shrink: 0;
+  justify-self: start;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.version-text {
-  font-size: 13px;
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
+.version-tag {
+  justify-self: start;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-weight: 600;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .status-tag {
-  flex-shrink: 0;
+  justify-self: start;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* 统一调整所有 Tag 标签大小和居中 */
+.project-item :deep(.ant-tag) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 60px;
+  padding: 4px 12px;
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+}
+
+/* 发布按钮样式 */
+.project-item :deep(.ant-btn-sm) {
+  justify-self: end;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 13px;
 }
 
 /* 版本状态标签 */
@@ -756,8 +954,8 @@ async function onDeploy(row: any, isVersion: boolean = false) {
 
 /* 筛选标签样式 */
 .filter-label {
-  color: hsl(var(--muted-foreground));
   font-weight: 500;
+  color: hsl(var(--muted-foreground));
   white-space: nowrap;
 }
 </style>

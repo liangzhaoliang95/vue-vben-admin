@@ -48,16 +48,16 @@ async function createBranchManagement(
 async function updateBranchManagement(
   id: number | string,
   data: Partial<
-    Omit<
-      BranchManagementApi.BranchManagement,
-      'createdAt' | 'id' | 'updatedAt'
-    >
+    Omit<BranchManagementApi.BranchManagement, 'createdAt' | 'id' | 'updatedAt'>
   >,
 ) {
-  return requestClient.post('/packageDeployManagement/branchManagement/update', {
-    id: String(id),
-    ...data,
-  });
+  return requestClient.post(
+    '/packageDeployManagement/branchManagement/update',
+    {
+      id: String(id),
+      ...data,
+    },
+  );
 }
 
 /**
@@ -66,9 +66,12 @@ async function updateBranchManagement(
  * @param id 分支ID
  */
 async function deleteBranchManagement(id: number | string) {
-  return requestClient.post('/packageDeployManagement/branchManagement/delete', {
-    id: String(id),
-  });
+  return requestClient.post(
+    '/packageDeployManagement/branchManagement/delete',
+    {
+      id: String(id),
+    },
+  );
 }
 
 /**

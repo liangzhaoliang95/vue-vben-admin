@@ -107,7 +107,9 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'ApiSelect',
       fieldName: 'frontendStorageId',
-      label: $t('deploy.packageDeployManagement.environmentConfig.frontendStorage'),
+      label: $t(
+        'deploy.packageDeployManagement.environmentConfig.frontendStorage',
+      ),
       rules: 'required',
       componentProps: {
         api: async (params?: any) => {
@@ -145,7 +147,9 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'Input',
       fieldName: 'frontendBaseUrl',
-      label: $t('deploy.packageDeployManagement.environmentConfig.frontendBaseUrl'),
+      label: $t(
+        'deploy.packageDeployManagement.environmentConfig.frontendBaseUrl',
+      ),
       rules: 'required',
       componentProps: {
         placeholder: $t(
@@ -156,7 +160,9 @@ export function useFormSchema(): VbenFormSchema[] {
     {
       component: 'ApiSelect',
       fieldName: 'backendSecretId',
-      label: $t('deploy.packageDeployManagement.environmentConfig.backendCluster'),
+      label: $t(
+        'deploy.packageDeployManagement.environmentConfig.backendCluster',
+      ),
       rules: 'required',
       componentProps: {
         api: async (params?: any) => {
@@ -275,7 +281,9 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
     },
     {
       field: 'frontendStorageId',
-      title: $t('deploy.packageDeployManagement.environmentConfig.frontendStorage'),
+      title: $t(
+        'deploy.packageDeployManagement.environmentConfig.frontendStorage',
+      ),
       minWidth: 150,
       formatter: ({ row }) => {
         if (!row.frontendStorageId) return '-';
@@ -287,12 +295,16 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
     },
     {
       field: 'frontendBaseUrl',
-      title: $t('deploy.packageDeployManagement.environmentConfig.frontendBaseUrl'),
+      title: $t(
+        'deploy.packageDeployManagement.environmentConfig.frontendBaseUrl',
+      ),
       minWidth: 200,
     },
     {
       field: 'backendSecretId',
-      title: $t('deploy.packageDeployManagement.environmentConfig.backendCluster'),
+      title: $t(
+        'deploy.packageDeployManagement.environmentConfig.backendCluster',
+      ),
       minWidth: 150,
       formatter: ({ row }) => {
         if (!row.backendSecretId) return '-';

@@ -1,5 +1,3 @@
-import type { Recordable } from '@vben/types';
-
 import { requestClient } from '#/api/request';
 
 export namespace ProjectPackageApi {
@@ -11,7 +9,7 @@ export namespace ProjectPackageApi {
     projectType?: string; // 项目类型：backend, frontend, submodule
     branchId: string;
     version: string;
-    status: 'pending' | 'running' | 'success' | 'failed' | 'cancelled';
+    status: 'cancelled' | 'failed' | 'pending' | 'running' | 'success';
     imageName: string;
     imageTag: string;
     startedAt?: number;
@@ -24,7 +22,7 @@ export namespace ProjectPackageApi {
   export interface VersionGroupItem {
     id: string; // 版本ID
     version: string; // 版本号
-    status: 'building' | 'success' | 'failed'; // 构建状态
+    status: 'building' | 'failed' | 'success'; // 构建状态
     buildTime: number; // 构建时间
     businessLineId?: number; // 业务线ID
     description?: string; // 版本描述
@@ -73,4 +71,3 @@ export async function startBuildTask(
     params,
   );
 }
-

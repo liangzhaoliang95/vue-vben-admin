@@ -1,4 +1,5 @@
 import type { VbenFormSchema } from '@vben/common-ui';
+
 import type { OnActionClickFn, VxeTableGridOptions } from '#/adapter/vxe-table';
 
 import { h } from 'vue';
@@ -7,7 +8,6 @@ import { useBusinessStore } from '@vben/stores';
 
 import { Tag } from 'ant-design-vue';
 
-import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
 import { $t } from '#/locales';
 
 /**
@@ -46,7 +46,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       componentProps: {
         options: [],
         style: { width: '100%' },
-        placeholder: $t('deploy.packageDeployManagement.projectPackage.branchPlaceholder'),
+        placeholder: $t(
+          'deploy.packageDeployManagement.projectPackage.branchPlaceholder',
+        ),
         allowClear: true,
       },
     },
@@ -58,13 +60,26 @@ export function useGridFormSchema(): VbenFormSchema[] {
  */
 function renderStatusTag(status: string) {
   const statusConfig = {
-    pending: { color: 'default', text: $t('deploy.packageDeployManagement.projectPackage.status.pending') },
-    running: { color: 'processing', text: $t('deploy.packageDeployManagement.projectPackage.status.running') },
-    success: { color: 'success', text: $t('deploy.packageDeployManagement.projectPackage.status.success') },
-    failed: { color: 'error', text: $t('deploy.packageDeployManagement.projectPackage.status.failed') },
+    pending: {
+      color: 'default',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.pending'),
+    },
+    running: {
+      color: 'processing',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.running'),
+    },
+    success: {
+      color: 'success',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.success'),
+    },
+    failed: {
+      color: 'error',
+      text: $t('deploy.packageDeployManagement.projectPackage.status.failed'),
+    },
   };
 
-  const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+  const config =
+    statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
 
   return h(Tag, { color: config.color }, () => config.text);
 }
@@ -75,8 +90,6 @@ function renderStatusTag(status: string) {
 export function useColumns<T = any>(
   onActionClick: OnActionClickFn<T>,
 ): VxeTableGridOptions['columns'] {
-  const businessStore = useBusinessStore();
-
   return [
     {
       field: 'version',
@@ -84,7 +97,7 @@ export function useColumns<T = any>(
       minWidth: 200,
       treeNode: true, // 设置为树节点列
       formatter: ({ row }) => {
-        console.log('Rendering version column, row:', row);
+        // console.warn('Rendering version column, row:', row);
         // 如果有children字段（无论是否为空数组），说明是父级（版本组）
         if (row.children !== undefined && Array.isArray(row.children)) {
           return row.version || '-';

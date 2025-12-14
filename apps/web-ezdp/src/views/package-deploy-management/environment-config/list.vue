@@ -157,11 +157,19 @@ function onCreate() {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <Grid :table-title="$t('deploy.packageDeployManagement.environmentConfig.title')">
+    <Grid
+      :table-title="
+        $t('deploy.packageDeployManagement.environmentConfig.title')
+      "
+    >
       <template #toolbar-tools>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
-          {{ $t('ui.actionTitle.create', [$t('deploy.packageDeployManagement.environmentConfig.title')]) }}
+          {{
+            $t('ui.actionTitle.create', [
+              $t('deploy.packageDeployManagement.environmentConfig.title'),
+            ])
+          }}
         </Button>
       </template>
     </Grid>

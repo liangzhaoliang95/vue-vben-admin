@@ -13,10 +13,6 @@ import {
 } from '#/api/package-deploy-management/branch-management';
 import { $t } from '#/locales';
 
-interface Props {
-  data?: Record<string, any>;
-}
-
 interface Emits {
   (e: 'success'): void;
 }
@@ -37,8 +33,13 @@ const formSchema = computed(() => [
           component: 'ApiSelect',
           componentProps: {
             api: async () => {
-              const { getBusinessLineList } = await import('#/api/system/business-line');
-              const res = await getBusinessLineList({ page: 1, pageSize: 1000 });
+              const { getBusinessLineList } = await import(
+                '#/api/system/business-line'
+              );
+              const res = await getBusinessLineList({
+                page: 1,
+                pageSize: 1000,
+              });
               return res.items || [];
             },
             fieldNames: { label: 'name', value: 'id' },
@@ -54,7 +55,9 @@ const formSchema = computed(() => [
   {
     component: 'Input',
     componentProps: {
-      placeholder: $t('deploy.packageDeployManagement.branchManagement.namePlaceholder'),
+      placeholder: $t(
+        'deploy.packageDeployManagement.branchManagement.namePlaceholder',
+      ),
     },
     fieldName: 'name',
     label: $t('deploy.packageDeployManagement.branchManagement.name'),
@@ -63,7 +66,9 @@ const formSchema = computed(() => [
   {
     component: 'Textarea',
     componentProps: {
-      placeholder: $t('deploy.packageDeployManagement.branchManagement.descriptionPlaceholder'),
+      placeholder: $t(
+        'deploy.packageDeployManagement.branchManagement.descriptionPlaceholder',
+      ),
       rows: 3,
     },
     fieldName: 'description',
@@ -115,8 +120,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const title = computed(() =>
   id.value
-    ? $t('ui.actionTitle.edit', [$t('deploy.packageDeployManagement.branchManagement.title')])
-    : $t('ui.actionTitle.create', [$t('deploy.packageDeployManagement.branchManagement.title')]),
+    ? $t('ui.actionTitle.edit', [
+        $t('deploy.packageDeployManagement.branchManagement.title'),
+      ])
+    : $t('ui.actionTitle.create', [
+        $t('deploy.packageDeployManagement.branchManagement.title'),
+      ]),
 );
 
 async function handleConfirm() {

@@ -1,9 +1,8 @@
+import { useAppConfig } from '@vben/hooks';
 /**
  * WebSocket 客户端工具
  */
 import { useAccessStore } from '@vben/stores';
-
-import { useAppConfig } from '@vben/hooks';
 
 const getApiURL = () => {
   const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
@@ -19,17 +18,24 @@ export interface WebSocketMessage {
 export type WebSocketMessageHandler = (message: WebSocketMessage) => void;
 
 export class WebSocketClient {
-  private ws: WebSocket | null = null;
-  private url: string = '';
+  /**
+   * 检查是否已连接
+   */
+  get connected(): boolean {
+    return this.isConnected && this.ws?.readyState === WebSocket.OPEN;
+  }
   private businessLineId: number;
-  private taskType: number;
-  private reconnectTimer: number | null = null;
-  private heartbeatTimer: number | null = null;
-  private messageHandlers: WebSocketMessageHandler[] = [];
+  private heartbeatTimer: null | number = null;
   private isConnected = false;
-  private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
+  private messageHandlers: WebSocketMessageHandler[] = [];
+  private reconnectAttempts = 0;
   private reconnectDelay = 3000;
+  private reconnectTimer: null | number = null;
+  private taskType: number;
+  private url: string = '';
+
+  private ws: null | WebSocket = null;
 
   constructor(businessLineId: number, taskType: number) {
     this.businessLineId = businessLineId;
@@ -49,7 +55,7 @@ export class WebSocketClient {
 
     // 构建 WebSocket URL
     const apiURL = getApiURL();
-    
+
     // 将 http/https URL 转换为 ws/wss URL
     let wsURL: string;
     if (apiURL.startsWith('http://')) {
@@ -63,12 +69,12 @@ export class WebSocketClient {
       const path = apiURL.startsWith('/') ? apiURL : `/${apiURL}`;
       wsURL = `${protocol}//${host}${path}`;
     }
-    
+
     // 确保路径不以 / 结尾
     if (wsURL.endsWith('/')) {
       wsURL = wsURL.slice(0, -1);
     }
-    
+
     // 构建完整的 WebSocket URL，通过 query 参数传递 token
     this.url = `${wsURL}/ws?businessLineId=${this.businessLineId}&taskType=${this.taskType}&token=${encodeURIComponent(token)}`;
 
@@ -76,15 +82,15 @@ export class WebSocketClient {
       try {
         this.ws = new WebSocket(this.url);
 
-        this.ws.onopen = () => {
-          console.log('WebSocket 连接成功');
+        this.ws.addEventListener('open', () => {
+          // console.warn('WebSocket 连接成功');
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.startHeartbeat();
           resolve();
-        };
+        });
 
-        this.ws.onmessage = (event) => {
+        this.ws.addEventListener('message', (event) => {
           try {
             const message = JSON.parse(event.data) as [string, number, any];
             const wsMessage: WebSocketMessage = {
@@ -94,7 +100,10 @@ export class WebSocketClient {
             };
 
             // 处理心跳响应
-            if (wsMessage.commandType === 'hearbeat' && wsMessage.commandId === 1) {
+            if (
+              wsMessage.commandType === 'hearbeat' &&
+              wsMessage.commandId === 1
+            ) {
               // 心跳响应，不需要处理
               return;
             }
@@ -110,19 +119,19 @@ export class WebSocketClient {
           } catch (error) {
             console.error('解析 WebSocket 消息失败:', error);
           }
-        };
+        });
 
-        this.ws.onerror = (error) => {
+        this.ws.addEventListener('error', (error) => {
           console.error('WebSocket 错误:', error);
           reject(error);
-        };
+        });
 
-        this.ws.onclose = () => {
-          console.log('WebSocket 连接关闭');
+        this.ws.addEventListener('close', () => {
+          // console.warn('WebSocket 连接关闭');
           this.isConnected = false;
           this.stopHeartbeat();
           this.attemptReconnect();
-        };
+        });
       } catch (error) {
         reject(error);
       }
@@ -145,6 +154,16 @@ export class WebSocketClient {
   }
 
   /**
+   * 移除消息处理器
+   */
+  offMessage(handler: WebSocketMessageHandler) {
+    const index = this.messageHandlers.indexOf(handler);
+    if (index !== -1) {
+      this.messageHandlers.splice(index, 1);
+    }
+  }
+
+  /**
    * 添加消息处理器
    */
   onMessage(handler: WebSocketMessageHandler) {
@@ -152,13 +171,24 @@ export class WebSocketClient {
   }
 
   /**
-   * 移除消息处理器
+   * 尝试重连
    */
-  offMessage(handler: WebSocketMessageHandler) {
-    const index = this.messageHandlers.indexOf(handler);
-    if (index > -1) {
-      this.messageHandlers.splice(index, 1);
+  private attemptReconnect() {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('WebSocket 重连次数已达上限');
+      return;
     }
+
+    this.reconnectAttempts++;
+    // console.warn(
+    //   `WebSocket 将在 ${this.reconnectDelay}ms 后尝试第 ${this.reconnectAttempts} 次重连`,
+    // );
+
+    this.reconnectTimer = window.setTimeout(() => {
+      this.connect().catch((error) => {
+        console.error('WebSocket 重连失败:', error);
+      });
+    }, this.reconnectDelay);
   }
 
   /**
@@ -183,7 +213,7 @@ export class WebSocketClient {
     // 每30秒发送一次心跳
     this.heartbeatTimer = window.setInterval(() => {
       this.sendHeartbeat();
-    }, 30000);
+    }, 30_000);
   }
 
   /**
@@ -195,33 +225,4 @@ export class WebSocketClient {
       this.heartbeatTimer = null;
     }
   }
-
-  /**
-   * 尝试重连
-   */
-  private attemptReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('WebSocket 重连次数已达上限');
-      return;
-    }
-
-    this.reconnectAttempts++;
-    console.log(
-      `WebSocket 将在 ${this.reconnectDelay}ms 后尝试第 ${this.reconnectAttempts} 次重连`,
-    );
-
-    this.reconnectTimer = window.setTimeout(() => {
-      this.connect().catch((error) => {
-        console.error('WebSocket 重连失败:', error);
-      });
-    }, this.reconnectDelay);
-  }
-
-  /**
-   * 检查是否已连接
-   */
-  get connected(): boolean {
-    return this.isConnected && this.ws?.readyState === WebSocket.OPEN;
-  }
 }
-

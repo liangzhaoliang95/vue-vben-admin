@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import {
   Button,
@@ -19,13 +19,17 @@ import { $t } from '#/locales';
 
 interface Props {
   projectId: string;
+  projectType?: string; // 项目类型: frontend/backend/submodule
 }
 
 const props = defineProps<Props>();
 
+// 判断是否为前端项目
+const isFrontendProject = computed(() => props.projectType === 'frontend');
+
 // 表单数据
 const formState = reactive({
-  deployType: 'k8s' as 'k8s' | 'oss', // 发布类型：k8s, oss
+  deployType: (isFrontendProject.value ? 'oss' : 'k8s') as 'k8s' | 'oss', // 发布类型：k8s, oss
   k8sType: 'deployment' as 'cronjob' | 'deployment', // K8s 资源类型：deployment, cronjob
   k8sName: '', // K8s 资源名称
   ossName: '', // OSS 名称
@@ -33,11 +37,15 @@ const formState = reactive({
 
 const loading = ref(false);
 
-// 发布类型选项
-const deployTypeOptions = [
-  { label: 'Kubernetes', value: 'k8s' },
-  { label: 'OSS', value: 'oss' },
-];
+// 发布类型选项(根据项目类型动态显示)
+const deployTypeOptions = computed(() => {
+  if (isFrontendProject.value) {
+    // 前端项目只支持 OSS 发布
+    return [{ label: 'OSS', value: 'oss' }];
+  }
+  // 后端项目只支持 K8s 发布
+  return [{ label: 'Kubernetes', value: 'k8s' }];
+});
 
 // K8s 资源类型选项
 const k8sTypeOptions = [

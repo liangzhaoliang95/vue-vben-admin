@@ -119,13 +119,19 @@ const projectTypeText = computed(() => {
           key="build"
           :tab="$t('deploy.projectManagement.projectConfig.buildConfig')"
         >
-          <BuildConfig :project-id="projectId" />
+          <BuildConfig
+            :project-id="projectId"
+            :project-type="projectInfo.type"
+          />
         </TabPane>
         <TabPane
           key="deploy"
           :tab="$t('deploy.projectManagement.projectConfig.deployConfig')"
         >
-          <DeployConfig :project-id="projectId" />
+          <DeployConfig
+            :project-id="projectId"
+            :project-type="projectInfo.type"
+          />
         </TabPane>
       </Tabs>
     </Card>

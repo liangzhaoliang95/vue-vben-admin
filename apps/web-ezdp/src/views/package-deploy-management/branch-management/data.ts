@@ -1,4 +1,5 @@
 import type { VbenFormSchema } from '@vben/common-ui';
+
 import type { OnActionClickFn, VxeGridProps } from '#/adapter/vxe-table';
 
 import { useBusinessStore } from '@vben/stores';
@@ -19,7 +20,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       component: 'ApiSelect',
       componentProps: {
         api: async () => {
-          const { getBusinessLineList } = await import('#/api/system/business-line');
+          const { getBusinessLineList } = await import(
+            '#/api/system/business-line'
+          );
           const res = await getBusinessLineList({ page: 1, pageSize: 1000 });
           return res.items || [];
         },
@@ -35,7 +38,9 @@ export function useGridFormSchema(): VbenFormSchema[] {
       fieldName: 'name',
       label: $t('deploy.packageDeployManagement.branchManagement.name'),
       componentProps: {
-        placeholder: $t('deploy.packageDeployManagement.branchManagement.namePlaceholder'),
+        placeholder: $t(
+          'deploy.packageDeployManagement.branchManagement.namePlaceholder',
+        ),
       },
     },
   ];
