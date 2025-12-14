@@ -13,7 +13,14 @@
     "namePlaceholder": "请输入场景名称",
     "descriptionPlaceholder": "请输入场景描述",
     "nameRequired": "场景名称不能为空",
-    "channelRequired": "请选择通知渠道"
+    "channelRequired": "请选择通知渠道",
+    "buildStart": "构建开始",
+    "buildCompleted": "构建完成",
+    "buildFailed": "构建异常",
+    "selectChannel": "请选择渠道",
+    "createSuccess": "创建场景配置成功",
+    "updateSuccess": "更新场景配置成功",
+    "saveFailed": "保存场景配置失败"
   },
   "channel": {
     "title": "渠道配置",

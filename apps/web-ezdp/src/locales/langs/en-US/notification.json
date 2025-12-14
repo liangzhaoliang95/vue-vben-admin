@@ -13,7 +13,14 @@
     "namePlaceholder": "Enter scenario name",
     "descriptionPlaceholder": "Enter description",
     "nameRequired": "Scenario name is required",
-    "channelRequired": "Please select a notification channel"
+    "channelRequired": "Please select a notification channel",
+    "buildStart": "Build Start",
+    "buildCompleted": "Build Completed",
+    "buildFailed": "Build Failed",
+    "selectChannel": "Select Channel",
+    "createSuccess": "Scenario created successfully",
+    "updateSuccess": "Scenario updated successfully",
+    "saveFailed": "Failed to save scenario"
   },
   "channel": {
     "title": "Channel Configuration",
