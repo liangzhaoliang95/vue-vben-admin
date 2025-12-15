@@ -63,5 +63,17 @@
     "setPermissions": "Permissions",
     "keyword": "Keyword",
     "noMenus": "No menu data"
+  },
+  "websocket": {
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "reconnecting": "Reconnecting",
+    "reconnectAttempt": "Reconnect attempt {count}",
+    "reconnectSuccess": "Reconnect successful",
+    "reconnectFailed": "Reconnect failed",
+    "connectionError": "Connection error",
+    "heartbeatTimeout": "Heartbeat timeout",
+    "noSubscribers": "No subscribers",
+    "reconnectIn": "Reconnecting in {delay}ms"
   }
 }

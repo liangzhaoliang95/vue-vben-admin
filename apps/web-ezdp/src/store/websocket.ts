@@ -38,10 +38,14 @@ interface WebSocketConnection {
   subscriptions: Set<string>; // 订阅者 ID 集合
   reconnectTimer: null | number;
   heartbeatTimer: null | number;
+  heartbeatTimeoutTimer: null | number; // 心跳超时检测定时器
   reconnectAttempts: number;
+  currentReconnectDelay: number; // 当前重连延迟时间
   isConnected: boolean;
+  isReconnecting: boolean; // 是否正在重连中
   keepAliveTimer: null | number; // 保持连接定时器（当没有订阅者时延迟断开）
   connectingPromise: null | Promise<void>; // 正在连接中的 Promise
+  lastHeartbeatTime: number; // 上次心跳时间
 }
 
 export const useWebSocketStore = defineStore('websocket', () => {
@@ -50,6 +54,12 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
   // 连接状态（独立的响应式状态，用于触发 UI 更新）
   const connectionStatus = ref(false);
+
+  // 重连状态（独立的响应式状态，用于触发 UI 更新）
+  const reconnectingStatus = ref(false);
+
+  // 重连次数（独立的响应式状态，用于触发 UI 更新）
+  const reconnectCount = ref(0);
 
   // 订阅者：key 为订阅者 ID
   const subscriptions = ref<Map<string, Subscription>>(new Map());
@@ -66,9 +76,12 @@ export const useWebSocketStore = defineStore('websocket', () => {
   // 日志缓存（按业务线ID存储）
   const logCaches = ref<Map<number, LogCache>>(new Map());
 
-  const maxReconnectAttempts = 5;
-  const reconnectDelay = 3000;
-  const heartbeatInterval = 30_000;
+  // 重连配置
+  const initialReconnectDelay = 3000; // 初始重连延迟 3秒
+  const maxReconnectDelay = 30_000; // 最大重连延迟 30秒
+  const reconnectDelayMultiplier = 2; // 重连延迟倍数
+  const heartbeatInterval = 30_000; // 心跳间隔 30秒
+  const heartbeatTimeout = 60_000; // 心跳超时时间 60秒
   const keepAliveDelay = 5 * 60 * 1000; // 5分钟，没有订阅者时保持连接的时间
 
   /**
@@ -118,11 +131,71 @@ export const useWebSocketStore = defineStore('websocket', () => {
       const heartbeatStr = JSON.stringify(heartbeat);
       // console.warn(`[WebSocket] 发送心跳: ${heartbeatStr}`);
       conn.ws.send(heartbeatStr);
+
+      // 记录心跳发送时间
+      conn.lastHeartbeatTime = Date.now();
+
+      // 启动心跳超时检测
+      startHeartbeatTimeout(conn);
     } else {
       console.warn(
         `[WebSocket] 无法发送心跳，连接状态: readyState=${conn.ws?.readyState}`,
       );
+      // 连接异常，触发重连
+      handleConnectionError(conn);
     }
+  }
+
+  /**
+   * 启动心跳超时检测
+   */
+  function startHeartbeatTimeout(conn: WebSocketConnection) {
+    // 清除旧的超时定时器
+    stopHeartbeatTimeout(conn);
+
+    // 设置新的超时定时器
+    conn.heartbeatTimeoutTimer = window.setTimeout(() => {
+      console.warn(
+        `[WebSocket] 心跳超时 (${heartbeatTimeout}ms)，主动断开连接并重连`,
+      );
+      // 心跳超时，主动关闭连接触发重连
+      handleConnectionError(conn);
+    }, heartbeatTimeout);
+  }
+
+  /**
+   * 停止心跳超时检测
+   */
+  function stopHeartbeatTimeout(conn: WebSocketConnection) {
+    if (conn.heartbeatTimeoutTimer) {
+      clearTimeout(conn.heartbeatTimeoutTimer);
+      conn.heartbeatTimeoutTimer = null;
+    }
+  }
+
+  /**
+   * 处理连接错误（主动触发重连）
+   */
+  function handleConnectionError(conn: WebSocketConnection) {
+    // 标记为未连接
+    conn.isConnected = false;
+    connectionStatus.value = false;
+
+    // 停止心跳
+    stopHeartbeat(conn);
+    stopHeartbeatTimeout(conn);
+
+    // 如果 WebSocket 还在连接状态，关闭它
+    if (conn.ws && conn.ws.readyState !== WebSocket.CLOSED) {
+      try {
+        conn.ws.close();
+      } catch (error) {
+        console.error('[WebSocket] 关闭连接失败:', error);
+      }
+    }
+
+    // 触发重连
+    attemptReconnect(conn);
   }
 
   /**
@@ -143,6 +216,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
       clearInterval(conn.heartbeatTimer);
       conn.heartbeatTimer = null;
     }
+    stopHeartbeatTimeout(conn);
   }
 
   /**
@@ -210,6 +284,8 @@ export const useWebSocketStore = defineStore('websocket', () => {
       // 处理心跳响应
       if (wsMessage.commandType === 'hearbeat' && wsMessage.commandId === 1) {
         // console.warn(`[WebSocket] 收到心跳响应:`, wsMessage.data);
+        // 收到心跳响应，取消超时检测
+        stopHeartbeatTimeout(conn);
         return;
       }
 
@@ -240,24 +316,54 @@ export const useWebSocketStore = defineStore('websocket', () => {
   }
 
   /**
-   * 尝试重连
+   * 尝试重连（无限重连，使用指数退避策略）
    */
   function attemptReconnect(conn: WebSocketConnection) {
-    if (conn.reconnectAttempts >= maxReconnectAttempts) {
-      console.error(`WebSocket 连接重连次数已达上限`);
+    // 如果没有订阅者，不需要重连
+    if (conn.subscriptions.size === 0) {
+      console.warn('[WebSocket] 没有订阅者，取消重连');
+      reconnectingStatus.value = false;
       return;
     }
 
-    conn.reconnectAttempts++;
-    // console.warn(
-    //   `WebSocket 连接将在 ${reconnectDelay}ms 后尝试第 ${conn.reconnectAttempts} 次重连`,
-    // );
+    // 如果已经在重连中，避免重复重连
+    if (conn.reconnectTimer) {
+      console.warn('[WebSocket] 已在重连中，跳过重复重连请求');
+      return;
+    }
 
+    // 增加重连次数
+    conn.reconnectAttempts++;
+    reconnectCount.value = conn.reconnectAttempts;
+
+    // 标记为正在重连
+    conn.isReconnecting = true;
+    reconnectingStatus.value = true;
+
+    // 计算当前重连延迟（指数退避）
+    conn.currentReconnectDelay = Math.min(
+      initialReconnectDelay * Math.pow(reconnectDelayMultiplier, conn.reconnectAttempts - 1),
+      maxReconnectDelay,
+    );
+
+    console.warn(
+      `[WebSocket] 将在 ${conn.currentReconnectDelay}ms 后尝试第 ${conn.reconnectAttempts} 次重连`,
+    );
+
+    // 设置重连定时器
     conn.reconnectTimer = window.setTimeout(() => {
+      conn.reconnectTimer = null;
+      console.warn(`[WebSocket] 开始第 ${conn.reconnectAttempts} 次重连...`);
+
       connect().catch((error) => {
-        console.error(`WebSocket 连接重连失败:`, error);
+        console.error(`[WebSocket] 第 ${conn.reconnectAttempts} 次重连失败:`, error);
+        // 重连失败，继续尝试下一次重连
+        const currentConn = connection.value;
+        if (currentConn) {
+          attemptReconnect(currentConn);
+        }
       });
-    }, reconnectDelay);
+    }, conn.currentReconnectDelay);
   }
 
   /**
@@ -381,10 +487,14 @@ export const useWebSocketStore = defineStore('websocket', () => {
       subscriptions: new Set(),
       reconnectTimer: null,
       heartbeatTimer: null,
+      heartbeatTimeoutTimer: null,
       reconnectAttempts: 0,
+      currentReconnectDelay: initialReconnectDelay,
       isConnected: false,
+      isReconnecting: false,
       keepAliveTimer: null,
       connectingPromise: connectPromise, // 立即设置 Promise 引用
+      lastHeartbeatTime: 0,
     };
 
     // 立即保存连接对象，这样其他调用可以立即检测到正在连接中
@@ -392,16 +502,22 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
     // 设置 WebSocket 事件处理器
     ws.addEventListener('open', () => {
-      // console.warn(`WebSocket 连接成功, readyState: ${ws.readyState}`);
+      console.warn(`[WebSocket] 连接成功, readyState: ${ws.readyState}`);
       conn.isConnected = true;
-      conn.reconnectAttempts = 0;
+      conn.isReconnecting = false;
       conn.connectingPromise = null; // 清除连接中的 Promise
+
+      // 重置重连相关状态
+      conn.reconnectAttempts = 0;
+      conn.currentReconnectDelay = initialReconnectDelay;
 
       // 清除正在连接标记
       isConnecting.value = false;
 
       // 更新连接状态（触发响应式更新）
       connectionStatus.value = true;
+      reconnectingStatus.value = false;
+      reconnectCount.value = 0;
 
       // 确保连接对象已保存
       connection.value = conn;
@@ -411,7 +527,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
         if (conn.ws && conn.ws.readyState === WebSocket.OPEN) {
           // 立即发送心跳确认连接可用
           sendHeartbeat(conn);
-          // console.warn(`WebSocket 连接已发送初始心跳`);
+          console.warn(`[WebSocket] 连接已发送初始心跳`);
 
           // 启动心跳定时器
           startHeartbeat(conn);
@@ -807,7 +923,9 @@ export const useWebSocketStore = defineStore('websocket', () => {
     subscribeBusinessLine,
     unsubscribeBusinessLine,
     currentBusinessLineId, // 暴露当前订阅的业务线ID
-    connectionStatus, // 暴露响应式状态，供组件直接使用
+    connectionStatus, // 暴露连接状态，供组件直接使用
+    reconnectingStatus, // 暴露重连状态，供组件直接使用
+    reconnectCount, // 暴露重连次数，供组件直接使用
     getCachedLogs, // 获取缓存的日志
     clearLogCache, // 清除日志缓存
   };
