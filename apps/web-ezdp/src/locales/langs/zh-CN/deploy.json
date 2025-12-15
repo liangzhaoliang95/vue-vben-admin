@@ -144,6 +144,32 @@
         "waitingForData": "等待日志数据..."
       }
     },
+    "deployHistory": {
+      "title": "发布历史",
+      "projectName": "项目名称",
+      "projectNamePlaceholder": "请输入项目名称",
+      "projectType": "项目类型",
+      "deployType": "发布类型",
+      "version": "版本号",
+      "status": "状态",
+      "environment": "环境",
+      "environmentPlaceholder": "请选择环境",
+      "startedAt": "开始时间",
+      "finishedAt": "结束时间",
+      "duration": "耗时",
+      "errorMessage": "错误信息",
+      "deployLogs": "发布日志",
+      "viewLogs": "查看日志",
+      "currentVersion": "当前版本",
+      "deployedAt": "发布时间",
+      "deployedBy": "发布人",
+      "noCurrentVersion": "未发布",
+      "type": {
+        "k8s": "K8s",
+        "oss": "OSS",
+        "obs": "OBS"
+      }
+    },
     "branchManagement": {
       "title": "分支管理",
       "name": "分支名称",

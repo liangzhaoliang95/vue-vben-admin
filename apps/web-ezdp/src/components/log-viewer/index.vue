@@ -24,10 +24,12 @@ import 'xterm/css/xterm.css';
 interface Props {
   subscriptionId: string;
   title?: string;
+  taskType?: 1 | 2; // 1=构建日志, 2=部署日志
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: '实时日志',
+  taskType: 1,
 });
 
 const emit = defineEmits<{
@@ -72,7 +74,9 @@ onMounted(async () => {
   // 创建终端实例
   terminal = new Terminal({
     fontSize: 14,
-    fontFamily: 'Consolas, "Courier New", monospace',
+    fontFamily: '"SF Mono", Monaco, Menlo, "Roboto Mono", "Source Code Pro", "Courier New", monospace',
+    fontWeight: '500',
+    fontWeightBold: '700',
     cursorBlink: true,
     cursorStyle: 'block',
     scrollback: 10_000, // 保留更多历史记录
@@ -186,6 +190,13 @@ onBeforeUnmount(() => {
 // 渲染日志消息到终端
 function renderLogMessage(message: WebSocketMessage) {
   if (!terminal) return;
+
+  // 根据 taskType 过滤消息：只显示对应 commandId 的日志
+  // taskType=1 时只显示 commandId=1 的消息（构建日志）
+  // taskType=2 时只显示 commandId=2 的消息（部署日志）
+  if (message.commandId !== props.taskType) {
+    return;
+  }
 
   if (message.commandType === 'log') {
     const content = message.data?.content || '';

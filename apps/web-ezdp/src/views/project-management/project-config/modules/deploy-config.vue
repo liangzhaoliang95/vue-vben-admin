@@ -32,10 +32,37 @@ const formState = reactive({
   deployType: (isFrontendProject.value ? 'oss' : 'k8s') as 'k8s' | 'oss', // 发布类型：k8s, oss
   k8sType: 'deployment' as 'cronjob' | 'deployment', // K8s 资源类型：deployment, cronjob
   k8sName: '', // K8s 资源名称
+  containerName: 'main', // K8s 容器名称（默认为main）
   ossName: '', // OSS 名称
 });
 
 const loading = ref(false);
+const formRef = ref();
+
+// 表单验证规则
+const rules: Record<string, any> = {
+  k8sName: [
+    {
+      required: true,
+      message: '请输入资源名称',
+      trigger: 'blur',
+    },
+  ],
+  containerName: [
+    {
+      required: true,
+      message: '请输入容器名称',
+      trigger: 'blur',
+    },
+  ],
+  ossName: [
+    {
+      required: true,
+      message: '请输入OSS名称',
+      trigger: 'blur',
+    },
+  ],
+};
 
 // 发布类型选项(根据项目类型动态显示)
 const deployTypeOptions = computed(() => {
@@ -56,6 +83,9 @@ const k8sTypeOptions = [
 // 保存配置
 async function handleSave() {
   try {
+    // 表单验证
+    await formRef.value?.validate();
+
     loading.value = true;
     const data: any = {
       projectConfigId: props.projectId,
@@ -64,14 +94,20 @@ async function handleSave() {
 
     if (formState.deployType === 'k8s') {
       data.k8sType = formState.k8sType;
-      data.k8sName = formState.k8sName || undefined;
+      data.k8sName = formState.k8sName;
+      data.containerName = formState.containerName;
     } else {
-      data.ossName = formState.ossName || undefined;
+      data.ossName = formState.ossName;
     }
 
     await createOrUpdateDeployConfig(data);
     message.success($t('ui.successMessage.save'));
-  } catch (error) {
+  } catch (error: any) {
+    // 如果是表单验证错误，不显示错误消息（Ant Design已经显示了）
+    if (error?.errorFields) {
+      console.log('表单验证失败:', error);
+      return;
+    }
     console.error('保存配置失败:', error);
     message.error($t('ui.errorMessage.save'));
   } finally {
@@ -88,6 +124,7 @@ async function loadConfig() {
       formState.deployType = config.deployType;
       formState.k8sType = config.k8sType || 'deployment';
       formState.k8sName = config.k8sName || '';
+      formState.containerName = config.containerName || 'main';
       formState.ossName = config.ossName || '';
     }
   } catch (error) {
@@ -106,7 +143,9 @@ onMounted(() => {
 <template>
   <div class="deploy-config">
     <Form
+      ref="formRef"
       :model="formState"
+      :rules="rules"
       :label-col="{ span: 6 }"
       :wrapper-col="{ span: 18 }"
       class="max-w-3xl"
@@ -148,6 +187,16 @@ onMounted(() => {
             v-model:value="formState.k8sName"
             placeholder="例如: myapp-deployment 或 myapp-cronjob"
           />
+        </FormItem>
+
+        <FormItem label="容器名称" name="containerName">
+          <Input
+            v-model:value="formState.containerName"
+            placeholder="K8s容器名称（默认为main）"
+          />
+          <div class="text-gray-500 text-xs mt-1">
+            容器名称用于kubectl更新镜像时指定，如不确定请保持默认值main
+          </div>
         </FormItem>
       </template>
 

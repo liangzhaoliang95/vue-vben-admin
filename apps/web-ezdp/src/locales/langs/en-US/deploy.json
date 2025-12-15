@@ -144,6 +144,32 @@
         "waitingForData": "Waiting for log data..."
       }
     },
+    "deployHistory": {
+      "title": "Deploy History",
+      "projectName": "Project Name",
+      "projectNamePlaceholder": "Enter project name",
+      "projectType": "Project Type",
+      "deployType": "Deploy Type",
+      "version": "Version",
+      "status": "Status",
+      "environment": "Environment",
+      "environmentPlaceholder": "Select environment",
+      "startedAt": "Start Time",
+      "finishedAt": "Finish Time",
+      "duration": "Duration",
+      "errorMessage": "Error Message",
+      "deployLogs": "Deploy Logs",
+      "viewLogs": "View Logs",
+      "currentVersion": "Current Version",
+      "deployedAt": "Deployed At",
+      "deployedBy": "Deployed By",
+      "noCurrentVersion": "Not Deployed",
+      "type": {
+        "k8s": "K8s",
+        "oss": "OSS",
+        "obs": "OBS"
+      }
+    },
     "branchManagement": {
       "title": "Branch Management",
       "name": "Branch Name",

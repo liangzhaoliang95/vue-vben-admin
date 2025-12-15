@@ -19,6 +19,7 @@ import {
 } from 'ant-design-vue';
 
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
+import { deployByTask, deployByVersion } from '#/api/package-deploy-management/deploy';
 import {
   getBuildTaskList,
   startBuildTask,
@@ -51,6 +52,7 @@ const activeKeys = ref<string[]>([]); // 展开的版本面板
 const showLogViewer = ref(false);
 const logViewerSubscriptionId = ref<string>('');
 const logViewerTitle = ref('');
+const logViewerTaskType = ref<1 | 2>(1); // 当前日志类型: 1=构建, 2=部署
 
 // 组件是否已激活的标记
 const isComponentActive = ref(true);
@@ -285,6 +287,106 @@ async function handleBuild() {
   }
 }
 
+// 部署版本
+async function handleDeployVersion(version: any) {
+  if (!selectedEnvironmentId.value) {
+    message.warning($t('deploy.packageDeployManagement.projectPackage.selectEnvironmentFirst'));
+    return;
+  }
+
+  const environment = deployEnvironments.value.find(
+    (env) => env.id === selectedEnvironmentId.value,
+  );
+  const environmentName = environment?.name || '';
+
+  try {
+    await confirm(
+      $t('deploy.packageDeployManagement.projectPackage.deployConfirm', [environmentName]),
+      $t('deploy.packageDeployManagement.projectPackage.deploy'),
+    );
+
+    message.loading({
+      content: $t('deploy.packageDeployManagement.projectPackage.deploying'),
+      duration: 0,
+      key: 'deploying',
+    });
+
+    await deployByVersion({
+      buildVersionId: version.id,
+      deployEnvironmentId: selectedEnvironmentId.value,
+    });
+
+    message.destroy('deploying');
+    message.success($t('deploy.packageDeployManagement.projectPackage.deploySuccess'));
+
+    // 打开实时日志（部署日志使用 taskType=2）
+    openLogViewer(2);
+
+    // 延迟刷新列表
+    setTimeout(() => {
+      if (isComponentActive.value) {
+        loadVersionList();
+      }
+    }, 2000);
+  } catch (error) {
+    message.destroy('deploying');
+    if (error instanceof Error && error.message !== '已取消') {
+      console.error('发布失败:', error);
+      message.error('发布失败');
+    }
+  }
+}
+
+// 部署单个项目
+async function handleDeployProject(project: any) {
+  if (!selectedEnvironmentId.value) {
+    message.warning($t('deploy.packageDeployManagement.projectPackage.selectEnvironmentFirst'));
+    return;
+  }
+
+  const environment = deployEnvironments.value.find(
+    (env) => env.id === selectedEnvironmentId.value,
+  );
+  const environmentName = environment?.name || '';
+
+  try {
+    await confirm(
+      $t('deploy.packageDeployManagement.projectPackage.deployConfirm', [environmentName]),
+      $t('deploy.packageDeployManagement.projectPackage.deploy'),
+    );
+
+    message.loading({
+      content: $t('deploy.packageDeployManagement.projectPackage.deploying'),
+      duration: 0,
+      key: 'deploying',
+    });
+
+    await deployByTask({
+      buildTaskId: project.id,
+      deployEnvironmentId: selectedEnvironmentId.value,
+    });
+
+    message.destroy('deploying');
+    message.success($t('deploy.packageDeployManagement.projectPackage.deploySuccess'));
+
+    // 打开实时日志（部署日志使用 taskType=2）
+    openLogViewer(2);
+
+    // 延迟刷新列表
+    setTimeout(() => {
+      if (isComponentActive.value) {
+        loadVersionList();
+      }
+    }, 2000);
+  } catch (error) {
+    message.destroy('deploying');
+    if (error instanceof Error && error.message !== '已取消') {
+      console.error('发布失败:', error);
+      message.error('发布失败');
+    }
+  }
+}
+
 // 打开实时日志
 function openLogViewer(taskType: 1 | 2) {
   // 生成唯一的订阅 ID
@@ -292,6 +394,7 @@ function openLogViewer(taskType: 1 | 2) {
 
   // 设置日志查看器参数
   logViewerSubscriptionId.value = subscriptionId;
+  logViewerTaskType.value = taskType; // 保存任务类型
 
   // 设置标题
   logViewerTitle.value =
@@ -623,8 +726,14 @@ onDeactivated(() => {
                   </span>
                 </div>
 
-                <Button type="primary" size="small" disabled>
-                  发布 (待实现)
+                <Button
+                  danger
+                  type="primary"
+                  size="large"
+                  :disabled="version.status !== 'success'"
+                  @click="handleDeployVersion(version)"
+                >
+                  🚀 {{ $t('deploy.packageDeployManagement.projectPackage.deploy') }}
                 </Button>
               </div>
             </template>
@@ -660,8 +769,13 @@ onDeactivated(() => {
                   }}
                 </Tag>
                 <div></div>
-                <Button type="primary" size="small" disabled>
-                  发布 (待实现)
+                <Button
+                  type="primary"
+                  size="small"
+                  :disabled="project.status !== 'success'"
+                  @click="handleDeployProject(project)"
+                >
+                  {{ $t('deploy.packageDeployManagement.projectPackage.deploy') }}
                 </Button>
               </div>
             </div>
@@ -678,6 +792,7 @@ onDeactivated(() => {
             v-if="logViewerSubscriptionId"
             :subscription-id="logViewerSubscriptionId"
             :title="logViewerTitle"
+            :task-type="logViewerTaskType"
             @close="closeLogViewer"
           />
         </div>
