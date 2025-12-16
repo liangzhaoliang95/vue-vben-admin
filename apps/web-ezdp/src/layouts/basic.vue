@@ -81,7 +81,6 @@ async function loadNotifications() {
 
     // 转换为 NotificationItem 格式
     notifications.value = res.items.map((item) => ({
-      avatar: preferences.app.defaultAvatar,
       date: formatTime(item.createdAt),
       isRead: item.isRead,
       message: item.content,
