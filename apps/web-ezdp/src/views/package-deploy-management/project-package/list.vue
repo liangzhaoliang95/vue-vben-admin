@@ -91,6 +91,7 @@ async function loadAllBranches() {
         page: 1,
         pageSize: 1000,
         businessLineId,
+        onlyEnabled: true, // 只查询启用的分支
       });
       allBranchesMap.value.set(businessLineId, res.items || []);
     } catch (error) {
