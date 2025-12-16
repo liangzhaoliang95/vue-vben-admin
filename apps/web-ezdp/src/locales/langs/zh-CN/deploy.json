@@ -96,6 +96,38 @@
   },
   "packageDeployManagement": {
     "title": "打包发布管理",
+    "projectDeploy": {
+      "title": "项目发布",
+      "branch": "分支",
+      "branchPlaceholder": "请选择分支",
+      "version": "版本号",
+      "projectType": "项目类型",
+      "deployEnvironment": "发布环境",
+      "deployEnvironmentPlaceholder": "请选择发布环境",
+      "deploy": "发布",
+      "deployConfirm": "确定要发布该版本到【{0}】环境吗？",
+      "deploying": "正在发布...",
+      "deploySuccess": "发布成功",
+      "selectEnvironmentFirst": "请先选择发布环境",
+      "realtimeLog": "实时日志",
+      "buildLog": "打包日志",
+      "deployLog": "发布日志",
+      "selectBusinessLineFirst": "请先选择业务线",
+      "status": {
+        "label": "状态",
+        "pending": "待处理",
+        "building": "构建中",
+        "running": "运行中",
+        "success": "成功",
+        "failed": "失败",
+        "skipped": "已跳过"
+      },
+      "versionStatus": {
+        "building": "构建中",
+        "success": "成功",
+        "failed": "失败"
+      }
+    },
     "projectPackage": {
       "title": "项目打包",
       "branch": "分支",

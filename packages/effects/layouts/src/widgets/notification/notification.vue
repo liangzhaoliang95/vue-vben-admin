@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { NotificationItem } from './types';
 
-import { Bell, MailCheck } from '@vben/icons';
+import { Bell, MailCheck, RotateCw } from '@vben/icons';
 import { $t } from '@vben/locales';
 
 import {
@@ -12,6 +12,7 @@ import {
 } from '@vben-core/shadcn-ui';
 
 import { useToggle } from '@vueuse/core';
+import { ref, watch } from 'vue';
 
 interface Props {
   /**
@@ -35,10 +36,19 @@ const emit = defineEmits<{
   clear: [];
   makeAll: [];
   read: [NotificationItem];
+  refresh: [];
   viewAll: [];
 }>();
 
 const [open, toggle] = useToggle();
+const refreshing = ref(false);
+
+// 监听弹窗打开，自动刷新
+watch(open, (newValue) => {
+  if (newValue) {
+    handleRefresh();
+  }
+});
 
 function close() {
   open.value = false;
@@ -46,7 +56,7 @@ function close() {
 
 function handleViewAll() {
   emit('viewAll');
-  close();
+  // 不关闭弹窗，让用户可以继续查看通知
 }
 
 function handleMakeAll() {
@@ -55,6 +65,15 @@ function handleMakeAll() {
 
 function handleClear() {
   emit('clear');
+}
+
+async function handleRefresh() {
+  refreshing.value = true;
+  emit('refresh');
+  // 给用户一个视觉反馈
+  setTimeout(() => {
+    refreshing.value = false;
+  }, 500);
 }
 
 function handleClick(item: NotificationItem) {
@@ -81,13 +100,22 @@ function handleClick(item: NotificationItem) {
     <div class="relative">
       <div class="flex items-center justify-between p-4 py-3">
         <div class="text-foreground">{{ $t('ui.widgets.notifications') }}</div>
-        <VbenIconButton
-          :disabled="notifications.length <= 0"
-          :tooltip="$t('ui.widgets.markAllAsRead')"
-          @click="handleMakeAll"
-        >
-          <MailCheck class="size-4" />
-        </VbenIconButton>
+        <div class="flex items-center gap-2">
+          <VbenIconButton
+            :class="{ 'animate-spin': refreshing }"
+            :tooltip="$t('ui.widgets.refresh')"
+            @click="handleRefresh"
+          >
+            <RotateCw class="size-4" />
+          </VbenIconButton>
+          <VbenIconButton
+            :disabled="notifications.length <= 0"
+            :tooltip="$t('ui.widgets.markAllAsRead')"
+            @click="handleMakeAll"
+          >
+            <MailCheck class="size-4" />
+          </VbenIconButton>
+        </div>
       </div>
       <VbenScrollbar v-if="notifications.length > 0">
         <ul class="!flex max-h-[360px] w-full flex-col">

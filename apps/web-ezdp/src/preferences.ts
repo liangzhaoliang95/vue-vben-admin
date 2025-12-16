@@ -14,6 +14,7 @@ export const overridesPreferences = defineOverridesPreferences({
     watermark: false,
     watermarkContent: 'EZDP',
     accessMode: 'backend',
+    defaultHomePath: '/package-deploy-management/project-deploy',
   },
   logo: {
     enable: true,

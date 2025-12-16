@@ -96,6 +96,38 @@
   },
   "packageDeployManagement": {
     "title": "Package & Deploy Management",
+    "projectDeploy": {
+      "title": "Project Deploy",
+      "branch": "Branch",
+      "branchPlaceholder": "Please select branch",
+      "version": "Version",
+      "projectType": "Project Type",
+      "deployEnvironment": "Deploy Environment",
+      "deployEnvironmentPlaceholder": "Please select deploy environment",
+      "deploy": "Deploy",
+      "deployConfirm": "Are you sure to deploy this version to [{0}] environment?",
+      "deploying": "Deploying...",
+      "deploySuccess": "Deploy successfully",
+      "selectEnvironmentFirst": "Please select deploy environment first",
+      "realtimeLog": "Realtime Log",
+      "buildLog": "Build Log",
+      "deployLog": "Deploy Log",
+      "selectBusinessLineFirst": "Please select business line first",
+      "status": {
+        "label": "Status",
+        "pending": "Pending",
+        "building": "Building",
+        "running": "Running",
+        "success": "Success",
+        "failed": "Failed",
+        "skipped": "Skipped"
+      },
+      "versionStatus": {
+        "building": "Building",
+        "success": "Success",
+        "failed": "Failed"
+      }
+    },
     "projectPackage": {
       "title": "Project Package",
       "branch": "Branch",

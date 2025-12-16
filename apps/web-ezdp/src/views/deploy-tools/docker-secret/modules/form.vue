@@ -141,7 +141,7 @@ async function handleConfirm() {
     drawerApi.close();
   } catch (error: any) {
     console.error('保存失败:', error);
-    message.error(error?.message || '保存失败');
+    // 全局错误拦截器已经处理了错误提示，这里不需要再次显示
     drawerApi.unlock();
   }
 }

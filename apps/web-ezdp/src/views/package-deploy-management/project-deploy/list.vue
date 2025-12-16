@@ -19,10 +19,11 @@ import {
 } from 'ant-design-vue';
 
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
+import { deployByTask, deployByVersion } from '#/api/package-deploy-management/deploy';
 import {
   getBuildTaskList,
-  startBuildTask,
 } from '#/api/package-deploy-management/project-package';
+import { getDeployEnvironmentList } from '#/api/project-management/deploy-environment';
 import LogViewer from '#/components/log-viewer/index.vue';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
@@ -33,6 +34,10 @@ const wsStore = useWebSocketStore();
 // 筛选条件
 const selectedBusinessLineId = ref<number | undefined>();
 const selectedBranchId = ref<string | undefined>();
+
+// 发布环境列表
+const deployEnvironments = ref<any[]>([]);
+const selectedEnvironmentId = ref<string>();
 
 // 所有分支数据（按业务线分组）
 const allBranchesMap = ref<Map<number, any[]>>(new Map());
@@ -46,7 +51,7 @@ const activeKeys = ref<string[]>([]); // 展开的版本面板
 const showLogViewer = ref(false);
 const logViewerSubscriptionId = ref<string>('');
 const logViewerTitle = ref('');
-const logViewerTaskType = ref<1 | 2>(1); // 当前日志类型: 1=构建, 2=部署
+const logViewerTaskType = ref<1 | 2>(2); // 当前日志类型: 1=构建, 2=部署
 
 // 组件是否已激活的标记
 const isComponentActive = ref(true);
@@ -75,6 +80,32 @@ const currentBranchOptions = computed(() => {
     value: item.id,
   }));
 });
+
+// 发布环境选项
+const environmentOptions = computed(() => {
+  return deployEnvironments.value.map((env) => ({
+    label: env.name,
+    value: env.id,
+  }));
+});
+
+// 加载发布环境列表
+async function loadDeployEnvironments() {
+  try {
+    const res = await getDeployEnvironmentList({
+      page: 1,
+      pageSize: 1000,
+    });
+    deployEnvironments.value = res.items || [];
+
+    // 默认选择第一个环境
+    if (deployEnvironments.value.length > 0 && !selectedEnvironmentId.value) {
+      selectedEnvironmentId.value = deployEnvironments.value[0].id;
+    }
+  } catch (error) {
+    console.error('加载发布环境失败:', error);
+  }
+}
 
 // 加载所有业务线的分支数据
 async function loadAllBranches() {
@@ -137,6 +168,9 @@ async function loadVersionList() {
 
 // 初始化
 async function init() {
+  // 加载发布环境
+  await loadDeployEnvironments();
+
   // 设置默认业务线
   if (isSuperAdmin.value) {
     const businessLines = businessStore.businessLines;
@@ -182,6 +216,11 @@ async function handleBranchChange() {
   await loadVersionList();
 }
 
+// 环境变化处理
+function handleEnvironmentChange(_newId: string) {
+  // 预留用于未来功能
+}
+
 // 刷新
 async function handleRefresh() {
   if (!selectedBranchId.value) {
@@ -208,41 +247,102 @@ function confirm(content: string, title: string) {
   });
 }
 
-// 开始构建
-async function handleBuild() {
-  if (!selectedBranchId.value) {
-    message.warning('请先选择分支');
+// 部署版本
+async function handleDeployVersion(version: any) {
+  if (!selectedEnvironmentId.value) {
+    message.warning($t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'));
     return;
   }
 
+  const environment = deployEnvironments.value.find(
+    (env) => env.id === selectedEnvironmentId.value,
+  );
+  const environmentName = environment?.name || '';
+
   try {
-    await confirm('确定要开始构建吗？构建过程可能需要几分钟时间。', '开始构建');
+    await confirm(
+      $t('deploy.packageDeployManagement.projectDeploy.deployConfirm', [environmentName]),
+      $t('deploy.packageDeployManagement.projectDeploy.deploy'),
+    );
 
-    const queryParams: any = {
-      branchId: selectedBranchId.value,
-    };
+    message.loading({
+      content: $t('deploy.packageDeployManagement.projectDeploy.deploying'),
+      duration: 0,
+      key: 'deploying',
+    });
 
-    // 超级管理员可以传业务线ID
-    if (isSuperAdmin.value && selectedBusinessLineId.value) {
-      queryParams.businessLineId = selectedBusinessLineId.value;
-    }
+    await deployByVersion({
+      buildVersionId: version.id,
+      deployEnvironmentId: selectedEnvironmentId.value,
+    });
 
-    await startBuildTask(queryParams);
-    message.success('构建任务已启动，请查看实时日志');
+    message.destroy('deploying');
+    message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
 
-    // 打开实时日志
-    openLogViewer(1);
+    // 打开实时日志（部署日志使用 taskType=2）
+    openLogViewer(2);
 
-    // 延迟刷新列表 - 检查组件是否仍然激活
+    // 延迟刷新列表
     setTimeout(() => {
       if (isComponentActive.value) {
         loadVersionList();
       }
     }, 2000);
   } catch (error) {
+    message.destroy('deploying');
     if (error instanceof Error && error.message !== '已取消') {
-      console.error('启动构建失败:', error);
-      message.error('启动构建失败');
+      console.error('发布失败:', error);
+      message.error('发布失败');
+    }
+  }
+}
+
+// 部署单个项目
+async function handleDeployProject(project: any) {
+  if (!selectedEnvironmentId.value) {
+    message.warning($t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'));
+    return;
+  }
+
+  const environment = deployEnvironments.value.find(
+    (env) => env.id === selectedEnvironmentId.value,
+  );
+  const environmentName = environment?.name || '';
+
+  try {
+    await confirm(
+      $t('deploy.packageDeployManagement.projectDeploy.deployConfirm', [environmentName]),
+      $t('deploy.packageDeployManagement.projectDeploy.deploy'),
+    );
+
+    message.loading({
+      content: $t('deploy.packageDeployManagement.projectDeploy.deploying'),
+      duration: 0,
+      key: 'deploying',
+    });
+
+    await deployByTask({
+      buildTaskId: project.id,
+      deployEnvironmentId: selectedEnvironmentId.value,
+    });
+
+    message.destroy('deploying');
+    message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
+
+    // 打开实时日志（部署日志使用 taskType=2）
+    openLogViewer(2);
+
+    // 延迟刷新列表
+    setTimeout(() => {
+      if (isComponentActive.value) {
+        loadVersionList();
+      }
+    }, 2000);
+  } catch (error) {
+    message.destroy('deploying');
+    if (error instanceof Error && error.message !== '已取消') {
+      console.error('发布失败:', error);
+      message.error('发布失败');
     }
   }
 }
@@ -259,8 +359,8 @@ function openLogViewer(taskType: 1 | 2) {
   // 设置标题
   logViewerTitle.value =
     taskType === 1
-      ? $t('deploy.packageDeployManagement.projectPackage.buildLog')
-      : $t('deploy.packageDeployManagement.projectPackage.deployLog');
+      ? $t('deploy.packageDeployManagement.projectDeploy.buildLog')
+      : $t('deploy.packageDeployManagement.projectDeploy.deployLog');
 
   // 显示日志查看器
   showLogViewer.value = true;
@@ -338,27 +438,27 @@ function getStatusConfig(status: string) {
   const statusConfig: Record<string, { color: string; text: string }> = {
     pending: {
       color: 'default',
-      text: $t('deploy.packageDeployManagement.projectPackage.status.pending'),
+      text: $t('deploy.packageDeployManagement.projectDeploy.status.pending'),
     },
     building: {
       color: 'processing',
-      text: $t('deploy.packageDeployManagement.projectPackage.status.building'),
+      text: $t('deploy.packageDeployManagement.projectDeploy.status.building'),
     },
     running: {
       color: 'processing',
-      text: $t('deploy.packageDeployManagement.projectPackage.status.running'),
+      text: $t('deploy.packageDeployManagement.projectDeploy.status.running'),
     },
     success: {
       color: 'success',
-      text: $t('deploy.packageDeployManagement.projectPackage.status.success'),
+      text: $t('deploy.packageDeployManagement.projectDeploy.status.success'),
     },
     failed: {
       color: 'error',
-      text: $t('deploy.packageDeployManagement.projectPackage.status.failed'),
+      text: $t('deploy.packageDeployManagement.projectDeploy.status.failed'),
     },
     skipped: {
       color: 'warning',
-      text: $t('deploy.packageDeployManagement.projectPackage.status.skipped'),
+      text: $t('deploy.packageDeployManagement.projectDeploy.status.skipped'),
     },
   };
   return statusConfig[status] || statusConfig.pending;
@@ -370,19 +470,19 @@ function getVersionStatusConfig(status: string) {
     building: {
       color: 'processing',
       text: $t(
-        'deploy.packageDeployManagement.projectPackage.versionStatus.building',
+        'deploy.packageDeployManagement.projectDeploy.versionStatus.building',
       ),
     },
     success: {
       color: 'success',
       text: $t(
-        'deploy.packageDeployManagement.projectPackage.versionStatus.success',
+        'deploy.packageDeployManagement.projectDeploy.versionStatus.success',
       ),
     },
     failed: {
       color: 'error',
       text: $t(
-        'deploy.packageDeployManagement.projectPackage.versionStatus.failed',
+        'deploy.packageDeployManagement.projectDeploy.versionStatus.failed',
       ),
     },
   };
@@ -415,7 +515,7 @@ onActivated(async () => {
     await init();
 
     // 订阅 WebSocket 事件消息（用于接收构建完成等事件）
-    await wsStore.subscribe('build-event-listener', handleWebSocketMessage);
+    await wsStore.subscribe('deploy-event-listener', handleWebSocketMessage);
   } catch (error) {
     console.error('onActivated 初始化失败:', error);
   }
@@ -439,7 +539,7 @@ onDeactivated(() => {
     }
 
     // 取消构建事件监听
-    wsStore.unsubscribe('build-event-listener');
+    wsStore.unsubscribe('deploy-event-listener');
 
     // 注意：不要调用 unsubscribeBusinessLine()
     // WebSocket 连接是全局共享的，其他页面可能还在使用
@@ -477,18 +577,40 @@ onDeactivated(() => {
           <!-- 分支筛选 -->
           <div class="flex items-center gap-2">
             <span class="filter-label">
-              {{ $t('deploy.packageDeployManagement.projectPackage.branch') }}:
+              {{ $t('deploy.packageDeployManagement.projectDeploy.branch') }}:
             </span>
             <Select
               v-model:value="selectedBranchId"
               :options="currentBranchOptions"
               :placeholder="
                 $t(
-                  'deploy.packageDeployManagement.projectPackage.branchPlaceholder',
+                  'deploy.packageDeployManagement.projectDeploy.branchPlaceholder',
                 )
               "
               class="w-48"
               @change="handleBranchChange"
+            />
+          </div>
+
+          <!-- 发布环境选择 -->
+          <div class="flex items-center gap-2">
+            <span class="filter-label">
+              {{
+                $t(
+                  'deploy.packageDeployManagement.projectDeploy.deployEnvironment',
+                )
+              }}:
+            </span>
+            <Select
+              v-model:value="selectedEnvironmentId"
+              :options="environmentOptions"
+              :placeholder="
+                $t(
+                  'deploy.packageDeployManagement.projectDeploy.deployEnvironmentPlaceholder',
+                )
+              "
+              class="w-48"
+              @change="handleEnvironmentChange"
             />
           </div>
         </div>
@@ -496,10 +618,9 @@ onDeactivated(() => {
         <!-- 操作按钮组 -->
         <div class="flex flex-shrink-0 items-center gap-3">
           <Button @click="handleRefresh">刷新</Button>
-          <Button type="primary" @click="handleBuild">开始构建</Button>
-          <Button @click="openLogViewer(1)">
+          <Button @click="openLogViewer(2)">
             {{
-              $t('deploy.packageDeployManagement.projectPackage.realtimeLog')
+              $t('deploy.packageDeployManagement.projectDeploy.realtimeLog')
             }}
           </Button>
         </div>
@@ -554,6 +675,16 @@ onDeactivated(() => {
                     {{ formatTime(version.buildTime) }}
                   </span>
                 </div>
+
+                <Button
+                  danger
+                  type="primary"
+                  size="large"
+                  :disabled="version.status !== 'success'"
+                  @click="handleDeployVersion(version)"
+                >
+                  🚀 {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
+                </Button>
               </div>
             </template>
 
@@ -587,6 +718,15 @@ onDeactivated(() => {
                       .text
                   }}
                 </Tag>
+                <div></div>
+                <Button
+                  type="primary"
+                  size="small"
+                  :disabled="project.status !== 'success'"
+                  @click="handleDeployProject(project)"
+                >
+                  {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
+                </Button>
               </div>
             </div>
           </CollapsePanel>
@@ -764,7 +904,7 @@ onDeactivated(() => {
 .project-item {
   position: relative;
   display: grid;
-  grid-template-columns: 200px 90px 100px 110px;
+  grid-template-columns: 200px 90px 100px 110px 1fr 80px;
   column-gap: 16px;
   align-items: center;
   padding: 16px 20px;
@@ -884,5 +1024,13 @@ onDeactivated(() => {
   font-size: 14px;
   line-height: 20px;
   text-align: center;
+}
+
+/* 发布按钮样式 */
+.project-item :deep(.ant-btn-sm) {
+  justify-self: end;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 13px;
 }
 </style>

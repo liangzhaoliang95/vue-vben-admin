@@ -127,6 +127,12 @@ async function handleMakeAll() {
   }
 }
 
+// 查看所有通知（跳转到通知中心）
+function handleViewAll() {
+  // TODO: 如果有通知中心页面，在这里跳转
+  console.log('跳转到通知中心');
+}
+
 // 组件挂载时加载通知
 onMounted(() => {
   loadNotifications();
@@ -171,6 +177,8 @@ watch(
         :notifications="notifications"
         @clear="handleNoticeClear"
         @make-all="handleMakeAll"
+        @refresh="loadNotifications"
+        @view-all="handleViewAll"
       />
     </template>
     <template #extra>
