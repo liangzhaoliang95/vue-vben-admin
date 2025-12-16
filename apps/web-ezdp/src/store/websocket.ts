@@ -458,10 +458,21 @@ export const useWebSocketStore = defineStore('websocket', () => {
       }
     }
 
-    // 如果连接存在但未连接且不在连接中，先清理
+    // 如果连接存在但未连接且不在连接中，只清理旧的WebSocket连接
+    // 不要调用disconnect()，因为它会清除reconnectTimer，导致重连链条中断
     if (existingConn) {
-      // console.warn(`WebSocket 连接存在但未连接，清理后重新连接`);
-      disconnect();
+      // console.warn(`WebSocket 连接存在但未连接，清理旧的WebSocket对象`);
+      stopHeartbeat(existingConn);
+      stopKeepAlive(existingConn);
+      if (existingConn.ws) {
+        try {
+          existingConn.ws.close();
+        } catch (e) {
+          // 忽略关闭错误
+        }
+      }
+      // 不清空connection.value，保留订阅者信息和重连定时器
+      // 不清空reconnectTimer，保持重连链条
     }
 
     // 标记为正在连接中（立即设置，防止重复连接）
@@ -481,21 +492,32 @@ export const useWebSocketStore = defineStore('websocket', () => {
     const url = buildWebSocketURL();
     const ws = new WebSocket(url);
 
-    // 创建连接对象，立即设置 connectingPromise
-    const conn: WebSocketConnection = {
-      ws,
-      subscriptions: new Set(),
-      reconnectTimer: null,
-      heartbeatTimer: null,
-      heartbeatTimeoutTimer: null,
-      reconnectAttempts: 0,
-      currentReconnectDelay: initialReconnectDelay,
-      isConnected: false,
-      isReconnecting: false,
-      keepAliveTimer: null,
-      connectingPromise: connectPromise, // 立即设置 Promise 引用
-      lastHeartbeatTime: 0,
-    };
+    // 创建或更新连接对象
+    // 如果已存在连接对象（重连场景），复用它的subscriptions和reconnectAttempts
+    // 这样可以保留订阅者信息，确保重连能够继续
+    const conn: WebSocketConnection = existingConn
+      ? {
+          ...existingConn, // 复用现有连接对象的信息
+          ws, // 使用新的WebSocket对象
+          connectingPromise: connectPromise,
+          isConnected: false,
+          // 保留：subscriptions, reconnectAttempts, currentReconnectDelay, isReconnecting
+        }
+      : {
+          // 首次连接，创建新对象
+          ws,
+          subscriptions: new Set(),
+          reconnectTimer: null,
+          heartbeatTimer: null,
+          heartbeatTimeoutTimer: null,
+          reconnectAttempts: 0,
+          currentReconnectDelay: initialReconnectDelay,
+          isConnected: false,
+          isReconnecting: false,
+          keepAliveTimer: null,
+          connectingPromise: connectPromise,
+          lastHeartbeatTime: 0,
+        };
 
     // 立即保存连接对象，这样其他调用可以立即检测到正在连接中
     connection.value = conn;
@@ -531,6 +553,19 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
           // 启动心跳定时器
           startHeartbeat(conn);
+
+          // 重连后自动恢复业务线订阅
+          if (currentBusinessLineId.value !== null) {
+            const businessLineId = currentBusinessLineId.value;
+            console.warn(
+              `[WebSocket] 重连成功，恢复业务线订阅: ${businessLineId}`,
+            );
+            // 发送订阅消息
+            const subscribeMsg = ['subscribe', 0, { businessLineId }];
+            const msgStr = JSON.stringify(subscribeMsg);
+            conn.ws.send(msgStr);
+            console.warn('[WebSocket] 已重新发送业务线订阅消息:', subscribeMsg);
+          }
         }
       }, 100);
 
@@ -545,19 +580,23 @@ export const useWebSocketStore = defineStore('websocket', () => {
     });
 
     ws.addEventListener('error', (error) => {
-      console.error(`WebSocket 错误:`, error);
+      console.error(`[WebSocket] 连接错误:`, error);
       conn.connectingPromise = null; // 清除连接中的 Promise
       // 清除正在连接标记
       isConnecting.value = false;
-      // 清理连接对象
-      connection.value = null;
+
+      // 不要在error事件中清理connection.value，让close事件处理重连
+      // 因为error事件后通常会触发close事件
+
       if (rejectPromise) {
         rejectPromise(error);
       }
     });
 
     ws.addEventListener('close', () => {
-      // console.warn(`WebSocket 连接关闭`);
+      console.warn(
+        `[WebSocket] 连接关闭 (订阅者数量: ${conn.subscriptions.size})`,
+      );
       conn.isConnected = false;
       conn.connectingPromise = null; // 清除连接中的 Promise
       // 清除正在连接标记
@@ -569,9 +608,14 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
       // 如果还有订阅者，尝试重连
       if (conn.subscriptions.size > 0) {
+        console.warn(
+          `[WebSocket] 有 ${conn.subscriptions.size} 个订阅者，开始重连流程`,
+        );
         attemptReconnect(conn);
       } else {
+        console.warn('[WebSocket] 没有订阅者，不重连，清理连接对象');
         // 没有订阅者了，清理连接
+        reconnectingStatus.value = false;
         connection.value = null;
       }
     });
