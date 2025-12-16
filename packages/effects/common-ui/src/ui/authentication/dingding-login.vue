@@ -36,7 +36,12 @@ const getRedirectUri = () => {
   if (redirectUri) {
     return redirectUri;
   }
-  return window.location.origin + route.fullPath;
+  // 在 hash 模式下，需要包含 hash 部分
+  const fullPath =
+    import.meta.env.VITE_ROUTER_HISTORY === 'hash'
+      ? `/#${route.fullPath}`
+      : route.fullPath;
+  return window.location.origin + fullPath;
 };
 
 /**

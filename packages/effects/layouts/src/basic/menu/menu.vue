@@ -61,7 +61,12 @@ const selectedValue = computed({
       // 调用store的switchBusinessLine方法，它会调用后端接口并更新状态
       await businessStore.switchBusinessLine(id);
       // 切换成功后刷新页面，让页面加载时重新生成菜单
-      window.location.href = preferences.app.defaultHomePath;
+      // 在 hash 模式下需要添加 # 前缀
+      const redirectUrl =
+        import.meta.env.VITE_ROUTER_HISTORY === 'hash'
+          ? `#${preferences.app.defaultHomePath}`
+          : preferences.app.defaultHomePath;
+      window.location.href = redirectUrl;
     } catch (error) {
       console.error('切换业务线失败:', error);
       // 切换失败时恢复原值

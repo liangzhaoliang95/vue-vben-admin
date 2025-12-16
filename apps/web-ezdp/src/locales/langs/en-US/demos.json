@@ -3,11 +3,65 @@
   "antd": "Ant Design Vue",
   "vben": {
     "title": "Project",
-    "about": "About",
     "document": "Document",
     "antdv": "Ant Design Vue Version",
     "naive-ui": "Naive UI Version",
     "element-plus": "Element Plus Version",
-    "tdesign": "TDesign Vue Version"
+    "tdesign": "TDesign Vue Version",
+    "about": {
+      "title": "About",
+      "pageTitle": "About EZDP",
+      "description": "EZDP is an enterprise-level deployment platform that provides comprehensive DevOps solutions including project configuration management, artifact deployment, notification management, and more. Built on Go + Vue 3 technology stack with support for multi-business line isolation, permission management, and other enterprise features.",
+      "basicInfo": "Basic Information",
+      "version": "Version",
+      "buildTime": "Build Time",
+      "techStack": "Technology Stack",
+      "tech": "Go + Gin + Vue 3 + Vite + TypeScript",
+      "coreFeatures": "Core Features",
+      "features": {
+        "projectManagement": {
+          "title": "Project Configuration Management",
+          "desc": "Support for project creation, editing, querying, and deletion, including deployment environment configuration and code branch management."
+        },
+        "packageDeploy": {
+          "title": "Artifact Deployment Management",
+          "desc": "Provides build and release functionality, supports major version release workflows, with WebSocket real-time notifications."
+        },
+        "deployTools": {
+          "title": "Deployment Tools",
+          "desc": "Integrated deployment tools supporting automated deployment processes for frontend and backend projects."
+        },
+        "notification": {
+          "title": "Notification Management",
+          "desc": "Real-time notification system with WebSocket push, read/unread marking, and notification list management."
+        },
+        "userManagement": {
+          "title": "User & Permission Management",
+          "desc": "Comprehensive user management system including role-based access control and business line administrator configuration."
+        },
+        "businessLine": {
+          "title": "Multi-Business Line Isolation",
+          "desc": "Support for multi-business line data isolation. Super admins can view across business lines, while regular users can only access their assigned business line data."
+        }
+      },
+      "architecture": "Technical Architecture",
+      "backend": "Backend Technology",
+      "backendTech": {
+        "item1": "Go + Gin Framework + Kratos Microservices",
+        "item2": "GORM + MySQL Data Persistence",
+        "item3": "Casbin RBAC Access Control",
+        "item4": "JWT Token Authentication",
+        "item5": "WebSocket Real-time Communication"
+      },
+      "frontend": "Frontend Technology",
+      "frontendTech": {
+        "item1": "Vue 3 + Composition API",
+        "item2": "Vite 5 + TypeScript",
+        "item3": "Pinia State Management",
+        "item4": "Ant Design Vue Component Library",
+        "item5": "TailwindCSS Styling Framework",
+        "item6": "Monorepo (pnpm workspaces)"
+      }
+    }
   }
 }

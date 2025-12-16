@@ -3,11 +3,65 @@
   "antd": "Ant Design Vue",
   "vben": {
     "title": "项目",
-    "about": "关于",
     "document": "文档",
     "antdv": "Ant Design Vue 版本",
     "naive-ui": "Naive UI 版本",
     "element-plus": "Element Plus 版本",
-    "tdesign": "TDesign Vue 版本"
+    "tdesign": "TDesign Vue 版本",
+    "about": {
+      "title": "关于",
+      "pageTitle": "关于 EZDP",
+      "description": "EZDP 是一个企业级部署平台,提供项目配置管理、制品部署、通知管理等全方位的 DevOps 解决方案。基于 Go + Vue 3 技术栈构建,支持多业务线隔离、权限管理等企业级功能。",
+      "basicInfo": "基本信息",
+      "version": "版本号",
+      "buildTime": "构建时间",
+      "techStack": "技术栈",
+      "tech": "Go + Gin + Vue 3 + Vite + TypeScript",
+      "coreFeatures": "核心功能",
+      "features": {
+        "projectManagement": {
+          "title": "项目配置管理",
+          "desc": "支持项目的创建、编辑、查询和删除,包含部署环境配置、代码分支管理等功能。"
+        },
+        "packageDeploy": {
+          "title": "制品部署管理",
+          "desc": "提供构建制品、发布制品功能,支持大版本发布流程,包含 WebSocket 实时通知。"
+        },
+        "deployTools": {
+          "title": "部署工具",
+          "desc": "集成多种部署工具,支持前端、后端项目的自动化部署流程。"
+        },
+        "notification": {
+          "title": "通知管理",
+          "desc": "实时通知系统,支持 WebSocket 推送、已读未读标记、通知列表管理等功能。"
+        },
+        "userManagement": {
+          "title": "用户权限管理",
+          "desc": "完善的用户管理体系,包含角色权限控制、业务线管理员配置等功能。"
+        },
+        "businessLine": {
+          "title": "多业务线隔离",
+          "desc": "支持多业务线数据隔离,超级管理员可跨业务线查看,普通用户仅可访问所属业务线数据。"
+        }
+      },
+      "architecture": "技术架构",
+      "backend": "后端技术",
+      "backendTech": {
+        "item1": "Go + Gin 框架 + Kratos 微服务",
+        "item2": "GORM + MySQL 数据持久化",
+        "item3": "Casbin RBAC 权限控制",
+        "item4": "JWT Token 认证",
+        "item5": "WebSocket 实时通信"
+      },
+      "frontend": "前端技术",
+      "frontendTech": {
+        "item1": "Vue 3 + Composition API",
+        "item2": "Vite 5 + TypeScript",
+        "item3": "Pinia 状态管理",
+        "item4": "Ant Design Vue 组件库",
+        "item5": "TailwindCSS 样式框架",
+        "item6": "Monorepo (pnpm workspaces)"
+      }
+    }
   }
 }

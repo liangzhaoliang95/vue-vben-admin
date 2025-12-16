@@ -126,7 +126,11 @@ export const useAuthStore = defineStore('auth', () => {
     const redirectQuery = redirect
       ? `?redirect=${encodeURIComponent(router.currentRoute.value.fullPath)}`
       : '';
-    const loginUrl = `${LOGIN_PATH}${redirectQuery}`;
+    // 在 hash 模式下，需要添加 # 前缀
+    const loginUrl =
+      import.meta.env.VITE_ROUTER_HISTORY === 'hash'
+        ? `#${LOGIN_PATH}${redirectQuery}`
+        : `${LOGIN_PATH}${redirectQuery}`;
     window.location.replace(loginUrl);
   }
 
