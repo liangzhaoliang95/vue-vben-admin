@@ -214,6 +214,11 @@
       "targetBranchPlaceholder": "请输入目标分支",
       "description": "描述",
       "descriptionPlaceholder": "请输入描述",
+      "status": "状态",
+      "enable": "启用",
+      "disable": "禁用",
+      "toggleSuccess": "{0}成功",
+      "toggleFailed": "{0}失败",
       "type": {
         "feature": "特性分支",
         "bugfix": "修复分支",

@@ -63,7 +63,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
           }
           // 超级管理员：保留formValues中的businessLineId（如果有），如果没有则不传，后端会查所有
 
-          return await getProjectConfigList(queryParams);
+          const result = await getProjectConfigList(queryParams);
+
+          // 项目类型排序：backend > frontend > submodule
+          if (result.items && Array.isArray(result.items)) {
+            const typeOrder: Record<string, number> = {
+              backend: 1,
+              frontend: 2,
+              submodule: 3,
+            };
+
+            result.items.sort((a, b) => {
+              const orderA = typeOrder[a.type] || 999;
+              const orderB = typeOrder[b.type] || 999;
+              return orderA - orderB;
+            });
+          }
+
+          return result;
         },
       },
     },

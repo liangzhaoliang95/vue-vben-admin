@@ -29,6 +29,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
  */
 export function useColumns(
   onActionClick: OnActionClickFn<any>,
+  onToggleEnabled: (row: any) => void,
 ): VxeGridProps['columns'] {
   const businessStore = useBusinessStore();
 
@@ -55,6 +56,27 @@ export function useColumns(
       minWidth: 250,
     },
     {
+      field: 'enabled',
+      title: $t('deploy.packageDeployManagement.branchManagement.status'),
+      minWidth: 120,
+      align: 'center',
+      cellRender: {
+        name: 'CellSwitch',
+        props: {
+          checkedValue: true,
+          unCheckedValue: false,
+          checkedChildren: $t('deploy.packageDeployManagement.branchManagement.enable'),
+          unCheckedChildren: $t('deploy.packageDeployManagement.branchManagement.disable'),
+        },
+        attrs: {
+          beforeChange: async (newVal: boolean, row: any) => {
+            await onToggleEnabled(row);
+            return true;
+          },
+        },
+      },
+    },
+    {
       field: 'createdAt',
       title: $t('ui.table.createdTime'),
       minWidth: 180,
@@ -70,12 +92,12 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['edit', 'delete'],
+        options: ['edit'],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('common.action'),
-      width: 150,
+      width: 100,
     },
   ];
 }

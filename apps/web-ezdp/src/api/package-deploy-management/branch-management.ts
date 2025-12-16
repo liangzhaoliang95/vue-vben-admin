@@ -8,6 +8,7 @@ export namespace BranchManagementApi {
     businessLineId: number;
     name: string;
     description: string;
+    enabled: boolean;
     createdAt: number;
     updatedAt: number;
   }

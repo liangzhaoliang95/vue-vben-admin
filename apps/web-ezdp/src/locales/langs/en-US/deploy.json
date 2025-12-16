@@ -214,6 +214,11 @@
       "targetBranchPlaceholder": "Please enter target branch",
       "description": "Description",
       "descriptionPlaceholder": "Please enter description",
+      "status": "Status",
+      "enable": "Enable",
+      "disable": "Disable",
+      "toggleSuccess": "{0} successfully",
+      "toggleFailed": "{0} failed",
       "type": {
         "feature": "Feature Branch",
         "bugfix": "Bugfix Branch",

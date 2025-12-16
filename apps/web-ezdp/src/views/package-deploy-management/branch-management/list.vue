@@ -15,8 +15,8 @@ import { Button, message, Modal } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  deleteBranchManagement,
   getBranchManagementList,
+  updateBranchManagement,
 } from '#/api/package-deploy-management/branch-management';
 import { $t } from '#/locales';
 
@@ -36,7 +36,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: true,
   },
   gridOptions: {
-    columns: useColumns(onActionClick),
+    columns: useColumns(onActionClick, onToggleEnabled),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -90,10 +90,6 @@ function onActionClick(
   e: OnActionClickParams<BranchManagementApi.BranchManagement>,
 ) {
   switch (e.code) {
-    case 'delete': {
-      onDelete(e.row);
-      break;
-    }
     case 'edit': {
       onEdit(e.row);
       break;
@@ -101,38 +97,36 @@ function onActionClick(
   }
 }
 
-function confirm(content: string, title: string) {
-  return new Promise((resolve, reject) => {
-    Modal.confirm({
-      content,
-      onCancel() {
-        reject(new Error('已取消'));
-      },
-      onOk() {
-        resolve(true);
-      },
-      title,
-    });
-  });
-}
-
 function onEdit(row: BranchManagementApi.BranchManagement) {
   formDrawerApi.setData(row).open();
 }
 
-function onDelete(row: BranchManagementApi.BranchManagement) {
-  confirm(
-    $t('ui.confirmContent.delete', [row.name]),
-    $t('ui.confirmTitle.delete'),
-  )
-    .then(async () => {
-      await deleteBranchManagement(row.id);
-      message.success($t('ui.successMessage.delete'));
-      gridApi.query();
-    })
-    .catch(() => {
-      // 用户取消,不做任何操作
+// 切换分支启用状态
+async function onToggleEnabled(row: BranchManagementApi.BranchManagement) {
+  const newStatus = !row.enabled;
+  const actionText = newStatus
+    ? $t('deploy.packageDeployManagement.branchManagement.enable')
+    : $t('deploy.packageDeployManagement.branchManagement.disable');
+
+  try {
+    await updateBranchManagement(row.id, {
+      enabled: newStatus,
     });
+    message.success(
+      $t('deploy.packageDeployManagement.branchManagement.toggleSuccess', [
+        actionText,
+      ]),
+    );
+    gridApi.query();
+  } catch (error) {
+    message.error(
+      $t('deploy.packageDeployManagement.branchManagement.toggleFailed', [
+        actionText,
+      ]),
+    );
+    // 恢复开关状态
+    gridApi.query();
+  }
 }
 
 function onRefresh() {

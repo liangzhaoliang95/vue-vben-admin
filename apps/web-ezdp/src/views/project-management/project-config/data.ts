@@ -210,11 +210,9 @@ export function useColumns(
       minWidth: 100,
       formatter: ({ cellValue }) => {
         const typeMap: Record<string, string> = {
-          backend: $t('deploy.projectManagement.projectConfig.type.backend'),
-          frontend: $t('deploy.projectManagement.projectConfig.type.frontend'),
-          submodule: $t(
-            'deploy.projectManagement.projectConfig.type.submodule',
-          ),
+          backend: `🖥️ ${$t('deploy.projectManagement.projectConfig.type.backend')}`,
+          frontend: `🎨 ${$t('deploy.projectManagement.projectConfig.type.frontend')}`,
+          submodule: `📦 ${$t('deploy.projectManagement.projectConfig.type.submodule')}`,
         };
         return typeMap[cellValue] || cellValue;
       },
