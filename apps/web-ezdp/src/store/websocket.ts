@@ -82,6 +82,12 @@ export const useWebSocketStore = defineStore('websocket', () => {
     deploy: false,
   });
 
+  // 全局日志查看器控制
+  const showGlobalLogViewer = ref(false);
+  const globalLogViewerTaskType = ref<1 | 2>(1); // 1=构建, 2=部署
+  const globalLogViewerSubscriptionId = ref<string>('');
+  const globalLogViewerTitle = ref<string>('');
+
   // 日志缓存（按业务线ID存储）
   const logCaches = ref<Map<number, LogCache>>(new Map());
 
@@ -1030,6 +1036,33 @@ export const useWebSocketStore = defineStore('websocket', () => {
     currentBusinessLineId.value = null;
   }
 
+  /**
+   * 打开全局日志查看器
+   * @param taskType 任务类型：1=构建, 2=部署
+   */
+  function openGlobalLogViewer(taskType: 1 | 2) {
+    // 设置任务类型
+    globalLogViewerTaskType.value = taskType;
+
+    // 设置订阅ID为当前业务线ID
+    if (currentBusinessLineId.value !== null) {
+      globalLogViewerSubscriptionId.value = String(currentBusinessLineId.value);
+    }
+
+    // 根据任务类型设置标题
+    globalLogViewerTitle.value = taskType === 1 ? '构建日志' : '部署日志';
+
+    // 显示日志查看器
+    showGlobalLogViewer.value = true;
+  }
+
+  /**
+   * 关闭全局日志查看器
+   */
+  function closeGlobalLogViewer() {
+    showGlobalLogViewer.value = false;
+  }
+
   return {
     subscribe,
     unsubscribe,
@@ -1048,5 +1081,11 @@ export const useWebSocketStore = defineStore('websocket', () => {
     getCachedLogs, // 获取缓存的日志
     clearLogCache, // 清除日志缓存
     subscribedLogTypes, // 暴露订阅的日志类型信息
+    showGlobalLogViewer, // 全局日志查看器显示状态
+    globalLogViewerTaskType, // 全局日志查看器任务类型
+    globalLogViewerSubscriptionId, // 全局日志查看器订阅ID
+    globalLogViewerTitle, // 全局日志查看器标题
+    openGlobalLogViewer, // 打开全局日志查看器
+    closeGlobalLogViewer, // 关闭全局日志查看器
   };
 });

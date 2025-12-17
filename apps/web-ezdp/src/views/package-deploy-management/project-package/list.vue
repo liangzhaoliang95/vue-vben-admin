@@ -224,6 +224,9 @@ async function handleBuild() {
     await startBuildTask(queryParams);
     message.success('构建任务已启动，请查看实时日志');
 
+    // 打开全局日志查看器（taskType=1 表示构建日志）
+    wsStore.openGlobalLogViewer(1);
+
     // 延迟刷新列表 - 检查组件是否仍然激活
     setTimeout(() => {
       if (isComponentActive.value) {
@@ -538,7 +541,6 @@ onDeactivated(() => {
         </Collapse>
       </Spin>
     </Card>
-
   </Page>
 </template>
 

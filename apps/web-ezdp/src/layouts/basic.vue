@@ -14,12 +14,14 @@ import {
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 
-import { Button } from 'ant-design-vue';
+import { Button, Modal } from 'ant-design-vue';
+import { marked } from 'marked';
 
 import {
   clearReadNotifications,
   getNotificationList,
   markAllAsRead,
+  markAsRead,
 } from '#/api/core/notification';
 import LogViewer from '#/components/log-viewer/index.vue';
 import { $t } from '#/locales';
@@ -39,11 +41,25 @@ const showDot = computed(() =>
   notifications.value.some((item) => !item.isRead),
 );
 
-// 实时日志相关
-const showLogViewer = ref(false);
-const logViewerSubscriptionId = ref<string>('');
-const logViewerTitle = ref('');
-const logViewerTaskType = ref<1 | 2>(1); // 当前日志类型: 1=构建, 2=部署
+// 通知详情弹窗
+const showNotificationDetail = ref(false);
+const currentNotification = ref<NotificationItem | null>(null);
+
+// 渲染通知内容（支持 Markdown）
+const notificationContent = computed(() => {
+  if (!currentNotification.value) return '';
+  const content = currentNotification.value.message || '';
+
+  try {
+    // 尝试渲染为 Markdown
+    return marked(content);
+  } catch {
+    // 如果解析失败，返回纯文本
+    return content;
+  }
+});
+
+// 实时日志相关 - 已移至 store 统一管理
 
 const menus = computed(() => [
   // 隐藏文档、GitHub、问题&帮助
@@ -92,13 +108,14 @@ async function loadNotifications() {
       pageSize: 20,
     });
 
-    // 转换为 NotificationItem 格式
+    // 转换为 NotificationItem 格式（保留 id 用于标记已读）
     notifications.value = res.items.map((item) => ({
+      id: item.id,
       date: formatTime(item.createdAt),
       isRead: item.isRead,
       message: item.content,
       title: item.title,
-    }));
+    } as any));
   } catch (error) {
     console.error('加载通知失败:', error);
   }
@@ -122,8 +139,10 @@ function formatTime(timestamp: number) {
 // 清空通知
 async function handleNoticeClear() {
   try {
-    await clearReadNotifications();
-    notifications.value = [];
+    const businessLineId = businessStore.currentBusinessLineId;
+    await clearReadNotifications(businessLineId);
+    // 重新加载通知列表
+    await loadNotifications();
   } catch (error) {
     console.error('清空通知失败:', error);
   }
@@ -132,8 +151,10 @@ async function handleNoticeClear() {
 // 全部标记为已读
 async function handleMakeAll() {
   try {
-    await markAllAsRead();
-    notifications.value.forEach((item) => (item.isRead = true));
+    const businessLineId = businessStore.currentBusinessLineId;
+    await markAllAsRead(businessLineId);
+    // 重新加载通知列表
+    await loadNotifications();
   } catch (error) {
     console.error('标记已读失败:', error);
   }
@@ -145,7 +166,35 @@ function handleViewAll() {
   console.log('跳转到通知中心');
 }
 
-// 打开实时日志
+// 点击通知，查看详情
+async function handleNotificationRead(item: NotificationItem) {
+  currentNotification.value = item;
+  showNotificationDetail.value = true;
+
+  // 标记为已读（如果尚未已读）
+  if (!item.isRead && (item as any).id) {
+    try {
+      await markAsRead({ id: (item as any).id });
+      // 更新本地状态
+      const notification = notifications.value.find(
+        (n) => (n as any).id === (item as any).id,
+      );
+      if (notification) {
+        notification.isRead = true;
+      }
+    } catch (error) {
+      console.error('标记已读失败:', error);
+    }
+  }
+}
+
+// 关闭通知详情弹窗
+function closeNotificationDetail() {
+  showNotificationDetail.value = false;
+  currentNotification.value = null;
+}
+
+// 打开实时日志（顶部按钮）
 async function openLogViewer() {
   // 获取当前业务线 ID
   const businessLineId = businessStore.currentBusinessLineId;
@@ -154,26 +203,16 @@ async function openLogViewer() {
     return;
   }
 
-  // 先订阅业务线日志（这会生成订阅信息消息并缓存）
+  // 先订阅业务线日志
   await wsStore.subscribeBusinessLine(businessLineId);
 
-  // 设置订阅 ID 为业务线 ID
-  logViewerSubscriptionId.value = String(businessLineId);
-  logViewerTitle.value = $t(
-    'deploy.packageDeployManagement.projectPackage.realtimeLog',
-  );
-  // 默认显示构建日志，可以根据需要调整
-  logViewerTaskType.value = 1;
-
-  // 打开日志查看器
-  showLogViewer.value = true;
+  // 打开日志查看器（默认显示构建日志）
+  wsStore.openGlobalLogViewer(1);
 }
 
 // 关闭实时日志
 function closeLogViewer() {
-  showLogViewer.value = false;
-  // 可选：清空订阅 ID
-  // logViewerSubscriptionId.value = '';
+  wsStore.closeGlobalLogViewer();
 }
 
 // 组件挂载时加载通知并订阅业务线日志
@@ -244,6 +283,7 @@ watch(
         :notifications="notifications"
         @clear="handleNoticeClear"
         @make-all="handleMakeAll"
+        @read="handleNotificationRead"
         @refresh="loadNotifications"
         @view-all="handleViewAll"
       />
@@ -256,15 +296,37 @@ watch(
         <LoginForm />
       </AuthenticationLoginExpiredModal>
 
+      <!-- 通知详情弹窗 -->
+      <Modal
+        v-model:open="showNotificationDetail"
+        :title="currentNotification?.title || '通知详情'"
+        :width="800"
+        :footer="null"
+        @cancel="closeNotificationDetail"
+      >
+        <div class="notification-detail-content">
+          <!-- Markdown 内容渲染 -->
+          <div
+            v-if="notificationContent"
+            class="markdown-body"
+            v-html="notificationContent"
+          ></div>
+          <!-- 通知元信息 -->
+          <div class="notification-meta">
+            <span class="notification-time">{{ currentNotification?.date }}</span>
+          </div>
+        </div>
+      </Modal>
+
       <!-- 实时日志悬浮窗 -->
       <Teleport to="body">
-        <div v-if="showLogViewer" class="log-viewer-overlay">
+        <div v-if="wsStore.showGlobalLogViewer" class="log-viewer-overlay">
           <div class="log-viewer-container">
             <LogViewer
-              v-if="logViewerSubscriptionId"
-              :subscription-id="logViewerSubscriptionId"
-              :title="logViewerTitle"
-              :task-type="logViewerTaskType"
+              v-if="wsStore.globalLogViewerSubscriptionId"
+              :subscription-id="wsStore.globalLogViewerSubscriptionId"
+              :title="wsStore.globalLogViewerTitle"
+              :task-type="wsStore.globalLogViewerTaskType"
               @close="closeLogViewer"
             />
           </div>
@@ -302,5 +364,150 @@ watch(
   background: hsl(var(--background-deep));
   border-radius: var(--radius);
   box-shadow: 0 4px 20px hsl(0deg 0% 0% / 30%);
+}
+
+/* 通知详情内容样式 */
+.notification-detail-content {
+  padding: 16px 0;
+}
+
+.notification-meta {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid hsl(var(--border));
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+}
+
+.notification-time {
+  display: inline-block;
+}
+
+/* Markdown 样式 */
+.markdown-body {
+  line-height: 1.8;
+  color: hsl(var(--foreground));
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.markdown-body h1 {
+  font-size: 2em;
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 0.3em;
+}
+
+.markdown-body h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid hsl(var(--border));
+  padding-bottom: 0.3em;
+}
+
+.markdown-body h3 {
+  font-size: 1.25em;
+}
+
+.markdown-body p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.markdown-body a {
+  color: hsl(var(--primary));
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 2em;
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.markdown-body li {
+  margin-bottom: 4px;
+}
+
+.markdown-body code {
+  padding: 0.2em 0.4em;
+  margin: 0;
+  font-size: 85%;
+  background-color: hsl(var(--muted));
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    'Liberation Mono', monospace;
+}
+
+.markdown-body pre {
+  padding: 16px;
+  overflow: auto;
+  font-size: 85%;
+  line-height: 1.45;
+  background-color: hsl(var(--muted));
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.markdown-body pre code {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  line-height: inherit;
+  word-wrap: normal;
+  background-color: transparent;
+  border: 0;
+}
+
+.markdown-body blockquote {
+  padding: 0 1em;
+  color: hsl(var(--muted-foreground));
+  border-left: 0.25em solid hsl(var(--border));
+  margin: 0 0 16px 0;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+  padding: 6px 13px;
+  border: 1px solid hsl(var(--border));
+}
+
+.markdown-body table th {
+  font-weight: 600;
+  background-color: hsl(var(--muted));
+}
+
+.markdown-body img {
+  max-width: 100%;
+  height: auto;
+  margin: 16px 0;
+}
+
+.markdown-body hr {
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: hsl(var(--border));
+  border: 0;
 }
 </style>

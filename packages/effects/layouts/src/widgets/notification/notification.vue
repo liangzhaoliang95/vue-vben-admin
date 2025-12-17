@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { NotificationItem } from './types';
 
-import { ref, watch } from 'vue';
+import { nextTick, ref, watch } from 'vue';
 
 import { Bell, MailCheck, RotateCw } from '@vben/icons';
 import { $t } from '@vben/locales';
@@ -43,11 +43,18 @@ const emit = defineEmits<{
 
 const [open, toggle] = useToggle();
 const refreshing = ref(false);
+const preventClose = ref(false);
 
 // 监听弹窗打开，自动刷新
 watch(open, (newValue) => {
   if (newValue) {
     handleRefresh();
+  } else if (preventClose.value) {
+    // 如果是点击通知项导致的关闭，立即重新打开
+    preventClose.value = false;
+    nextTick(() => {
+      open.value = true;
+    });
   }
 });
 
@@ -78,6 +85,8 @@ async function handleRefresh() {
 }
 
 function handleClick(item: NotificationItem) {
+  // 标记不要关闭 popover
+  preventClose.value = true;
   emit('read', item);
 }
 </script>
@@ -122,8 +131,8 @@ function handleClick(item: NotificationItem) {
         <ul class="!flex max-h-[360px] w-full flex-col">
           <template v-for="item in notifications" :key="item.title">
             <li
-              class="hover:bg-accent border-border relative flex w-full cursor-pointer items-start gap-5 border-t px-3 py-3"
-              @click="handleClick(item)"
+              class="notification-item hover:bg-accent border-border relative flex w-full cursor-pointer items-start gap-5 border-t px-3 py-3"
+              @click.stop="handleClick(item)"
             >
               <span
                 v-if="!item.isRead"

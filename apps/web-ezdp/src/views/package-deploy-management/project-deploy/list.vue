@@ -303,6 +303,9 @@ async function handleDeployVersion(version: any) {
     message.destroy('deploying');
     message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
 
+    // 打开全局日志查看器（taskType=2 表示部署日志）
+    wsStore.openGlobalLogViewer(2);
+
     // 延迟刷新列表和当前环境版本
     setTimeout(() => {
       if (isComponentActive.value) {
@@ -350,6 +353,9 @@ async function handleDeployProject(project: any) {
 
     message.destroy('deploying');
     message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
+
+    // 打开全局日志查看器（taskType=2 表示部署日志）
+    wsStore.openGlobalLogViewer(2);
 
     // 延迟刷新列表和当前环境版本（单个项目部署不会改变大版本，只刷新列表）
     setTimeout(() => {
@@ -661,7 +667,7 @@ onDeactivated(() => {
                   type="primary"
                   size="large"
                   :disabled="version.status !== 'success'"
-                  @click="handleDeployVersion(version)"
+                  @click.stop="handleDeployVersion(version)"
                 >
                   🚀 {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
                 </Button>
@@ -703,7 +709,7 @@ onDeactivated(() => {
                   type="primary"
                   size="small"
                   :disabled="project.status !== 'success'"
-                  @click="handleDeployProject(project)"
+                  @click.stop="handleDeployProject(project)"
                 >
                   {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
                 </Button>
