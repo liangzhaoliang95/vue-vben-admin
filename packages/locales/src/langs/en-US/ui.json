@@ -36,6 +36,13 @@
     "delete": "Deleted successfully",
     "save": "Saved successfully"
   },
+  "errorMessage": {
+    "create": "Failed to create",
+    "update": "Failed to update",
+    "delete": "Failed to delete",
+    "save": "Failed to save"
+  },
+  "inputRequired": " is required",
   "button": {
     "submit": "Submit",
     "cancel": "Cancel",

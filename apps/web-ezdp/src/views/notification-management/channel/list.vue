@@ -161,3 +161,16 @@ function onCreate() {
     </Grid>
   </Page>
 </template>
+
+<style scoped>
+/* 表格行悬浮效果 */
+:deep(.vxe-table--body) .vxe-body--row:hover {
+  background-color: rgba(24, 144, 255, 0.08) !important;
+  transition: background-color 0.2s ease;
+}
+
+/* 深色模式下的悬浮效果 */
+:deep(.dark .vxe-table--body) .vxe-body--row:hover {
+  background-color: rgba(24, 144, 255, 0.15) !important;
+}
+</style>

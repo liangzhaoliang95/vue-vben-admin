@@ -36,6 +36,13 @@
     "delete": "删除成功",
     "save": "保存成功"
   },
+  "errorMessage": {
+    "create": "创建失败",
+    "update": "更新失败",
+    "delete": "删除失败",
+    "save": "保存失败"
+  },
+  "inputRequired": "不能为空",
   "button": {
     "submit": "提交",
     "cancel": "取消",

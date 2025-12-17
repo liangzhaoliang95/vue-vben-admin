@@ -19,7 +19,11 @@ import {
 } from 'ant-design-vue';
 
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
-import { deployByTask, deployByVersion } from '#/api/package-deploy-management/deploy';
+import {
+  deployByTask,
+  deployByVersion,
+  getEnvironmentVersion,
+} from '#/api/package-deploy-management/deploy';
 import {
   getBuildTaskList,
 } from '#/api/package-deploy-management/project-package';
@@ -45,6 +49,9 @@ const allBranchesMap = ref<Map<number, any[]>>(new Map());
 const versionList = ref<any[]>([]);
 const loading = ref(false);
 const activeKeys = ref<string[]>([]); // 展开的版本面板
+
+// 当前环境正在使用的版本ID
+const currentEnvironmentVersionId = ref<string | null>(null);
 
 // 组件是否已激活的标记
 const isComponentActive = ref(true);
@@ -124,6 +131,25 @@ async function loadAllBranches() {
   }
 }
 
+// 加载当前环境的版本
+async function loadCurrentEnvironmentVersion() {
+  if (!selectedEnvironmentId.value) {
+    currentEnvironmentVersionId.value = null;
+    return;
+  }
+
+  try {
+    const res = await getEnvironmentVersion({
+      deployEnvironmentId: selectedEnvironmentId.value,
+    });
+    currentEnvironmentVersionId.value = res.versionId;
+  } catch (error: any) {
+    // 如果环境还没有部署过版本，会返回错误，这是正常的
+    console.log('当前环境暂无部署版本:', error?.message || error);
+    currentEnvironmentVersionId.value = null;
+  }
+}
+
 // 加载版本列表
 async function loadVersionList() {
   // 检查组件是否仍然激活
@@ -152,6 +178,9 @@ async function loadVersionList() {
 
     const res = await getBuildTaskList(queryParams);
     versionList.value = res.items || [];
+
+    // 加载当前环境的版本
+    await loadCurrentEnvironmentVersion();
   } catch (error) {
     console.error('加载版本列表失败:', error);
     message.error('加载版本列表失败');
@@ -211,8 +240,9 @@ async function handleBranchChange() {
 }
 
 // 环境变化处理
-function handleEnvironmentChange(_newId: string) {
-  // 预留用于未来功能
+async function handleEnvironmentChange(_newId: string) {
+  // 加载当前环境的版本
+  await loadCurrentEnvironmentVersion();
 }
 
 // 刷新
@@ -273,10 +303,11 @@ async function handleDeployVersion(version: any) {
     message.destroy('deploying');
     message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
 
-    // 延迟刷新列表
+    // 延迟刷新列表和当前环境版本
     setTimeout(() => {
       if (isComponentActive.value) {
         loadVersionList();
+        loadCurrentEnvironmentVersion();
       }
     }, 2000);
   } catch (error) {
@@ -320,7 +351,7 @@ async function handleDeployProject(project: any) {
     message.destroy('deploying');
     message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
 
-    // 延迟刷新列表
+    // 延迟刷新列表和当前环境版本（单个项目部署不会改变大版本，只刷新列表）
     setTimeout(() => {
       if (isComponentActive.value) {
         loadVersionList();
@@ -612,6 +643,14 @@ onDeactivated(() => {
                       ).text
                     }}
                   </Tag>
+                  <!-- 当前版本标记 -->
+                  <Tag
+                    v-if="version.id === currentEnvironmentVersionId"
+                    color="green"
+                    class="current-version-tag"
+                  >
+                    ✓ 当前版本
+                  </Tag>
                   <span class="version-time">
                     {{ formatTime(version.buildTime) }}
                   </span>
@@ -798,6 +837,24 @@ onDeactivated(() => {
   font-weight: 500;
 }
 
+.current-version-tag {
+  flex-shrink: 0;
+  font-weight: 600;
+  font-size: 14px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
 /* 项目列表样式 */
 .project-list {
   display: flex;
@@ -937,5 +994,16 @@ onDeactivated(() => {
   height: 28px;
   padding: 0 12px;
   font-size: 13px;
+}
+
+/* 表格行悬浮效果 */
+:deep(.vxe-table--body) .vxe-body--row:hover {
+  background-color: rgba(24, 144, 255, 0.08) !important;
+  transition: background-color 0.2s ease;
+}
+
+/* 深色模式下的悬浮效果 */
+:deep(.dark .vxe-table--body) .vxe-body--row:hover {
+  background-color: rgba(24, 144, 255, 0.15) !important;
 }
 </style>
