@@ -96,7 +96,6 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'Textarea',
       fieldName: 'description',
       label: $t('deploy.packageDeployManagement.environmentConfig.description'),
-      rules: 'required',
       componentProps: {
         placeholder: $t(
           'deploy.packageDeployManagement.environmentConfig.descriptionPlaceholder',
@@ -110,7 +109,6 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t(
         'deploy.packageDeployManagement.environmentConfig.frontendStorage',
       ),
-      rules: 'required',
       componentProps: {
         api: async (params?: any) => {
           const res = await getObjectStorageList({
@@ -150,7 +148,6 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t(
         'deploy.packageDeployManagement.environmentConfig.frontendBaseUrl',
       ),
-      rules: 'required',
       componentProps: {
         placeholder: $t(
           'deploy.packageDeployManagement.environmentConfig.frontendBaseUrlPlaceholder',

@@ -127,15 +127,23 @@ async function handleConfirm() {
 
   loading.value = true;
 
-  // 构建提交数据（所有字段都是必填项）
+  // 构建提交数据（后端字段为必填）
   const submitData: any = {
     name: values.name,
-    description: values.description,
-    frontendStorageId: values.frontendStorageId,
-    frontendBaseUrl: values.frontendBaseUrl,
     backendSecretId: values.backendSecretId,
     backendNamespace: values.backendNamespace,
   };
+
+  // 可选字段（只在有值时提交）
+  if (values.description) {
+    submitData.description = values.description;
+  }
+  if (values.frontendStorageId) {
+    submitData.frontendStorageId = values.frontendStorageId;
+  }
+  if (values.frontendBaseUrl) {
+    submitData.frontendBaseUrl = values.frontendBaseUrl;
+  }
 
   // 业务线ID（如果表单中有，则使用；否则后端会从token自动获取）
   if (values.businessLineId) {
