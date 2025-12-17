@@ -73,6 +73,15 @@ export const useWebSocketStore = defineStore('websocket', () => {
   // 当前订阅的业务线ID
   const currentBusinessLineId = ref<null | number>(null);
 
+  // 当前订阅的日志类型信息
+  const subscribedLogTypes = ref<{
+    build: boolean; // 是否订阅构建日志
+    deploy: boolean; // 是否订阅发布日志
+  }>({
+    build: false,
+    deploy: false,
+  });
+
   // 日志缓存（按业务线ID存储）
   const logCaches = ref<Map<number, LogCache>>(new Map());
 
@@ -289,10 +298,11 @@ export const useWebSocketStore = defineStore('websocket', () => {
         return;
       }
 
-      // 缓存日志消息（只缓存 log 和 event 类型的消息）
+      // 缓存日志消息（缓存 log、event 和 system 类型的消息）
       if (
         wsMessage.commandType === 'log' ||
-        wsMessage.commandType === 'event'
+        wsMessage.commandType === 'event' ||
+        wsMessage.commandType === 'system'
       ) {
         cacheLogMessage(currentBusinessLineId.value, wsMessage);
       }
@@ -883,8 +893,36 @@ export const useWebSocketStore = defineStore('websocket', () => {
   }
 
   /**
+   * 检查用户是否有指定菜单权限
+   */
+  function hasMenuPermission(menuPath: string): boolean {
+    const accessStore = useAccessStore();
+    const menus = accessStore.accessMenus;
+
+    function findMenuByPath(
+      menus: any[],
+      targetPath: string,
+    ): boolean {
+      for (const menu of menus) {
+        if (menu.path === targetPath) {
+          return true;
+        }
+        if (menu.children && menu.children.length > 0) {
+          if (findMenuByPath(menu.children, targetPath)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    return findMenuByPath(menus, menuPath);
+  }
+
+  /**
    * 订阅业务线日志（一个连接只能订阅一个业务线）
    * 切换业务线时会自动取消旧订阅
+   * 根据菜单权限订阅对应的日志类型
    */
   async function subscribeBusinessLine(businessLineId: number) {
     // console.warn(`[WebSocket] 订阅业务线: ${businessLineId}`);
@@ -906,6 +944,43 @@ export const useWebSocketStore = defineStore('websocket', () => {
       // console.warn(`[WebSocket] 连接未建立，先建立连接`);
       await connect();
     }
+
+    // 检查菜单权限，确定订阅哪些日志类型
+    const hasBuildPermission = hasMenuPermission(
+      '/package-deploy-management/project-package',
+    );
+    const hasDeployPermission = hasMenuPermission(
+      '/package-deploy-management/project-deploy',
+    );
+
+    // 更新订阅的日志类型信息
+    subscribedLogTypes.value = {
+      build: hasBuildPermission,
+      deploy: hasDeployPermission,
+    };
+
+    // 构建订阅日志信息消息
+    const logTypesText: string[] = [];
+    if (hasBuildPermission) logTypesText.push('构建日志');
+    if (hasDeployPermission) logTypesText.push('发布日志');
+
+    const subscriptionInfo: WebSocketMessage = {
+      commandType: 'system',
+      commandId: 0,
+      data: {
+        message: logTypesText.length > 0
+          ? `✓ 已订阅：${logTypesText.join('、')}`
+          : '⚠ 无可订阅的日志类型（缺少菜单权限）',
+        timestamp: Date.now(),
+      },
+    };
+
+    // 添加订阅信息到日志缓存
+    cacheLogMessage(businessLineId, subscriptionInfo);
+
+    console.warn(
+      `[WebSocket] 订阅业务线 ${businessLineId}，日志类型：${logTypesText.join('、') || '无'}`,
+    );
 
     // 发送订阅消息（使用数组格式：["subscribe", 0, {businessLineId: 2}]）
     const subscribeMsg = ['subscribe', 0, { businessLineId }];
@@ -972,5 +1047,6 @@ export const useWebSocketStore = defineStore('websocket', () => {
     reconnectCount, // 暴露重连次数，供组件直接使用
     getCachedLogs, // 获取缓存的日志
     clearLogCache, // 清除日志缓存
+    subscribedLogTypes, // 暴露订阅的日志类型信息
   };
 });

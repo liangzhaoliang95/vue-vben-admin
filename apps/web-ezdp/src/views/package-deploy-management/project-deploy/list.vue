@@ -24,7 +24,6 @@ import {
   getBuildTaskList,
 } from '#/api/package-deploy-management/project-package';
 import { getDeployEnvironmentList } from '#/api/project-management/deploy-environment';
-import LogViewer from '#/components/log-viewer/index.vue';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
 
@@ -46,12 +45,6 @@ const allBranchesMap = ref<Map<number, any[]>>(new Map());
 const versionList = ref<any[]>([]);
 const loading = ref(false);
 const activeKeys = ref<string[]>([]); // 展开的版本面板
-
-// 实时日志相关
-const showLogViewer = ref(false);
-const logViewerSubscriptionId = ref<string>('');
-const logViewerTitle = ref('');
-const logViewerTaskType = ref<1 | 2>(2); // 当前日志类型: 1=构建, 2=部署
 
 // 组件是否已激活的标记
 const isComponentActive = ref(true);
@@ -280,9 +273,6 @@ async function handleDeployVersion(version: any) {
     message.destroy('deploying');
     message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
 
-    // 打开实时日志（部署日志使用 taskType=2）
-    openLogViewer(2);
-
     // 延迟刷新列表
     setTimeout(() => {
       if (isComponentActive.value) {
@@ -330,9 +320,6 @@ async function handleDeployProject(project: any) {
     message.destroy('deploying');
     message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
 
-    // 打开实时日志（部署日志使用 taskType=2）
-    openLogViewer(2);
-
     // 延迟刷新列表
     setTimeout(() => {
       if (isComponentActive.value) {
@@ -346,36 +333,6 @@ async function handleDeployProject(project: any) {
       message.error('发布失败');
     }
   }
-}
-
-// 打开实时日志
-function openLogViewer(taskType: 1 | 2) {
-  // 生成唯一的订阅 ID
-  const subscriptionId = `log-viewer-${taskType}-${Date.now()}`;
-
-  // 设置日志查看器参数
-  logViewerSubscriptionId.value = subscriptionId;
-  logViewerTaskType.value = taskType; // 保存任务类型
-
-  // 设置标题
-  logViewerTitle.value =
-    taskType === 1
-      ? $t('deploy.packageDeployManagement.projectDeploy.buildLog')
-      : $t('deploy.packageDeployManagement.projectDeploy.deployLog');
-
-  // 显示日志查看器
-  showLogViewer.value = true;
-}
-
-// 关闭实时日志
-function closeLogViewer() {
-  // 取消订阅
-  if (logViewerSubscriptionId.value) {
-    wsStore.unsubscribe(logViewerSubscriptionId.value);
-    logViewerSubscriptionId.value = '';
-  }
-  showLogViewer.value = false;
-  // 注意：不取消业务线订阅，保持连接以便下次打开日志时能立即接收
 }
 
 // 格式化时间
@@ -528,17 +485,6 @@ onDeactivated(() => {
     // 标记组件为非激活状态
     isComponentActive.value = false;
 
-    // 关闭日志查看器
-    if (showLogViewer.value) {
-      closeLogViewer();
-    }
-
-    // 取消WebSocket订阅（清理全局状态）
-    if (logViewerSubscriptionId.value) {
-      wsStore.unsubscribe(logViewerSubscriptionId.value);
-      logViewerSubscriptionId.value = '';
-    }
-
     // 取消构建事件监听
     wsStore.unsubscribe('deploy-event-listener');
 
@@ -546,7 +492,6 @@ onDeactivated(() => {
     // WebSocket 连接是全局共享的，其他页面可能还在使用
 
     // 清空本地状态，避免状态残留
-    showLogViewer.value = false;
     versionList.value = [];
     activeKeys.value = [];
   } catch (error) {
@@ -619,11 +564,6 @@ onDeactivated(() => {
         <!-- 操作按钮组 -->
         <div class="flex flex-shrink-0 items-center gap-3">
           <Button @click="handleRefresh">刷新</Button>
-          <Button @click="openLogViewer(2)">
-            {{
-              $t('deploy.packageDeployManagement.projectDeploy.realtimeLog')
-            }}
-          </Button>
         </div>
       </div>
     </Card>
@@ -734,46 +674,10 @@ onDeactivated(() => {
         </Collapse>
       </Spin>
     </Card>
-
-    <!-- 实时日志悬浮窗 -->
-    <Teleport to="body">
-      <div v-if="showLogViewer" class="log-viewer-overlay">
-        <div class="log-viewer-container">
-          <LogViewer
-            v-if="logViewerSubscriptionId"
-            :subscription-id="logViewerSubscriptionId"
-            :title="logViewerTitle"
-            :task-type="logViewerTaskType"
-            @close="closeLogViewer"
-          />
-        </div>
-      </div>
-    </Teleport>
   </Page>
 </template>
 
 <style scoped>
-.log-viewer-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: hsl(var(--overlay));
-}
-
-.log-viewer-container {
-  width: 90%;
-  max-width: 1200px;
-  height: 80%;
-  max-height: 800px;
-  overflow: hidden;
-  background: hsl(var(--background-deep));
-  border-radius: var(--radius);
-  box-shadow: 0 4px 20px hsl(0deg 0% 0% / 30%);
-}
-
 .filter-label {
   font-weight: 500;
   color: hsl(var(--muted-foreground));

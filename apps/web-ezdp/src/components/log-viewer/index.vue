@@ -191,6 +191,15 @@ onBeforeUnmount(() => {
 function renderLogMessage(message: WebSocketMessage) {
   if (!terminal) return;
 
+  // 优先处理系统消息（订阅信息等）- 不受 taskType 过滤影响
+  if (message.commandType === 'system') {
+    const systemMessage = message.data?.message || '';
+    // 系统消息使用黄色显示
+    terminal.writeln(`\u001B[33m${systemMessage}\u001B[0m`);
+    totalLines.value++;
+    return;
+  }
+
   // 根据 taskType 过滤消息：只显示对应 commandId 的日志
   // taskType=1 时只显示 commandId=1 的消息（构建日志）
   // taskType=2 时只显示 commandId=2 的消息（部署日志）
