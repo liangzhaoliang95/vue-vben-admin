@@ -73,7 +73,7 @@ const projectTypeText = computed(() => {
         <template #icon>
           <ArrowLeft class="size-4" />
         </template>
-        返回列表
+        {{ $t('ui.button.backToList') }}
       </Button>
     </div>
 
@@ -117,7 +117,7 @@ const projectTypeText = computed(() => {
       <Tabs v-model:active-key="activeTab">
         <TabPane
           key="build"
-          :tab="$t('deploy.projectManagement.projectConfig.buildConfig')"
+          :tab="$t('deploy.projectManagement.projectConfig.buildConfig.title')"
         >
           <BuildConfig
             :project-id="projectId"
@@ -126,7 +126,7 @@ const projectTypeText = computed(() => {
         </TabPane>
         <TabPane
           key="deploy"
-          :tab="$t('deploy.projectManagement.projectConfig.deployConfig')"
+          :tab="$t('deploy.projectManagement.projectConfig.deployConfig.title')"
         >
           <DeployConfig
             :project-id="projectId"

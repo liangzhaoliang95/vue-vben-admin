@@ -65,21 +65,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
           const result = await getProjectConfigList(queryParams);
 
-          // 项目类型排序：backend > frontend > submodule
-          if (result.items && Array.isArray(result.items)) {
-            const typeOrder: Record<string, number> = {
-              backend: 1,
-              frontend: 2,
-              submodule: 3,
-            };
-
-            result.items.sort((a, b) => {
-              const orderA = typeOrder[a.type] || 999;
-              const orderB = typeOrder[b.type] || 999;
-              return orderA - orderB;
-            });
-          }
-
+          // 排序已在后端实现：backend > frontend > submodule，同类型内按项目ID正序
           return result;
         },
       },

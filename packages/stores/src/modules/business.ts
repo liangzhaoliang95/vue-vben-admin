@@ -358,57 +358,59 @@ export const useBusinessStore = defineStore(
       if (currentBusinessLineId.value === id) {
         return;
       }
-      await init();
 
-      const target = businessLines.value.find(
-        (item) => item.businessLine.id === id,
-      );
-      if (!target) {
-        return;
-      }
+      try {
+        // 确保业务线列表已加载
+        await init();
 
-      // 调用后端接口切换业务线
-      const apiProvider = getBusinessApiProvider();
-      if (apiProvider.switchBusinessLine) {
-        try {
-          await apiProvider.switchBusinessLine(id);
-        } catch (error) {
-          console.error('切换业务线失败:', error);
-          throw error;
+        const target = businessLines.value.find(
+          (item) => item.businessLine.id === id,
+        );
+        if (!target) {
+          return;
         }
-      }
 
-      // 切换业务线前，先清空菜单缓存，确保获取新业务线的菜单
-      roleMenuCache.value = {};
+        // 调用后端接口切换业务线
+        const apiProvider = getBusinessApiProvider();
+        if (apiProvider.switchBusinessLine) {
+          await apiProvider.switchBusinessLine(id);
+        }
 
-      // 清空标签页（只保留固定标签）
-      const tabbarStore = useTabbarStore();
-      const affixTabs = tabbarStore.tabs.filter(
-        (tab) => tab?.meta?.affixTab === true,
-      );
-      tabbarStore.tabs = affixTabs.length > 0 ? affixTabs : [];
-      tabbarStore.updateCacheTabs();
+        // 切换业务线前，先清空菜单缓存，确保获取新业务线的菜单
+        roleMenuCache.value = {};
 
-      currentBusinessLineId.value = id;
+        // 清空标签页（只保留固定标签）
+        const tabbarStore = useTabbarStore();
+        const affixTabs = tabbarStore.tabs.filter(
+          (tab) => tab?.meta?.affixTab === true,
+        );
+        tabbarStore.tabs = affixTabs.length > 0 ? affixTabs : [];
+        tabbarStore.updateCacheTabs();
 
-      const role =
-        target.roles.find((item) => item.id === currentRoleId.value) ??
-        target.roles[0] ??
-        null;
+        currentBusinessLineId.value = id;
 
-      if (role) {
-        await switchRole(role.id);
-        // 切换角色后，需要重新生成路由和菜单
-        // 标记需要重新生成，路由守卫会检测到并重新生成
-        accessStore.setIsAccessChecked(false);
-      } else {
-        currentRoleId.value = null;
-        updateUserRoles(null);
-        // 没有角色时，清空权限码、菜单和路由
-        accessStore.setAccessCodes([]);
-        accessStore.setAccessMenus([]);
-        accessStore.setAccessRoutes([]);
-        accessStore.setIsAccessChecked(false);
+        const role =
+          target.roles.find((item) => item.id === currentRoleId.value) ??
+          target.roles[0] ??
+          null;
+
+        if (role) {
+          await switchRole(role.id);
+          // 切换角色后，需要重新生成路由和菜单
+          // 标记需要重新生成，路由守卫会检测到并重新生成
+          accessStore.setIsAccessChecked(false);
+        } else {
+          currentRoleId.value = null;
+          updateUserRoles(null);
+          // 没有角色时，清空权限码、菜单和路由
+          accessStore.setAccessCodes([]);
+          accessStore.setAccessMenus([]);
+          accessStore.setAccessRoutes([]);
+          accessStore.setIsAccessChecked(false);
+        }
+      } finally {
+        // 确保loading状态被重置，避免Select被永久禁用
+        loading.value = false;
       }
     }
 

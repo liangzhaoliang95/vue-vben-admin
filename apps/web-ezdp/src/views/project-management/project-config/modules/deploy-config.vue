@@ -9,6 +9,7 @@ import {
   message,
   Select,
   SelectOption,
+  Textarea,
 } from 'ant-design-vue';
 
 import {
@@ -29,49 +30,66 @@ const isFrontendProject = computed(() => props.projectType === 'frontend');
 
 // 表单数据
 const formState = reactive({
-  deployType: (isFrontendProject.value ? 'oss' : 'k8s') as 'k8s' | 'oss', // 发布类型：k8s, oss
+  deployType: (isFrontendProject.value ? 'oss' : 'k8s') as
+    | 'k8s'
+    | 'oss'
+    | 'script', // 发布类型：k8s, oss, script
   k8sType: 'deployment' as 'cronjob' | 'deployment', // K8s 资源类型：deployment, cronjob
   k8sName: '', // K8s 资源名称
   containerName: 'main', // K8s 容器名称（默认为main）
   ossName: '', // OSS 名称
+  scriptContent: '', // 脚本内容
 });
 
 const loading = ref(false);
 const formRef = ref();
 
 // 表单验证规则
-const rules: Record<string, any> = {
+const rules: Record<string, any> = computed(() => ({
   k8sName: [
     {
       required: true,
-      message: '请输入资源名称',
+      message: $t('deploy.projectManagement.projectConfig.deployConfig.k8sName') + $t('ui.inputRequired'),
       trigger: 'blur',
     },
   ],
   containerName: [
     {
       required: true,
-      message: '请输入容器名称',
+      message: $t('deploy.projectManagement.projectConfig.deployConfig.containerName') + $t('ui.inputRequired'),
       trigger: 'blur',
     },
   ],
   ossName: [
     {
       required: true,
-      message: '请输入OSS名称',
+      message: $t('deploy.projectManagement.projectConfig.deployConfig.ossName') + $t('ui.inputRequired'),
       trigger: 'blur',
     },
   ],
-};
+  scriptContent: [
+    {
+      required: true,
+      message: $t('deploy.projectManagement.projectConfig.deployConfig.scriptContent') + $t('ui.inputRequired'),
+      trigger: 'blur',
+    },
+  ],
+}));
 
 // 发布类型选项(根据项目类型动态显示)
 const deployTypeOptions = computed(() => {
   if (isFrontendProject.value) {
-    // 前端项目只支持 OSS 发布
-    return [{ label: 'OSS', value: 'oss' }];
+    // 前端项目支持 OSS 发布和Shell发布
+    return [
+      { label: 'OSS', value: 'oss' },
+      { label: $t('deploy.projectManagement.projectConfig.deployConfig.shell'), value: 'script' },
+    ];
   }
-  // 后端项目只支持 K8s 发布
-  return [{ label: 'Kubernetes', value: 'k8s' }];
+  // 后端项目支持 K8s 发布和Shell发布
+  return [
+    { label: 'Kubernetes', value: 'k8s' },
+    { label: $t('deploy.projectManagement.projectConfig.deployConfig.shell'), value: 'script' },
+  ];
 });
 
 // K8s 资源类型选项
@@ -96,8 +114,10 @@ async function handleSave() {
       data.k8sType = formState.k8sType;
       data.k8sName = formState.k8sName;
       data.containerName = formState.containerName;
-    } else {
+    } else if (formState.deployType === 'oss') {
       data.ossName = formState.ossName;
+    } else if (formState.deployType === 'script') {
+      data.scriptContent = formState.scriptContent;
     }
 
     await createOrUpdateDeployConfig(data);
@@ -126,6 +146,7 @@ async function loadConfig() {
       formState.k8sName = config.k8sName || '';
       formState.containerName = config.containerName || 'main';
       formState.ossName = config.ossName || '';
+      formState.scriptContent = config.scriptContent || '';
     }
   } catch (error) {
     console.error('加载配置失败:', error);
@@ -150,10 +171,13 @@ onMounted(() => {
       :wrapper-col="{ span: 18 }"
       class="max-w-3xl"
     >
-      <FormItem label="发布类型" name="deployType">
+      <FormItem
+        :label="$t('deploy.projectManagement.projectConfig.deployConfig.deployType')"
+        name="deployType"
+      >
         <Select
           v-model:value="formState.deployType"
-          placeholder="请选择发布类型"
+          :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.deployTypePlaceholder')"
         >
           <SelectOption
             v-for="option in deployTypeOptions"
@@ -167,10 +191,13 @@ onMounted(() => {
 
       <!-- K8s 发布配置 -->
       <template v-if="formState.deployType === 'k8s'">
-        <FormItem label="资源类型" name="k8sType">
+        <FormItem
+          :label="$t('deploy.projectManagement.projectConfig.deployConfig.k8sType')"
+          name="k8sType"
+        >
           <Select
             v-model:value="formState.k8sType"
-            placeholder="请选择资源类型"
+            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.k8sTypePlaceholder')"
           >
             <SelectOption
               v-for="option in k8sTypeOptions"
@@ -182,37 +209,65 @@ onMounted(() => {
           </Select>
         </FormItem>
 
-        <FormItem label="资源名称" name="k8sName">
+        <FormItem
+          :label="$t('deploy.projectManagement.projectConfig.deployConfig.k8sName')"
+          name="k8sName"
+        >
           <Input
             v-model:value="formState.k8sName"
-            placeholder="例如: myapp-deployment 或 myapp-cronjob"
+            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.k8sNamePlaceholder')"
           />
         </FormItem>
 
-        <FormItem label="容器名称" name="containerName">
+        <FormItem
+          :label="$t('deploy.projectManagement.projectConfig.deployConfig.containerName')"
+          name="containerName"
+        >
           <Input
             v-model:value="formState.containerName"
-            placeholder="K8s容器名称（默认为main）"
+            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.containerNamePlaceholder')"
           />
           <div class="text-gray-500 text-xs mt-1">
-            容器名称用于kubectl更新镜像时指定，如不确定请保持默认值main
+            {{ $t('deploy.projectManagement.projectConfig.deployConfig.containerNameTip') }}
           </div>
         </FormItem>
       </template>
 
       <!-- OSS 发布配置 -->
       <template v-if="formState.deployType === 'oss'">
-        <FormItem label="名称" name="ossName">
+        <FormItem
+          :label="$t('deploy.projectManagement.projectConfig.deployConfig.ossName')"
+          name="ossName"
+        >
           <Input
             v-model:value="formState.ossName"
-            placeholder="例如: myapp-frontend"
+            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.ossNamePlaceholder')"
           />
+        </FormItem>
+      </template>
+
+      <!-- 脚本发布配置 -->
+      <template v-if="formState.deployType === 'script'">
+        <FormItem
+          :label="$t('deploy.projectManagement.projectConfig.deployConfig.scriptContent')"
+          name="scriptContent"
+        >
+          <Textarea
+            v-model:value="formState.scriptContent"
+            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.scriptContentPlaceholder')"
+            :rows="10"
+            :auto-size="{ minRows: 10, maxRows: 20 }"
+            style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace"
+          />
+          <div class="text-gray-500 text-xs mt-1">
+            {{ $t('deploy.projectManagement.projectConfig.deployConfig.scriptContentTip') }}
+          </div>
         </FormItem>
       </template>
 
       <FormItem :wrapper-col="{ offset: 6, span: 18 }">
         <Button type="primary" :loading="loading" @click="handleSave">
-          保存配置
+          {{ $t('deploy.projectManagement.projectConfig.deployConfig.saveConfig') }}
         </Button>
       </FormItem>
     </Form>

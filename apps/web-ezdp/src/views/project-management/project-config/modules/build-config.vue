@@ -35,21 +35,39 @@ const dockerSecretList = ref<Array<{ id: string; name: string }>>([]);
 
 // 构建参数的 placeholder（使用计算属性避免引号冲突）
 const buildArgsPlaceholder = computed(
-  () => 'JSON格式，例如: {"ENV": "production", "VERSION": "1.0.0"}',
+  () => $t('deploy.projectManagement.projectConfig.buildConfig.buildArgsPlaceholder'),
 );
 
 // 表单验证规则(根据项目类型动态生成)
 const formRules = computed(() => {
   const baseRules = {
     dockerfile: [
-      { required: true, message: '请输入 Dockerfile 路径', trigger: 'blur' },
+      {
+        required: true,
+        message: $t('deploy.projectManagement.projectConfig.buildConfig.dockerfile') + $t('ui.inputRequired'),
+        trigger: 'blur'
+      },
     ],
     buildContext: [
-      { required: true, message: '请输入构建上下文', trigger: 'blur' },
+      {
+        required: true,
+        message: $t('deploy.projectManagement.projectConfig.buildConfig.buildContext') + $t('ui.inputRequired'),
+        trigger: 'blur'
+      },
     ],
-    imageName: [{ required: true, message: '请输入镜像名称', trigger: 'blur' }],
+    imageName: [
+      {
+        required: true,
+        message: $t('deploy.projectManagement.projectConfig.buildConfig.imageName') + $t('ui.inputRequired'),
+        trigger: 'blur'
+      }
+    ],
     dockerSecretId: [
-      { required: true, message: '请选择仓库配置', trigger: 'change' },
+      {
+        required: true,
+        message: $t('deploy.projectManagement.projectConfig.buildConfig.dockerSecret') + $t('ui.selectRequired'),
+        trigger: 'change'
+      },
     ],
   };
 
@@ -58,7 +76,11 @@ const formRules = computed(() => {
     return {
       ...baseRules,
       ossName: [
-        { required: true, message: '请输入 OSS 名称', trigger: 'blur' },
+        {
+          required: true,
+          message: $t('deploy.projectManagement.projectConfig.buildConfig.ossName') + $t('ui.inputRequired'),
+          trigger: 'blur'
+        },
       ],
     };
   }
@@ -91,7 +113,7 @@ async function handleSave() {
     console.error('保存配置失败:', error);
     // 区分验证错误和保存错误
     if (error && typeof error === 'object' && 'errorFields' in error) {
-      message.error('请填写必填项');
+      message.error($t('deploy.projectManagement.projectConfig.buildConfig.fillRequired'));
     } else {
       message.error($t('ui.errorMessage.save'));
     }
@@ -154,31 +176,43 @@ onMounted(() => {
       :wrapper-col="{ span: 18 }"
       class="max-w-3xl"
     >
-      <FormItem label="Dockerfile 路径" name="dockerfile">
+      <FormItem
+        :label="$t('deploy.projectManagement.projectConfig.buildConfig.dockerfile')"
+        name="dockerfile"
+      >
         <Input
           v-model:value="formState.dockerfile"
-          placeholder="例如: ./Dockerfile 或 ./docker/Dockerfile"
+          :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.dockerfilePlaceholder')"
         />
       </FormItem>
 
-      <FormItem label="构建上下文" name="buildContext">
+      <FormItem
+        :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildContext')"
+        name="buildContext"
+      >
         <Input
           v-model:value="formState.buildContext"
-          placeholder="例如: . 或 ./app"
+          :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.buildContextPlaceholder')"
         />
       </FormItem>
 
-      <FormItem label="镜像名称" name="imageName">
+      <FormItem
+        :label="$t('deploy.projectManagement.projectConfig.buildConfig.imageName')"
+        name="imageName"
+      >
         <Input
           v-model:value="formState.imageName"
-          placeholder="例如: myapp 或 registry.example.com/myapp"
+          :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.imageNamePlaceholder')"
         />
       </FormItem>
 
-      <FormItem label="仓库配置" name="dockerSecretId">
+      <FormItem
+        :label="$t('deploy.projectManagement.projectConfig.buildConfig.dockerSecret')"
+        name="dockerSecretId"
+      >
         <Select
           v-model:value="formState.dockerSecretId"
-          placeholder="请选择 Docker 仓库配置（可选）"
+          :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.dockerSecretPlaceholder')"
           allow-clear
         >
           <Select.Option
@@ -191,14 +225,21 @@ onMounted(() => {
         </Select>
       </FormItem>
 
-      <FormItem v-if="isFrontendProject" label="OSS 名称" name="ossName">
+      <FormItem
+        v-if="isFrontendProject"
+        :label="$t('deploy.projectManagement.projectConfig.buildConfig.ossName')"
+        name="ossName"
+      >
         <Input
           v-model:value="formState.ossName"
-          placeholder="前端项目构建资源上传目录，例如: my-frontend-app"
+          :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.ossNamePlaceholder')"
         />
       </FormItem>
 
-      <FormItem label="构建参数" name="buildArgs">
+      <FormItem
+        :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildArgs')"
+        name="buildArgs"
+      >
         <Input.TextArea
           v-model:value="formState.buildArgs"
           :rows="4"
@@ -208,7 +249,7 @@ onMounted(() => {
 
       <FormItem :wrapper-col="{ offset: 6, span: 18 }">
         <Button type="primary" :loading="loading" @click="handleSave">
-          保存配置
+          {{ $t('deploy.projectManagement.projectConfig.buildConfig.saveConfig') }}
         </Button>
       </FormItem>
     </Form>

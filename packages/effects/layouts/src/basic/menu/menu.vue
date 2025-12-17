@@ -24,7 +24,7 @@ interface Props extends MenuProps {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  accordion: true,
+  accordion: undefined, // 使用 undefined，让组件从 preferences 读取
   menus: () => [],
 });
 
@@ -37,6 +37,11 @@ const businessStore = useBusinessStore();
 
 // 切换业务线的 loading 状态
 const switchingBusinessLine = ref(false);
+
+// 从配置中获取 accordion 值，如果 props 中未指定则使用全局配置
+const accordion = computed(() => {
+  return props.accordion ?? preferences.navigation.accordion;
+});
 
 // 业务线选项
 const businessLineOptions = computed(() => businessStore.businessLineOptions);
@@ -69,7 +74,8 @@ const selectedValue = computed({
       window.location.href = redirectUrl;
     } catch (error) {
       console.error('切换业务线失败:', error);
-      // 切换失败时恢复原值
+    } finally {
+      // 无论成功失败都恢复状态，避免Select被永久禁用
       switchingBusinessLine.value = false;
     }
   },

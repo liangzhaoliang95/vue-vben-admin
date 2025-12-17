@@ -6,10 +6,12 @@ export namespace DeployConfigApi {
   export interface DeployConfig {
     id: string;
     projectConfigId: string;
-    deployType: 'k8s' | 'oss';
+    deployType: 'k8s' | 'oss' | 'script';
     k8sType?: 'cronjob' | 'deployment';
     k8sName?: string;
+    containerName?: string;
     ossName?: string;
+    scriptContent?: string;
     createdAt: number;
     updatedAt: number;
   }
