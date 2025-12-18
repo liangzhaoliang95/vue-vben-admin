@@ -43,6 +43,10 @@ const activeKeys = ref<string[]>([]); // 展开的版本面板
 
 // 组件是否已激活的标记
 const isComponentActive = ref(true);
+// 是否已经初始化过
+const isInitialized = ref(false);
+// 是否正在初始化中（防止重复初始化）
+const isInitializing = ref(false);
 
 // 是否是超级管理员
 const isSuperAdmin = computed(
@@ -69,27 +73,29 @@ const currentBranchOptions = computed(() => {
   }));
 });
 
-// 加载所有业务线的分支数据
-async function loadAllBranches() {
-  const businessLines = businessStore.businessLines;
-
-  if (!businessLines || businessLines.length === 0) {
+// 加载指定业务线的分支数据（懒加载）
+async function loadBranchesForBusinessLine(businessLineId: number, force: boolean = false) {
+  if (!businessLineId) {
     return;
   }
 
-  for (const bl of businessLines) {
-    const businessLineId = bl.businessLine.id;
-    try {
-      const res = await getBranchManagementList({
-        page: 1,
-        pageSize: 1000,
-        businessLineId,
-        onlyEnabled: true, // 只查询启用的分支
-      });
-      allBranchesMap.value.set(businessLineId, res.items || []);
-    } catch (error) {
-      console.error(`加载业务线 ${businessLineId} 的分支失败:`, error);
-    }
+  // 如果该业务线的分支已加载且不是强制刷新，直接返回
+  if (!force && allBranchesMap.value.has(businessLineId)) {
+    return;
+  }
+
+  try {
+    const res = await getBranchManagementList({
+      page: 1,
+      pageSize: 1000,
+      businessLineId,
+      onlyEnabled: true, // 只查询启用的分支
+    });
+    allBranchesMap.value.set(businessLineId, res.items || []);
+  } catch (error) {
+    console.error(`加载业务线 ${businessLineId} 的分支失败:`, error);
+    // 即使失败也设置空数组，避免重复请求
+    allBranchesMap.value.set(businessLineId, []);
   }
 }
 
@@ -102,10 +108,12 @@ async function loadVersionList() {
 
   if (!selectedBranchId.value) {
     versionList.value = [];
+    loading.value = false;
     return;
   }
 
-  loading.value = true;
+  // 注意：这里不设置 loading.value = true，由调用方控制
+  // 这样可以避免在 init() 中出现 loading 闪烁
 
   try {
     const queryParams: any = {
@@ -124,56 +132,100 @@ async function loadVersionList() {
   } catch (error) {
     console.error('加载版本列表失败:', error);
     message.error('加载版本列表失败');
-  } finally {
-    loading.value = false;
   }
 }
 
 // 初始化
 async function init() {
-  // 设置默认业务线
-  if (isSuperAdmin.value) {
-    const businessLines = businessStore.businessLines;
-    if (businessLines && businessLines.length > 0) {
-      selectedBusinessLineId.value = businessLines[0]?.businessLine.id;
+  // 如果正在初始化中，直接返回，避免重复调用
+  if (isInitializing.value) {
+    return;
+  }
+
+  // 如果已经初始化过，只刷新版本列表即可
+  if (isInitialized.value) {
+    loading.value = true;
+    try {
+      await loadVersionList();
+    } finally {
+      loading.value = false;
     }
-  } else {
-    selectedBusinessLineId.value =
-      businessStore.currentBusinessLineId ?? undefined;
+    return;
   }
 
-  // 加载分支数据
-  await loadAllBranches();
+  try {
+    // 设置初始化锁和加载状态
+    isInitializing.value = true;
+    loading.value = true;
 
-  // 设置默认分支
-  if (selectedBusinessLineId.value) {
-    const branches =
-      allBranchesMap.value.get(selectedBusinessLineId.value) || [];
-    selectedBranchId.value = branches.length > 0 ? branches[0].id : undefined;
-  }
+    // 步骤1: 设置默认业务线（仅首次）
+    if (!selectedBusinessLineId.value) {
+      if (isSuperAdmin.value) {
+        const businessLines = businessStore.businessLines;
+        if (businessLines && businessLines.length > 0) {
+          selectedBusinessLineId.value = businessLines[0]?.businessLine.id;
+        }
+      } else {
+        selectedBusinessLineId.value =
+          businessStore.currentBusinessLineId ?? undefined;
+      }
+    }
 
-  // 加载版本列表
-  await loadVersionList();
+    // 步骤2: 加载当前业务线的分支数据（懒加载策略）
+    if (selectedBusinessLineId.value) {
+      await loadBranchesForBusinessLine(selectedBusinessLineId.value);
+    }
 
-  // 订阅当前业务线的 WebSocket 日志
-  if (selectedBusinessLineId.value) {
-    wsStore.subscribeBusinessLine(selectedBusinessLineId.value);
+    // 步骤3: 设置默认分支（仅首次）
+    if (!selectedBranchId.value && selectedBusinessLineId.value) {
+      const branches =
+        allBranchesMap.value.get(selectedBusinessLineId.value) || [];
+      selectedBranchId.value = branches.length > 0 ? branches[0].id : undefined;
+    }
+
+    // 步骤4: 只有在分支列表准备好后，才加载版本列表
+    await loadVersionList();
+
+    // 订阅当前业务线的 WebSocket 日志
+    if (selectedBusinessLineId.value) {
+      wsStore.subscribeBusinessLine(selectedBusinessLineId.value);
+    }
+
+    // 标记为已初始化
+    isInitialized.value = true;
+  } finally {
+    // 释放初始化锁和加载状态
+    isInitializing.value = false;
+    loading.value = false;
   }
 }
 
 // 业务线变化处理
 async function handleBusinessLineChange(newId: number) {
-  const branches = allBranchesMap.value.get(newId) || [];
-  selectedBranchId.value = branches.length > 0 ? branches[0].id : undefined;
-  await loadVersionList();
+  loading.value = true;
+  try {
+    // 加载新业务线的分支数据（如果未加载）
+    await loadBranchesForBusinessLine(newId);
 
-  // 订阅新业务线的 WebSocket 日志
-  wsStore.subscribeBusinessLine(newId);
+    const branches = allBranchesMap.value.get(newId) || [];
+    selectedBranchId.value = branches.length > 0 ? branches[0].id : undefined;
+    await loadVersionList();
+
+    // 订阅新业务线的 WebSocket 日志
+    wsStore.subscribeBusinessLine(newId);
+  } finally {
+    loading.value = false;
+  }
 }
 
 // 分支变化处理
 async function handleBranchChange() {
-  await loadVersionList();
+  loading.value = true;
+  try {
+    await loadVersionList();
+  } finally {
+    loading.value = false;
+  }
 }
 
 // 刷新
@@ -182,8 +234,13 @@ async function handleRefresh() {
     message.warning('请先选择分支');
     return;
   }
-  await loadVersionList();
-  message.success('刷新成功');
+  loading.value = true;
+  try {
+    await loadVersionList();
+    message.success('刷新成功');
+  } finally {
+    loading.value = false;
+  }
 }
 
 // 确认对话框
@@ -398,9 +455,11 @@ onDeactivated(() => {
     // 注意：不要调用 unsubscribeBusinessLine()
     // WebSocket 连接是全局共享的，其他页面可能还在使用
 
-    // 清空本地状态，避免状态残留
+    // 清空版本列表状态，但保留其他缓存数据（分支等）
     versionList.value = [];
     activeKeys.value = [];
+
+    // 保留 isInitialized 标记，避免重新初始化时重复加载分支数据
   } catch (error) {
     console.error('onDeactivated 清理失败:', error);
   }
