@@ -12,8 +12,14 @@ export namespace DeployEnvironmentApi {
     frontendBaseUrl?: string;
     backendSecretId?: string;
     backendNamespace?: string;
+    sortOrder: number;
     createdAt: number;
     updatedAt: number;
+  }
+
+  export interface OrderItem {
+    id: string;
+    sortOrder: number;
   }
 }
 
@@ -87,10 +93,24 @@ async function getDeployEnvironmentDetail(id: number | string) {
   );
 }
 
+/**
+ * 更新发布环境配置排序
+ *
+ * @param orders 排序列表
+ */
+async function updateDeployEnvironmentOrder(
+  orders: DeployEnvironmentApi.OrderItem[],
+) {
+  return requestClient.post('/projectManagement/deployEnvironment/updateOrder', {
+    orders,
+  });
+}
+
 export {
   createDeployEnvironment,
   deleteDeployEnvironment,
   getDeployEnvironmentDetail,
   getDeployEnvironmentList,
   updateDeployEnvironment,
+  updateDeployEnvironmentOrder,
 };

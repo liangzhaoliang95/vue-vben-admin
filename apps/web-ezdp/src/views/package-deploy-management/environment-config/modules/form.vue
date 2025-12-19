@@ -75,6 +75,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
           previousBusinessLineId.value = detail.businessLineId;
           formApi.setValues({
             name: detail.name,
+            sortOrder: detail.sortOrder || 0,
             description: detail.description || '',
             frontendStorageId: detail.frontendStorageId || '',
             frontendBaseUrl: detail.frontendBaseUrl || '',
@@ -89,6 +90,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
           previousBusinessLineId.value = data.businessLineId;
           formApi.setValues({
             name: data.name,
+            sortOrder: data.sortOrder || 0,
             description: data.description || '',
             frontendStorageId: data.frontendStorageId || '',
             frontendBaseUrl: data.frontendBaseUrl || '',
@@ -125,14 +127,30 @@ async function handleConfirm() {
   if (!valid) return;
   const values = await formApi.getValues();
 
+  // 验证至少配置了前端或后端之一
+  const hasFrontend = !!(values.frontendStorageId || values.frontendBaseUrl);
+  const hasBackend = !!(values.backendSecretId && values.backendNamespace);
+
+  if (!hasFrontend && !hasBackend) {
+    message.error(
+      $t(
+        'deploy.packageDeployManagement.environmentConfig.atLeastOneTargetRequired',
+      ),
+    );
+    return;
+  }
+
   loading.value = true;
 
-  // 构建提交数据（后端字段为必填）
+  // 构建提交数据
   const submitData: any = {
     name: values.name,
-    backendSecretId: values.backendSecretId,
-    backendNamespace: values.backendNamespace,
   };
+
+  // sortOrder字段（如果提供了则使用，否则后端会自动设置）
+  if (values.sortOrder !== undefined && values.sortOrder !== null) {
+    submitData.sortOrder = values.sortOrder;
+  }
 
   // 可选字段（只在有值时提交）
   if (values.description) {
@@ -143,6 +161,12 @@ async function handleConfirm() {
   }
   if (values.frontendBaseUrl) {
     submitData.frontendBaseUrl = values.frontendBaseUrl;
+  }
+  if (values.backendSecretId) {
+    submitData.backendSecretId = values.backendSecretId;
+  }
+  if (values.backendNamespace) {
+    submitData.backendNamespace = values.backendNamespace;
   }
 
   // 业务线ID（如果表单中有，则使用；否则后端会从token自动获取）

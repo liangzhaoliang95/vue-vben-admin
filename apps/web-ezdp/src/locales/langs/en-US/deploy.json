@@ -240,6 +240,8 @@
       "title": "Branch Management",
       "name": "Branch Name",
       "namePlaceholder": "Please enter branch name",
+      "sortOrder": "Sort Order",
+      "sortOrderPlaceholder": "Please enter sort order (lower number comes first)",
       "projectName": "Project Name",
       "projectNamePlaceholder": "Please select project",
       "branchType": "Branch Type",
@@ -264,6 +266,8 @@
       "title": "Environment Configuration",
       "name": "Environment Name",
       "namePlaceholder": "Please enter environment name",
+      "sortOrder": "Sort Order",
+      "sortOrderPlaceholder": "Please enter sort order (lower number comes first)",
       "description": "Description",
       "descriptionPlaceholder": "Please enter description",
       "frontendStorage": "Frontend Environment",
@@ -273,7 +277,8 @@
       "backendCluster": "Backend Cluster",
       "backendClusterPlaceholder": "Please select backend cluster (K8S Cluster)",
       "backendEnvironment": "Backend NS",
-      "backendEnvironmentPlaceholder": "Please enter backend NS"
+      "backendEnvironmentPlaceholder": "Please enter backend NS",
+      "atLeastOneTargetRequired": "At least one deployment target (frontend or backend) must be configured"
     }
   }
 }

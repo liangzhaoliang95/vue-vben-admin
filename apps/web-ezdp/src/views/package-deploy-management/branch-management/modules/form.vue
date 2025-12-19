@@ -38,6 +38,18 @@ const formSchema = computed(() => [
     rules: 'required',
   },
   {
+    component: 'InputNumber',
+    componentProps: {
+      placeholder: $t(
+        'deploy.packageDeployManagement.branchManagement.sortOrderPlaceholder',
+      ),
+      min: 0,
+      style: { width: '100%' },
+    },
+    fieldName: 'sortOrder',
+    label: $t('deploy.packageDeployManagement.branchManagement.sortOrder'),
+  },
+  {
     component: 'Textarea',
     componentProps: {
       placeholder: $t(
@@ -74,6 +86,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         id.value = data.id;
         formApi.setValues({
           name: data.name,
+          sortOrder: data.sortOrder || 0,
           description: data.description || '',
           businessLineId: data.businessLineId,
         });
@@ -114,6 +127,11 @@ async function handleConfirm() {
     name: values.name,
     description: values.description,
   };
+
+  // sortOrder字段（如果提供了则使用，否则后端会自动设置）
+  if (values.sortOrder !== undefined && values.sortOrder !== null) {
+    submitData.sortOrder = values.sortOrder;
+  }
 
   // 业务线ID（如果表单中有，则使用；否则后端会从token自动获取）
   if (values.businessLineId) {

@@ -9,6 +9,7 @@ export namespace BranchManagementApi {
     name: string;
     description: string;
     enabled: boolean;
+    sortOrder: number;
     createdAt: number;
     updatedAt: number;
   }

@@ -46,6 +46,12 @@ export function useColumns(
       },
     },
     {
+      field: 'sortOrder',
+      title: $t('deploy.packageDeployManagement.branchManagement.sortOrder'),
+      minWidth: 80,
+      align: 'center',
+    },
+    {
       field: 'name',
       title: $t('deploy.packageDeployManagement.branchManagement.name'),
       minWidth: 200,

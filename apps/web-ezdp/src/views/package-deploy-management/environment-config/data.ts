@@ -93,6 +93,18 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },
     {
+      component: 'InputNumber',
+      fieldName: 'sortOrder',
+      label: $t('deploy.packageDeployManagement.environmentConfig.sortOrder'),
+      componentProps: {
+        placeholder: $t(
+          'deploy.packageDeployManagement.environmentConfig.sortOrderPlaceholder',
+        ),
+        min: 0,
+        style: { width: '100%' },
+      },
+    },
+    {
       component: 'Textarea',
       fieldName: 'description',
       label: $t('deploy.packageDeployManagement.environmentConfig.description'),
@@ -160,7 +172,6 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t(
         'deploy.packageDeployManagement.environmentConfig.backendCluster',
       ),
-      rules: 'required',
       componentProps: {
         api: async (params?: any) => {
           const res = await getK8sSecretList({
@@ -200,7 +211,6 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t(
         'deploy.packageDeployManagement.environmentConfig.backendEnvironment',
       ),
-      rules: 'required',
       componentProps: {
         placeholder: $t(
           'deploy.packageDeployManagement.environmentConfig.backendEnvironmentPlaceholder',
@@ -265,6 +275,12 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
         );
         return businessLine?.businessLine.name || '-';
       },
+    },
+    {
+      field: 'sortOrder',
+      title: $t('deploy.packageDeployManagement.environmentConfig.sortOrder'),
+      minWidth: 80,
+      align: 'center',
     },
     {
       field: 'name',

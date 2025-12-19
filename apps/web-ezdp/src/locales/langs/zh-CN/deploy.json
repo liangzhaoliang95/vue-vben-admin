@@ -240,6 +240,8 @@
       "title": "分支管理",
       "name": "分支名称",
       "namePlaceholder": "请输入分支名称",
+      "sortOrder": "排序",
+      "sortOrderPlaceholder": "请输入排序数字（数字越小越靠前）",
       "projectName": "项目名称",
       "projectNamePlaceholder": "请选择项目",
       "branchType": "分支类型",
@@ -264,6 +266,8 @@
       "title": "环境配置",
       "name": "环境名称",
       "namePlaceholder": "请输入环境名称",
+      "sortOrder": "排序",
+      "sortOrderPlaceholder": "请输入排序数字（数字越小越靠前）",
       "description": "描述",
       "descriptionPlaceholder": "请输入描述",
       "frontendStorage": "前端环境",
@@ -273,7 +277,8 @@
       "backendCluster": "后端集群",
       "backendClusterPlaceholder": "请选择后端集群（K8S集群）",
       "backendEnvironment": "后端NS",
-      "backendEnvironmentPlaceholder": "请输入后端NS"
+      "backendEnvironmentPlaceholder": "请输入后端NS",
+      "atLeastOneTargetRequired": "至少需要配置前端或后端之一"
     }
   }
 }
