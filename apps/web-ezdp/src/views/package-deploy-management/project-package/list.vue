@@ -101,12 +101,16 @@ async function loadBranchesForBusinessLine(businessLineId: number, force: boolea
 
 // 加载版本列表
 async function loadVersionList() {
+  console.log('[项目打包] loadVersionList 被调用');
+
   // 检查组件是否仍然激活
   if (!isComponentActive.value) {
+    console.log('[项目打包] 组件未激活，跳过加载');
     return;
   }
 
   if (!selectedBranchId.value) {
+    console.log('[项目打包] 未选择分支，清空版本列表');
     versionList.value = [];
     loading.value = false;
     return;
@@ -127,10 +131,12 @@ async function loadVersionList() {
       queryParams.businessLineId = selectedBusinessLineId.value;
     }
 
+    console.log('[项目打包] 正在加载版本列表，参数:', queryParams);
     const res = await getBuildTaskList(queryParams);
+    console.log('[项目打包] 版本列表加载完成，数据:', res);
     versionList.value = res.items || [];
   } catch (error) {
-    console.error('加载版本列表失败:', error);
+    console.error('[项目打包] 加载版本列表失败:', error);
     message.error('加载版本列表失败');
   }
 }
@@ -455,15 +461,19 @@ function getVersionStatusConfig(status: string) {
 
 // WebSocket 消息处理器
 function handleWebSocketMessage(message: any) {
+  console.log('[项目打包] 收到 WebSocket 消息:', message);
+
   // 只处理事件类型的消息
   if (message.commandType === 'event' && message.commandId === 1) {
     const { eventType } = message.data;
+    console.log('[项目打包] 事件类型:', eventType, '组件激活状态:', isComponentActive.value);
 
     // 处理构建完成事件
     if (
       eventType === 'build_completed' && // 刷新版本列表
       isComponentActive.value
     ) {
+      console.log('[项目打包] 触发刷新版本列表');
       loadVersionList();
       message.success('构建已完成，版本列表已更新');
     }

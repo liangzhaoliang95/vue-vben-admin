@@ -553,13 +553,22 @@ function handleWebSocketMessage(message: any) {
   if (message.commandType === 'event' && message.commandId === 1) {
     const { eventType } = message.data;
 
-    // 处理构建完成事件
+    // 处理构建完成事件（刷新版本列表）
     if (
-      eventType === 'build_completed' && // 刷新版本列表
+      eventType === 'build_completed' &&
       isComponentActive.value
     ) {
       loadVersionList();
       message.success('构建已完成，版本列表已更新');
+    }
+
+    // 处理部署完成事件（刷新部署列表）
+    if (
+      eventType === 'deploy_completed' &&
+      isComponentActive.value
+    ) {
+      loadDeployTasks();
+      message.success(`部署已完成: ${message.data.version || ''}`);
     }
   }
 }
