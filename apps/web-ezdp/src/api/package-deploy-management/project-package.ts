@@ -45,6 +45,7 @@ export namespace ProjectPackageApi {
   export interface StartBuildTaskParams {
     branchId: string;
     businessLineId?: number;
+    forceRebuild?: boolean; // 强制构建（跳过 tag 和镜像检查）
   }
 }
 

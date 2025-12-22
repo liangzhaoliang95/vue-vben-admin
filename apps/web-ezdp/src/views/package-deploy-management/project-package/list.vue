@@ -298,6 +298,49 @@ async function handleBuild() {
   }
 }
 
+// 强制构建（跳过 tag 和镜像检查）
+async function handleForceBuild() {
+  if (!selectedBranchId.value) {
+    message.warning('请先选择分支');
+    return;
+  }
+
+  try {
+    await confirm(
+      '⚠️ 强制构建将跳过 tag 和镜像检查，强制重新构建所有项目。确定要继续吗？',
+      '强制构建'
+    );
+
+    const queryParams: any = {
+      branchId: selectedBranchId.value,
+      forceRebuild: true, // 强制构建标记
+    };
+
+    // 超级管理员可以传业务线ID
+    if (isSuperAdmin.value && selectedBusinessLineId.value) {
+      queryParams.businessLineId = selectedBusinessLineId.value;
+    }
+
+    await startBuildTask(queryParams);
+    message.success('强制构建任务已启动，请查看实时日志');
+
+    // 打开全局日志查看器（taskType=1 表示构建日志）
+    wsStore.openGlobalLogViewer(1);
+
+    // 延迟刷新列表 - 检查组件是否仍然激活
+    setTimeout(() => {
+      if (isComponentActive.value) {
+        loadVersionList();
+      }
+    }, 2000);
+  } catch (error) {
+    if (error instanceof Error && error.message !== '已取消') {
+      console.error('启动强制构建失败:', error);
+      message.error('启动强制构建失败');
+    }
+  }
+}
+
 // 格式化时间
 function formatTime(timestamp: number) {
   if (!timestamp) return '-';
@@ -509,6 +552,9 @@ onDeactivated(() => {
         <div class="flex flex-shrink-0 items-center gap-3">
           <Button @click="handleRefresh">刷新</Button>
           <Button type="primary" @click="handleBuild">开始构建</Button>
+          <Button danger type="primary" @click="handleForceBuild">
+            ⚡ 强制构建
+          </Button>
         </div>
       </div>
     </Card>
