@@ -101,11 +101,21 @@ export namespace DeployApi {
 }
 
 /**
- * 按大版本发布
+ * 按大版本发布（全量）
  */
 export async function deployByVersion(params: DeployApi.DeployByVersionParams) {
   return requestClient.post<DeployApi.DeployTaskResult>(
     '/deploy/deployByVersion',
+    params,
+  );
+}
+
+/**
+ * 按大版本增量发布（对比上一次发布，只部署变更的项目）
+ */
+export async function deployByVersionIncremental(params: DeployApi.DeployByVersionParams) {
+  return requestClient.post<DeployApi.DeployTaskResult>(
+    '/deploy/deployByVersionIncremental',
     params,
   );
 }

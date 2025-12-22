@@ -22,6 +22,7 @@ import { getBranchManagementList } from '#/api/package-deploy-management/branch-
 import {
   deployByTask,
   deployByVersion,
+  deployByVersionIncremental,
   getEnvironmentVersion,
 } from '#/api/package-deploy-management/deploy';
 import {
@@ -334,8 +335,8 @@ function confirm(content: string, title: string) {
   });
 }
 
-// 部署版本
-async function handleDeployVersion(version: any) {
+// 全量部署版本（原逻辑）
+async function handleFullDeploy(version: any) {
   if (!selectedEnvironmentId.value) {
     message.warning($t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'));
     return;
@@ -348,8 +349,8 @@ async function handleDeployVersion(version: any) {
 
   try {
     await confirm(
-      $t('deploy.packageDeployManagement.projectDeploy.deployConfirm', [version.version, environmentName]),
-      $t('deploy.packageDeployManagement.projectDeploy.deploy'),
+      $t('deploy.packageDeployManagement.projectDeploy.fullDeployConfirm', [version.version, environmentName]),
+      $t('deploy.packageDeployManagement.projectDeploy.fullDeploy'),
     );
 
     message.loading({
@@ -359,6 +360,57 @@ async function handleDeployVersion(version: any) {
     });
 
     await deployByVersion({
+      buildVersionId: version.id,
+      deployEnvironmentId: selectedEnvironmentId.value,
+    });
+
+    message.destroy('deploying');
+    message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
+
+    // 打开全局日志查看器（taskType=2 表示部署日志）
+    wsStore.openGlobalLogViewer(2);
+
+    // 延迟刷新列表和当前环境版本
+    setTimeout(() => {
+      if (isComponentActive.value) {
+        loadVersionList();
+        loadCurrentEnvironmentVersion();
+      }
+    }, 2000);
+  } catch (error) {
+    message.destroy('deploying');
+    if (error instanceof Error && error.message !== '已取消') {
+      console.error('发布失败:', error);
+      message.error('发布失败');
+    }
+  }
+}
+
+// 增量部署版本（对比上一次发布，只部署变更的项目）
+async function handleIncrementalDeploy(version: any) {
+  if (!selectedEnvironmentId.value) {
+    message.warning($t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'));
+    return;
+  }
+
+  const environment = deployEnvironments.value.find(
+    (env) => env.id === selectedEnvironmentId.value,
+  );
+  const environmentName = environment?.name || '';
+
+  try {
+    await confirm(
+      $t('deploy.packageDeployManagement.projectDeploy.incrementalDeployConfirm', [version.version, environmentName]),
+      $t('deploy.packageDeployManagement.projectDeploy.incrementalDeploy'),
+    );
+
+    message.loading({
+      content: $t('deploy.packageDeployManagement.projectDeploy.deploying'),
+      duration: 0,
+      key: 'deploying',
+    });
+
+    await deployByVersionIncremental({
       buildVersionId: version.id,
       deployEnvironmentId: selectedEnvironmentId.value,
     });
@@ -736,15 +788,25 @@ onDeactivated(() => {
                   </Tag>
                 </div>
 
-                <Button
-                  danger
-                  type="primary"
-                  size="large"
-                  :disabled="version.status !== 'success'"
-                  @click.stop="handleDeployVersion(version)"
-                >
-                  🚀 {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
-                </Button>
+                <div class="flex items-center gap-2">
+                  <Button
+                    type="primary"
+                    size="large"
+                    :disabled="version.status !== 'success'"
+                    @click.stop="handleIncrementalDeploy(version)"
+                  >
+                    📦 {{ $t('deploy.packageDeployManagement.projectDeploy.incrementalDeploy') }}
+                  </Button>
+                  <Button
+                    danger
+                    type="primary"
+                    size="large"
+                    :disabled="version.status !== 'success'"
+                    @click.stop="handleFullDeploy(version)"
+                  >
+                    🚀 {{ $t('deploy.packageDeployManagement.projectDeploy.fullDeploy') }}
+                  </Button>
+                </div>
               </div>
             </template>
 
