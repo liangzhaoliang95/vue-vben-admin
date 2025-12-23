@@ -1,5 +1,7 @@
 import type { Recordable } from '@vben/types';
 
+import type { PageResult } from '#/api/core';
+
 import { requestClient } from '#/api/request';
 
 export namespace SystemBusinessLineApi {
@@ -20,11 +22,11 @@ export namespace SystemBusinessLineApi {
 /**
  * 获取业务线列表数据
  */
-async function getBusinessLineList(params: Recordable<any>) {
-  return requestClient.post<{
-    items: SystemBusinessLineApi.BusinessLine[];
-    total: number;
-  }>('/businessLine/list', params);
+async function getBusinessLineList(params?: Recordable<any>) {
+  return requestClient.post<PageResult<SystemBusinessLineApi.BusinessLine>>(
+    '/businessLine/list',
+    params || {},
+  );
 }
 
 /**

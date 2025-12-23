@@ -9,8 +9,8 @@ export default defineConfig(async () => {
           '/server': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/server/, ''),
-            // mock代理目标地址
-            target: 'http://localhost/server',
+            // 后端服务地址（使用 127.0.0.1 避免 DNS 解析延迟）
+            target: 'http://127.0.0.1:80/server',
             ws: true,
           },
         },

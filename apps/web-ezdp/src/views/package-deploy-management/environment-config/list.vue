@@ -44,7 +44,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
         query: async ({ page }, formValues) => {
           const isSuperAdmin = businessStore.currentRole?.isSuper === true;
           const queryParams: any = {
-            page: page.currentPage,
+            pageIndex: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
           };

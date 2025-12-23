@@ -22,7 +22,7 @@ export async function loadReferenceData() {
   try {
     // 加载对象存储列表
     const objectStorageRes = await getObjectStorageList({
-      page: 1,
+      pageIndex: 1,
       pageSize: 1000,
     });
     const newObjectStorageMap = new Map<string, string>();
@@ -34,7 +34,7 @@ export async function loadReferenceData() {
     objectStorageMap.value = newObjectStorageMap;
 
     // 加载K8S集群列表
-    const k8sSecretRes = await getK8sSecretList({ page: 1, pageSize: 1000 });
+    const k8sSecretRes = await getK8sSecretList({ pageIndex: 1, pageSize: 1000 });
     const newK8sSecretMap = new Map<string, string>();
     if (k8sSecretRes.items) {
       k8sSecretRes.items.forEach((item) => {
@@ -66,7 +66,7 @@ export function useFormSchema(): VbenFormSchema[] {
                   '#/api/system/business-line'
                 );
                 const res = await getBusinessLineList({
-                  page: 1,
+                  pageIndex: 1,
                   pageSize: 1000,
                 });
                 return res.items || [];
@@ -124,7 +124,7 @@ export function useFormSchema(): VbenFormSchema[] {
       componentProps: {
         api: async (params?: any) => {
           const res = await getObjectStorageList({
-            page: 1,
+            pageIndex: 1,
             pageSize: 1000,
             ...params,
           });
@@ -175,7 +175,7 @@ export function useFormSchema(): VbenFormSchema[] {
       componentProps: {
         api: async (params?: any) => {
           const res = await getK8sSecretList({
-            page: 1,
+            pageIndex: 1,
             pageSize: 1000,
             ...params,
           });
@@ -243,7 +243,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
                   '#/api/system/business-line'
                 );
                 const res = await getBusinessLineList({
-                  page: 1,
+                  pageIndex: 1,
                   pageSize: 1000,
                 });
                 return res.items || [];
