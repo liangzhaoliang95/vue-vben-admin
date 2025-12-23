@@ -58,8 +58,8 @@ setupVbenVxeTable({
         const { column, row } = params;
         const providerMap: Record<string, { icon: string; label: string }> = {
           minio: { label: 'MinIO', icon: 'mdi:server-network' },
-          ali: { label: '阿里云OSS', icon: 'mdi:cloud' },
-          ecloudObs: { label: '移动云Obs', icon: 'mdi:cloud-outline' },
+          oss: { label: '阿里云OSS', icon: 'mdi:cloud' },
+          obs: { label: '移动云Obs', icon: 'mdi:cloud-outline' },
         };
         const provider = providerMap[row[column.field]] || {
           label: row[column.field],

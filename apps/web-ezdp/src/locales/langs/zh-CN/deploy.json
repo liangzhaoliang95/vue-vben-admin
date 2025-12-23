@@ -276,8 +276,8 @@
       "noCurrentVersion": "未发布",
       "type": {
         "k8s": "K8s",
-        "oss": "OSS",
-        "obs": "OBS"
+        "ossutil": "对象存储",
+        "script": "脚本"
       }
     },
     "branchManagement": {

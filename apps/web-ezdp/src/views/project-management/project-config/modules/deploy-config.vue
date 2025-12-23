@@ -30,10 +30,10 @@ const isFrontendProject = computed(() => props.projectType === 'frontend');
 
 // 表单数据
 const formState = reactive({
-  deployType: (isFrontendProject.value ? 'oss' : 'k8s') as
+  deployType: (isFrontendProject.value ? 'ossutil' : 'k8s') as
     | 'k8s'
-    | 'oss'
-    | 'script', // 发布类型：k8s, oss, script
+    | 'ossutil'
+    | 'script', // 发布类型：k8s, ossutil, script
   k8sType: 'deployment' as 'cronjob' | 'deployment', // K8s 资源类型：deployment, cronjob
   k8sName: '', // K8s 资源名称
   containerName: 'main', // K8s 容器名称（默认为main）
@@ -79,9 +79,9 @@ const rules: Record<string, any> = computed(() => ({
 // 发布类型选项(根据项目类型动态显示)
 const deployTypeOptions = computed(() => {
   if (isFrontendProject.value) {
-    // 前端项目支持 OSS 发布和Shell发布
+    // 前端项目支持对象存储发布和Shell发布
     return [
-      { label: 'OSS', value: 'oss' },
+      { label: $t('deploy.packageDeployManagement.deployHistory.type.ossutil'), value: 'ossutil' },
       { label: $t('deploy.projectManagement.projectConfig.deployConfig.shell'), value: 'script' },
     ];
   }
@@ -114,7 +114,7 @@ async function handleSave() {
       data.k8sType = formState.k8sType;
       data.k8sName = formState.k8sName;
       data.containerName = formState.containerName;
-    } else if (formState.deployType === 'oss') {
+    } else if (formState.deployType === 'ossutil') {
       data.ossName = formState.ossName;
     } else if (formState.deployType === 'script') {
       data.scriptContent = formState.scriptContent;
@@ -233,8 +233,8 @@ onMounted(() => {
         </FormItem>
       </template>
 
-      <!-- OSS 发布配置 -->
-      <template v-if="formState.deployType === 'oss'">
+      <!-- 对象存储发布配置 -->
+      <template v-if="formState.deployType === 'ossutil'">
         <FormItem
           :label="$t('deploy.projectManagement.projectConfig.deployConfig.ossName')"
           name="ossName"

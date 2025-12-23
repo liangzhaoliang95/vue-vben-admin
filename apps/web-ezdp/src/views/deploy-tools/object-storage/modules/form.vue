@@ -36,7 +36,7 @@ const [Form, formApi] = useVbenForm({
       const isEditingWithRegion = id.value && hasExistingRegion;
 
       switch (values.provider) {
-        case 'ali': {
+        case 'oss': {
           // 选择阿里云OSS时，如果 region 为空才清空，否则保留现有值（编辑场景）
           if (!hasExistingRegion) {
             await formApi.setFieldValue('region', '');
@@ -62,7 +62,7 @@ const [Form, formApi] = useVbenForm({
 
           break;
         }
-        case 'ecloudObs': {
+        case 'obs': {
           // 选择移动云Obs时，如果不是编辑场景或 region 为空，设置为默认值 wuxi
           if (!isEditingWithRegion) {
             await formApi.setFieldValue('region', 'wuxi');

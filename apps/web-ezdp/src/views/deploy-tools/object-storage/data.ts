@@ -47,8 +47,8 @@ export function useFormSchema(): VbenFormSchema[] {
       componentProps: {
         options: [
           { label: 'MinIO', value: 'minio' },
-          { label: '阿里云OSS', value: 'ali' },
-          { label: '移动云Obs', value: 'ecloudObs' },
+          { label: '阿里云OSS', value: 'oss' },
+          { label: '移动云Obs', value: 'obs' },
         ],
         placeholder: '请选择存储类型',
         style: { width: '100%' },

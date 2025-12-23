@@ -7,7 +7,7 @@ export namespace ObjectStorageApi {
     id: string;
     businessLineId: number;
     name: string;
-    provider: 'ali' | 'ecloudObs' | 'minio';
+    provider: 'oss' | 'obs' | 'minio';
     bucket: string;
     endpoint: string;
     region?: string;
@@ -91,7 +91,7 @@ async function testObjectStorageConnection(data: {
   accessSecret: string;
   bucket: string;
   endpoint: string;
-  provider: 'ali' | 'huawei' | 'minio';
+  provider: 'oss' | 'obs' | 'minio';
   region?: string;
 }) {
   return requestClient.post<{ message: string }>(

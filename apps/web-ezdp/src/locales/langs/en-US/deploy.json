@@ -276,8 +276,8 @@
       "noCurrentVersion": "Not Deployed",
       "type": {
         "k8s": "K8s",
-        "oss": "OSS",
-        "obs": "OBS"
+        "ossutil": "Object Storage",
+        "script": "Script"
       }
     },
     "branchManagement": {
