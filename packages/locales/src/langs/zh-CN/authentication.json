@@ -1,7 +1,7 @@
 {
   "welcomeBack": "欢迎回来",
-  "pageTitle": "多业务线一体化运维平台",
-  "pageDesc": "多业务线、权限控制、统一运维、一键操作",
+  "pageTitle": "一体化分布式运维平台",
+  "pageDesc": "多业务线、权限可控、版本管理、分布式构建发布、监控告警",
   "loginSuccess": "登录成功",
   "loginSuccessDesc": "欢迎回来",
   "loginSubtitle": "请输入您的帐户信息以登录",
