@@ -4,6 +4,8 @@ export default defineConfig(async () => {
   return {
     application: {},
     vite: {
+      // 使用相对路径，确保打包后可以部署在任何路径下
+      base: './',
       server: {
         proxy: {
           '/server': {

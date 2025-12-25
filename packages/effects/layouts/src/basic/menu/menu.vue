@@ -4,6 +4,7 @@ import type { MenuRecordRaw } from '@vben/types';
 import type { MenuProps } from '@vben-core/menu-ui';
 
 import { computed, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { SvgAvatar2Icon } from '@vben/icons';
 import { preferences } from '@vben/preferences';
@@ -34,6 +35,7 @@ const emit = defineEmits<{
 }>();
 
 const businessStore = useBusinessStore();
+const router = useRouter();
 
 // 切换业务线的 loading 状态
 const switchingBusinessLine = ref(false);
@@ -65,8 +67,10 @@ const selectedValue = computed({
     try {
       // 调用store的switchBusinessLine方法，它会调用后端接口并更新状态
       await businessStore.switchBusinessLine(id);
-      // 切换成功后刷新页面，让页面加载时重新生成菜单
-      // 使用 window.location.reload() 进行完整的页面刷新，触发浏览器的加载动画
+      // 先跳转到根路由，确保reload后停留在首页（避免停留在新业务线下没有权限的路由）
+      await router.replace('/');
+      // 切换成功后刷新页面，重新执行所有初始化流程
+      // 使用 window.location.reload() 进行完整的页面刷新
       window.location.reload();
     } catch (error) {
       console.error('切换业务线失败:', error);

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Logo Path Test</title>
+</head>
+<body>
+    <h1>Logo Path Test</h1>
+    <h2>1. 相对路径测试:</h2>
+    <img src="./logo.png" alt="Relative Path" style="max-width: 200px;">
+    <p>路径: <code>./logo.png</code></p>
+
+    <h2>2. 绝对路径测试:</h2>
+    <img src="/logo.png" alt="Absolute Path" style="max-width: 200px;">
+    <p>路径: <code>/logo.png</code></p>
+
+    <h2>3. 检查实际请求:</h2>
+    <p>打开浏览器开发者工具 Network 面板查看实际请求的URL</p>
+
+    <script>
+        console.log('当前页面URL:', window.location.href);
+        console.log('BASE URL:', document.baseURI);
+    </script>
+</body>
+</html>
