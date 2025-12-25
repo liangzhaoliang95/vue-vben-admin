@@ -19,8 +19,8 @@ export const overridesPreferences = defineOverridesPreferences({
   logo: {
     enable: true,
     fit: 'contain',
-    // 使用相对路径（直接硬编码，确保在任何部署路径下都能正常访问）
-    source: './logo.png',
+    // 使用 BASE_URL 确保在任何部署路径下都能正常访问
+    source: `./logo.png`,
   },
   copyright: {
     enable: true,
