@@ -22,5 +22,7 @@
   "createdAt": "创建时间",
   "updatedAt": "更新时间",
   "confirmDelete": "确认删除",
-  "pleaseSelect": "请选择"
+  "pleaseSelect": "请选择",
+  "yes": "是",
+  "no": "否"
 }

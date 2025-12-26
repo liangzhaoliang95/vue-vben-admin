@@ -82,6 +82,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             backendSecretId: detail.backendSecretId || '',
             backendNamespace: detail.backendNamespace || '',
             businessLineId: detail.businessLineId,
+            isAgentDeploy: detail.isAgentDeploy || false,
           });
         } catch (error: any) {
           console.error('获取详情失败:', error);
@@ -97,6 +98,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             backendSecretId: data.backendSecretId || '',
             backendNamespace: data.backendNamespace || '',
             businessLineId: data.businessLineId,
+            isAgentDeploy: data.isAgentDeploy || false,
           });
         }
       } else {
@@ -107,6 +109,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
           previousBusinessLineId.value = defaultBusinessLineId;
           formApi.setValues({
             businessLineId: defaultBusinessLineId,
+            isAgentDeploy: false, // 默认为非Agent环境
           });
         } else {
           previousBusinessLineId.value = undefined;
@@ -127,17 +130,34 @@ async function handleConfirm() {
   if (!valid) return;
   const values = await formApi.getValues();
 
-  // 验证至少配置了前端或后端之一
-  const hasFrontend = !!(values.frontendStorageId || values.frontendBaseUrl);
-  const hasBackend = !!(values.backendSecretId && values.backendNamespace);
+  // isAgentDeploy字段（默认为false）
+  const isAgentDeploy = values.isAgentDeploy || false;
 
-  if (!hasFrontend && !hasBackend) {
-    message.error(
-      $t(
-        'deploy.packageDeployManagement.environmentConfig.atLeastOneTargetRequired',
-      ),
-    );
-    return;
+  // 验证逻辑：
+  // - 如果是Agent环境：不允许配置前端/后端
+  // - 如果不是Agent环境：必须配置前端或后端之一
+  if (isAgentDeploy) {
+    // Agent环境：检查是否尝试配置了前端/后端
+    if (values.frontendStorageId || values.frontendBaseUrl ||
+        values.backendSecretId || values.backendNamespace) {
+      message.error(
+        $t('deploy.packageDeployManagement.environmentConfig.agentEnvNotAllowedFrontendBackend'),
+      );
+      return;
+    }
+  } else {
+    // 非Agent环境：必须配置前端或后端之一
+    const hasFrontend = !!(values.frontendStorageId || values.frontendBaseUrl);
+    const hasBackend = !!(values.backendSecretId && values.backendNamespace);
+
+    if (!hasFrontend && !hasBackend) {
+      message.error(
+        $t(
+          'deploy.packageDeployManagement.environmentConfig.atLeastOneTargetRequired',
+        ),
+      );
+      return;
+    }
   }
 
   loading.value = true;
@@ -152,22 +172,29 @@ async function handleConfirm() {
     submitData.sortOrder = values.sortOrder;
   }
 
-  // 可选字段（只在有值时提交）
+  // 只在有值时提交
   if (values.description) {
     submitData.description = values.description;
   }
-  if (values.frontendStorageId) {
-    submitData.frontendStorageId = values.frontendStorageId;
+
+  // Agent环境不提交前端/后端字段，非Agent环境正常提交
+  if (!isAgentDeploy) {
+    if (values.frontendStorageId) {
+      submitData.frontendStorageId = values.frontendStorageId;
+    }
+    if (values.frontendBaseUrl) {
+      submitData.frontendBaseUrl = values.frontendBaseUrl;
+    }
+    if (values.backendSecretId) {
+      submitData.backendSecretId = values.backendSecretId;
+    }
+    if (values.backendNamespace) {
+      submitData.backendNamespace = values.backendNamespace;
+    }
   }
-  if (values.frontendBaseUrl) {
-    submitData.frontendBaseUrl = values.frontendBaseUrl;
-  }
-  if (values.backendSecretId) {
-    submitData.backendSecretId = values.backendSecretId;
-  }
-  if (values.backendNamespace) {
-    submitData.backendNamespace = values.backendNamespace;
-  }
+
+  // isAgentDeploy字段
+  submitData.isAgentDeploy = isAgentDeploy;
 
   // 业务线ID（如果表单中有，则使用；否则后端会从token自动获取）
   if (values.businessLineId) {

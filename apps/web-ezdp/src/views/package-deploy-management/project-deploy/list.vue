@@ -105,6 +105,7 @@ async function loadDeployEnvironments(force: boolean = false) {
     const res = await getDeployEnvironmentList({
       page: 1,
       pageSize: 1000,
+      excludeAgent: true, // 排除Agent环境，只显示Web界面可发布的环境
     });
     deployEnvironments.value = res.items || [];
 

@@ -356,7 +356,9 @@
       "backendClusterPlaceholder": "请选择后端集群（K8S集群）",
       "backendEnvironment": "后端NS",
       "backendEnvironmentPlaceholder": "请输入后端NS",
-      "atLeastOneTargetRequired": "至少需要配置前端或后端之一"
+      "isAgentDeploy": "Agent负责发布",
+      "atLeastOneTargetRequired": "至少需要配置前端或后端之一",
+      "agentEnvNotAllowedFrontendBackend": "Agent环境不允许配置前端/后端信息"
     }
   }
 }

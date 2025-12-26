@@ -22,5 +22,7 @@
   "createdAt": "Created At",
   "updatedAt": "Updated At",
   "confirmDelete": "Confirm Delete",
-  "pleaseSelect": "Please select"
+  "pleaseSelect": "Please select",
+  "yes": "Yes",
+  "no": "No"
 }

@@ -116,11 +116,24 @@ export function useFormSchema(): VbenFormSchema[] {
       },
     },
     {
+      component: 'Switch',
+      fieldName: 'isAgentDeploy',
+      label: $t(
+        'deploy.packageDeployManagement.environmentConfig.isAgentDeploy',
+      ),
+      componentProps: {
+        checkedText: $t('common.yes'),
+        uncheckedText: $t('common.no'),
+      },
+      defaultValue: false,
+    },
+    {
       component: 'ApiSelect',
       fieldName: 'frontendStorageId',
       label: $t(
         'deploy.packageDeployManagement.environmentConfig.frontendStorage',
       ),
+      ifShow: (values) => !values?.isAgentDeploy,
       componentProps: {
         api: async (params?: any) => {
           const res = await getObjectStorageList({
@@ -160,6 +173,7 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t(
         'deploy.packageDeployManagement.environmentConfig.frontendBaseUrl',
       ),
+      ifShow: (values) => !values?.isAgentDeploy,
       componentProps: {
         placeholder: $t(
           'deploy.packageDeployManagement.environmentConfig.frontendBaseUrlPlaceholder',
@@ -172,6 +186,7 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t(
         'deploy.packageDeployManagement.environmentConfig.backendCluster',
       ),
+      ifShow: (values) => !values?.isAgentDeploy,
       componentProps: {
         api: async (params?: any) => {
           const res = await getK8sSecretList({
@@ -211,6 +226,7 @@ export function useFormSchema(): VbenFormSchema[] {
       label: $t(
         'deploy.packageDeployManagement.environmentConfig.backendEnvironment',
       ),
+      ifShow: (values) => !values?.isAgentDeploy,
       componentProps: {
         placeholder: $t(
           'deploy.packageDeployManagement.environmentConfig.backendEnvironmentPlaceholder',
@@ -332,6 +348,19 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
         'deploy.packageDeployManagement.environmentConfig.backendEnvironment',
       ),
       minWidth: 150,
+    },
+    {
+      field: 'isAgentDeploy',
+      title: $t(
+        'deploy.packageDeployManagement.environmentConfig.isAgentDeploy',
+      ),
+      minWidth: 100,
+      align: 'center',
+      formatter: ({ cellValue }) => {
+        return cellValue
+          ? $t('common.yes')
+          : $t('common.no');
+      },
     },
     {
       field: 'createdAt',

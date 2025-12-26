@@ -12,6 +12,7 @@ export namespace DeployEnvironmentApi {
     frontendBaseUrl?: string;
     backendSecretId?: string;
     backendNamespace?: string;
+    isAgentDeploy: boolean;
     sortOrder: number;
     createdAt: number;
     updatedAt: number;
