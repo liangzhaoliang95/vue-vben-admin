@@ -302,6 +302,7 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
       field: 'name',
       title: $t('deploy.packageDeployManagement.environmentConfig.name'),
       minWidth: 120,
+      className: 'env-name-cell',
     },
     {
       field: 'description',

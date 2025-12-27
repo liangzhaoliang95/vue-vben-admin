@@ -5,7 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { DeployEnvironmentApi } from '#/api/project-management/deploy-environment';
 
-import { onActivated, watch } from 'vue';
+import { onActivated, ref, watch } from 'vue';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
@@ -22,8 +22,19 @@ import { $t } from '#/locales';
 
 import { loadReferenceData, useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+import VersionModal from './modules/version-modal.vue';
 
 const businessStore = useBusinessStore();
+
+// 版本模态框状态
+const versionModalOpen = ref(false);
+const selectedEnvironment = ref<{
+  id: string;
+  name: string;
+}>({
+  id: '',
+  name: '',
+});
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -73,6 +84,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
       zoom: true,
     },
   } as VxeTableGridOptions<DeployEnvironmentApi.DeployEnvironment>,
+  gridEvents: {
+    cellClick: ({ row, column }: any) => {
+      // 点击环境名称列时打开版本模态框
+      if (column.field === 'name') {
+        showVersionModal(row.id, row.name);
+      }
+    },
+  },
 });
 
 // 路由激活时刷新数据（用于 keep-alive 场景）
@@ -153,10 +172,21 @@ function onRefresh() {
 function onCreate() {
   formDrawerApi.setData({}).open();
 }
+
+// 显示版本模态框
+function showVersionModal(id: string, name: string) {
+  selectedEnvironment.value = { id, name };
+  versionModalOpen.value = true;
+}
 </script>
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
+    <VersionModal
+      v-model:open="versionModalOpen"
+      :environment-id="selectedEnvironment.id"
+      :environment-name="selectedEnvironment.name"
+    />
     <Grid
       :table-title="
         $t('deploy.packageDeployManagement.environmentConfig.title')
@@ -186,5 +216,21 @@ function onCreate() {
 /* 深色模式下的悬浮效果 */
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
   background-color: rgba(24, 144, 255, 0.15) !important;
+}
+
+/* 环境名称列样式 - 链接效果 */
+:deep(.env-name-cell) .vxe-cell--label {
+  color: #1890ff;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+:deep(.env-name-cell) .vxe-cell--label:hover {
+  text-decoration: underline;
+}
+
+/* 深色模式下的链接颜色 */
+:deep(.dark .env-name-cell) .vxe-cell--label {
+  color: #40a9ff;
 }
 </style>

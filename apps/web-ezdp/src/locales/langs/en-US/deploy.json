@@ -358,7 +358,17 @@
       "backendEnvironmentPlaceholder": "Please enter backend NS",
       "isAgentDeploy": "Agent Deploy",
       "atLeastOneTargetRequired": "At least one deployment target (frontend or backend) must be configured",
-      "agentEnvNotAllowedFrontendBackend": "Agent environment does not allow frontend/backend configuration"
+      "agentEnvNotAllowedFrontendBackend": "Agent environment does not allow frontend/backend configuration",
+      "versionModal": {
+        "title": "Environment [{0}] Project Versions",
+        "projectName": "Project Name",
+        "projectType": "Project Type",
+        "version": "Version",
+        "deployedAt": "Deployed At",
+        "frontend": "Frontend",
+        "backend": "Backend",
+        "noData": "No project deployment records in this environment"
+      }
     }
   }
 }

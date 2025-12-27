@@ -358,7 +358,17 @@
       "backendEnvironmentPlaceholder": "请输入后端NS",
       "isAgentDeploy": "Agent负责发布",
       "atLeastOneTargetRequired": "至少需要配置前端或后端之一",
-      "agentEnvNotAllowedFrontendBackend": "Agent环境不允许配置前端/后端信息"
+      "agentEnvNotAllowedFrontendBackend": "Agent环境不允许配置前端/后端信息",
+      "versionModal": {
+        "title": "环境【{0}】项目版本",
+        "projectName": "项目名称",
+        "projectType": "项目类型",
+        "version": "版本号",
+        "deployedAt": "部署时间",
+        "frontend": "前端",
+        "backend": "后端",
+        "noData": "该环境暂无项目部署记录"
+      }
     }
   }
 }

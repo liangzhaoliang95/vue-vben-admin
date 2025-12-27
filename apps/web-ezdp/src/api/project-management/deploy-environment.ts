@@ -22,6 +22,15 @@ export namespace DeployEnvironmentApi {
     id: string;
     sortOrder: number;
   }
+
+  export interface EnvironmentProjectVersion {
+    projectConfigId: string;
+    projectName: string;
+    projectType: string;
+    version: string;
+    deployedAt: number;
+    deployedBy: string;
+  }
 }
 
 /**
@@ -107,11 +116,25 @@ async function updateDeployEnvironmentOrder(
   });
 }
 
+/**
+ * 获取环境项目版本列表
+ *
+ * @param deployEnvironmentId 环境ID
+ */
+async function getEnvironmentProjectVersions(deployEnvironmentId: string) {
+  return requestClient.post<{
+    list: DeployEnvironmentApi.EnvironmentProjectVersion[];
+  }>('/deploy/getEnvironmentProjectVersions', {
+    deployEnvironmentId,
+  });
+}
+
 export {
   createDeployEnvironment,
   deleteDeployEnvironment,
   getDeployEnvironmentDetail,
   getDeployEnvironmentList,
+  getEnvironmentProjectVersions,
   updateDeployEnvironment,
   updateDeployEnvironmentOrder,
 };
