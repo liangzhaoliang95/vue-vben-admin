@@ -10,5 +10,10 @@
     "title": "概览",
     "analytics": "分析页",
     "workspace": "工作台"
+  },
+  "docs": {
+    "title": "接入文档中心",
+    "description": "Agent 接入指南和协议文档",
+    "listTitle": "文档列表"
   }
 }

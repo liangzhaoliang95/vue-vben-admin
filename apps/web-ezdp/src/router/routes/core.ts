@@ -22,6 +22,18 @@ const fallbackNotFoundRoute: RouteRecordRaw = {
 
 /** 基本路由，这些路由是必须存在的 */
 const coreRoutes: RouteRecordRaw[] = [
+  // 文档中心页面 - 公共页面，无需登录即可访问
+  {
+    name: 'Docs',
+    path: '/docs',
+    component: () => import('#/views/docs/index.vue'),
+    meta: {
+      title: $t('page.docs.title'),
+      hideInMenu: true,
+      hideInBreadcrumb: false,
+      keepAlive: true,
+    },
+  },
   /**
    * 根路由
    * 使用基础布局，作为所有页面的父级容器，子级就不必配置BasicLayout。
