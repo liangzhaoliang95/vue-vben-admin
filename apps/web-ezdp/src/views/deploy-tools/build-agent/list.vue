@@ -24,6 +24,12 @@ import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
 import TokenDialog from './modules/token-dialog.vue';
 
+// 打开文档中心
+function openDocs() {
+  const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
+  window.open(`${baseUrl}#/docs`, '_blank');
+}
+
 const formRef = ref<InstanceType<typeof Form>>();
 const tokenDialogRef = ref<InstanceType<typeof TokenDialog>>();
 
@@ -141,6 +147,9 @@ function onRefresh(token?: string) {
     <TokenDialog ref="tokenDialogRef" />
     <Grid :table-title="$t('deploy.tools.buildAgent.title')">
       <template #toolbar-tools>
+        <Button type="link" @click="openDocs" style="margin-right: 12px;">
+          📚 {{ $t('page.docs.title') }}
+        </Button>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
           {{ $t('common.create') }}
