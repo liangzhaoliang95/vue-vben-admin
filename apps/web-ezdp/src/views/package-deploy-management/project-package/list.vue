@@ -16,6 +16,7 @@ import {
   Select,
   Spin,
   Tag,
+  Tooltip,
 } from 'ant-design-vue';
 
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
@@ -74,7 +75,10 @@ const currentBranchOptions = computed(() => {
 });
 
 // 加载指定业务线的分支数据（懒加载）
-async function loadBranchesForBusinessLine(businessLineId: number, force: boolean = false) {
+async function loadBranchesForBusinessLine(
+  businessLineId: number,
+  force: boolean = false,
+) {
   if (!businessLineId) {
     return;
   }
@@ -314,7 +318,7 @@ async function handleForceBuild() {
   try {
     await confirm(
       '⚠️ 强制构建将跳过 tag 和镜像检查，强制重新构建所有项目。确定要继续吗？',
-      '强制构建'
+      '强制构建',
     );
 
     const queryParams: any = {
@@ -466,7 +470,12 @@ function handleWebSocketMessage(message: any) {
   // 只处理事件类型的消息
   if (message.commandType === 'event' && message.commandId === 1) {
     const { eventType } = message.data;
-    console.log('[项目打包] 事件类型:', eventType, '组件激活状态:', isComponentActive.value);
+    console.log(
+      '[项目打包] 事件类型:',
+      eventType,
+      '组件激活状态:',
+      isComponentActive.value,
+    );
 
     // 处理构建完成事件
     if (
@@ -494,6 +503,50 @@ onActivated(async () => {
     console.error('onActivated 初始化失败:', error);
   }
 });
+
+// 复制版本为 Markdown 表格
+async function copyVersionAsMarkdown(version: any) {
+  if (!version.children || version.children.length === 0) {
+    message.warning('该版本无项目数据');
+    return;
+  }
+
+  try {
+    // 构建 Markdown 表格头部
+    const versionHeader = `## 版本 ${version.version}\n\n`;
+    const versionInfo = `**构建时间:** ${formatTime(version.buildTime)}\n**状态:** ${getVersionStatusConfig(version.status || 'building').text}\n\n`;
+
+    // 构建 Markdown 表格
+    const headers = ['项目名称', '项目类型', '版本号', '状态'];
+    const separator = ['---', '---', '---', '---'];
+
+    const rows = getSortedProjects(version.children).map((project: any) => {
+      return [
+        project.projectName || '-',
+        getProjectTypeName(project.projectType || ''),
+        project.version || '-',
+        getStatusConfig((project && project.status) || 'pending').text,
+      ];
+    });
+
+    // 拼接 Markdown 表格
+    const markdownTable = [
+      `| ${headers.join(' | ')} |`,
+      `| ${separator.join(' | ')} |`,
+      ...rows.map((row) => `| ${row.join(' | ')} |`),
+    ].join('\n');
+
+    // 完整的 Markdown 内容
+    const fullMarkdown = versionHeader + versionInfo + markdownTable;
+
+    // 复制到剪贴板
+    await navigator.clipboard.writeText(fullMarkdown);
+    message.success('已复制为 Markdown 表格');
+  } catch (error) {
+    console.error('复制失败:', error);
+    message.error('复制失败');
+  }
+}
 
 // 路由切换时清理资源
 onDeactivated(() => {
@@ -617,6 +670,40 @@ onDeactivated(() => {
                     {{ formatTime(version.buildTime) }}
                   </span>
                 </div>
+                <!-- 复制按钮 -->
+                <Tooltip title="复制为 Markdown 表格">
+                  <Button
+                    size="small"
+                    type="text"
+                    @click.stop="copyVersionAsMarkdown(version)"
+                  >
+                    <template #icon>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path
+                          d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                        />
+                      </svg>
+                    </template>
+                  </Button>
+                </Tooltip>
               </div>
             </template>
 
@@ -778,6 +865,16 @@ onDeactivated(() => {
 .version-status-tag {
   flex-shrink: 0;
   font-weight: 500;
+}
+
+/* 复制按钮样式 */
+:deep(.ant-btn-text) svg {
+  transition: all 0.2s ease;
+}
+
+:deep(.ant-btn-text):hover svg {
+  color: hsl(var(--primary));
+  transform: scale(1.1);
 }
 
 /* 项目列表样式 */
