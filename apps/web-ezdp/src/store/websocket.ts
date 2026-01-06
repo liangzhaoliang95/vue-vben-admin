@@ -77,9 +77,11 @@ export const useWebSocketStore = defineStore('websocket', () => {
   const subscribedLogTypes = ref<{
     build: boolean; // 是否订阅构建日志
     deploy: boolean; // 是否订阅发布日志
+    release: boolean; // 是否订阅Release日志
   }>({
     build: false,
     deploy: false,
+    release: false,
   });
 
   // 全局日志查看器控制
@@ -958,17 +960,22 @@ export const useWebSocketStore = defineStore('websocket', () => {
     const hasDeployPermission = hasMenuPermission(
       '/package-deploy-management/project-deploy',
     );
+    const hasReleasePermission = hasMenuPermission(
+      '/project-management/project-release',
+    );
 
     // 更新订阅的日志类型信息
     subscribedLogTypes.value = {
       build: hasBuildPermission,
       deploy: hasDeployPermission,
+      release: hasReleasePermission,
     };
 
     // 构建订阅日志信息消息
     const logTypesText: string[] = [];
     if (hasBuildPermission) logTypesText.push('构建日志');
     if (hasDeployPermission) logTypesText.push('发布日志');
+    if (hasReleasePermission) logTypesText.push('项目Release日志');
 
     const subscriptionInfo: WebSocketMessage = {
       commandType: 'system',

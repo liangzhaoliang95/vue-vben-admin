@@ -3,11 +3,13 @@ import { computed, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
-import { Button, Card, Checkbox, Form, Input, message, Modal, Select } from 'ant-design-vue';
+import { Button, Card, Checkbox, Input, message, Modal, Select } from 'ant-design-vue';
 
 import { executeRelease } from '#/api/project-management/project-release';
 import { getProjectConfigList } from '#/api/project-management/project-config';
+import LogViewer from '#/components/log-viewer/index.vue';
 import { $t } from '#/locales';
+import { useWebSocketStore } from '#/store/websocket';
 
 defineOptions({ name: 'ProjectRelease' });
 
@@ -23,6 +25,9 @@ const formData = ref({
   isFullRelease: true, // 默认全量Release
 });
 const loading = ref(false);
+const showLogViewer = ref(false);
+
+const wsStore = useWebSocketStore();
 
 // 计算是否禁用项目选择
 const isProjectSelectDisabled = computed(() => formData.value.isFullRelease);
@@ -81,6 +86,9 @@ async function handleExecute() {
 
         message.success(res.message || 'Release已开始执行');
 
+        // 打开日志查看器
+        showLogViewer.value = true;
+
         // 清空表单
         formData.value = {
           projectId: '',
@@ -112,6 +120,11 @@ function handleReleaseTypeChange() {
   }
 }
 
+// 关闭日志查看器
+function handleCloseLogViewer() {
+  showLogViewer.value = false;
+}
+
 onMounted(() => {
   loadProjects();
 });
@@ -126,31 +139,30 @@ onMounted(() => {
     :title="$t('deploy.projectManagement.projectRelease.title')"
   >
     <Card :bordered="false" title="项目Release">
-      <Form layout="vertical">
-        <Form.Item label="Release模式">
+      <div class="space-y-4">
+        <!-- Release模式 -->
+        <div>
+          <div class="mb-2 text-sm font-medium">Release模式</div>
           <Checkbox
             v-model:checked="formData.isFullRelease"
             @change="handleReleaseTypeChange"
           >
             全量Release（所有项目）
           </Checkbox>
-        </Form.Item>
+        </div>
 
-        <Form.Item
-          label="项目"
-          name="projectId"
-          :rules="[
-            {
-              required: !formData.isFullRelease,
-              message: '请选择项目',
-            },
-          ]"
-        >
+        <!-- 项目选择 -->
+        <div>
+          <div class="mb-2 text-sm font-medium">
+            项目
+            <span v-if="!formData.isFullRelease" class="text-red-500">*</span>
+          </div>
           <Select
             v-model:value="formData.projectId"
             placeholder="请选择项目（全量Release时无需选择）"
             show-search
             :disabled="isProjectSelectDisabled"
+            class="w-full"
             :filter-option="
               (input: string, option: any) => {
                 return option.label.toLowerCase().includes(input.toLowerCase());
@@ -166,33 +178,31 @@ onMounted(() => {
               {{ project.name }}
             </Select.Option>
           </Select>
-        </Form.Item>
+        </div>
 
-        <Form.Item
-          label="分支"
-          name="branch"
-          :rules="[{ required: true, message: '请输入分支名称' }]"
-        >
+        <!-- 分支 -->
+        <div>
+          <div class="mb-2 text-sm font-medium">
+            分支
+            <span class="text-red-500">*</span>
+          </div>
           <Input
             v-model:value="formData.branch"
             placeholder="请输入分支名称，如: dev-1.0"
           />
-        </Form.Item>
+        </div>
 
-        <Form.Item>
-          <Button
-            type="primary"
-            :loading="loading"
-            style="margin-right: 8px"
-            @click="handleExecute"
-          >
+        <!-- 操作按钮 -->
+        <div class="flex gap-2">
+          <Button type="primary" :loading="loading" @click="handleExecute">
             执行Release
           </Button>
           <Button @click="handleReset"> 重置 </Button>
-        </Form.Item>
-      </Form>
+        </div>
+      </div>
 
-      <div class="mt-4">
+      <!-- 说明 -->
+      <div class="mt-6">
         <div class="rounded bg-blue-50 p-4 dark:bg-blue-900/20">
           <div class="flex">
             <div class="flex-shrink-0">
@@ -213,12 +223,13 @@ onMounted(() => {
                 说明
               </h3>
               <div class="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                <ul class="list-disc pl-5 space-y-1">
+                <ul class="list-disc space-y-1 pl-5">
                   <li>
                     Release操作会将指定分支合并到master分支，并打tag推送到远程仓库
                   </li>
                   <li>
-                    <strong>全量Release</strong>: 对当前业务线的所有项目执行Release（超级管理员可Release所有业务线）
+                    <strong>全量Release</strong>:
+                    对当前业务线的所有项目执行Release（超级管理员可Release所有业务线）
                   </li>
                   <li>
                     <strong>单个项目Release</strong>: 仅对选中的项目执行Release
@@ -233,6 +244,24 @@ onMounted(() => {
         </div>
       </div>
     </Card>
+
+    <!-- 日志查看器弹窗 -->
+    <Modal
+      v-model:open="showLogViewer"
+      :footer="null"
+      :width="1200"
+      title="Release日志"
+      @cancel="handleCloseLogViewer"
+    >
+      <div style="height: 600px">
+        <LogViewer
+          :subscription-id="String(wsStore.currentBusinessLineId)"
+          :task-type="2"
+          title="Release日志"
+          @close="handleCloseLogViewer"
+        />
+      </div>
+    </Modal>
   </Page>
 </template>
 
