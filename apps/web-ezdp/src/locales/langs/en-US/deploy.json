@@ -200,6 +200,9 @@
       "backendClusterPlaceholder": "Please select backend cluster (K8S Cluster)",
       "backendEnvironment": "Backend NS",
       "backendEnvironmentPlaceholder": "Please enter backend NS"
+    },
+    "projectRelease": {
+      "title": "Project Release"
     }
   },
   "packageDeployManagement": {

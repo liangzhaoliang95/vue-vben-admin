@@ -200,6 +200,9 @@
       "backendClusterPlaceholder": "请选择后端集群（K8S集群）",
       "backendEnvironment": "后端NS",
       "backendEnvironmentPlaceholder": "请输入后端NS"
+    },
+    "projectRelease": {
+      "title": "项目Release"
     }
   },
   "packageDeployManagement": {
