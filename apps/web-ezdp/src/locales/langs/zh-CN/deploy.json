@@ -202,7 +202,10 @@
       "backendEnvironmentPlaceholder": "请输入后端NS"
     },
     "projectRelease": {
-      "title": "项目Release"
+      "title": "项目Release",
+      "deployedVersions": "部署版本",
+      "viewDeployedVersions": "查看部署版本",
+      "selectEnvironmentFirst": "请先选择发布环境"
     }
   },
   "packageDeployManagement": {

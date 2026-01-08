@@ -202,7 +202,10 @@
       "backendEnvironmentPlaceholder": "Please enter backend NS"
     },
     "projectRelease": {
-      "title": "Project Release"
+      "title": "Project Release",
+      "deployedVersions": "Deployed Versions",
+      "viewDeployedVersions": "View Deployed Versions",
+      "selectEnvironmentFirst": "Please select deploy environment first"
     }
   },
   "packageDeployManagement": {

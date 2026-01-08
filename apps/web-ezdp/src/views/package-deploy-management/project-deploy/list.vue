@@ -15,6 +15,7 @@ import {
   Modal,
   Select,
   Spin,
+  Table,
   Tag,
 } from 'ant-design-vue';
 
@@ -28,7 +29,7 @@ import {
 import {
   getBuildTaskList,
 } from '#/api/package-deploy-management/project-package';
-import { getDeployEnvironmentList } from '#/api/project-management/deploy-environment';
+import { getDeployEnvironmentList, getEnvironmentProjectVersions } from '#/api/project-management/deploy-environment';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
 
@@ -60,6 +61,11 @@ const isComponentActive = ref(true);
 const isInitialized = ref(false);
 // 是否正在初始化中（防止重复初始化）
 const isInitializing = ref(false);
+
+// 版本模态框状态
+const versionModalOpen = ref(false);
+const versionModalLoading = ref(false);
+const deployedVersions = ref<any[]>([]);
 
 // 是否是超级管理员
 const isSuperAdmin = computed(
@@ -93,6 +99,42 @@ const environmentOptions = computed(() => {
     value: env.id,
   }));
 });
+
+// 当前环境名称
+const currentEnvironmentName = computed(() => {
+  const environment = deployEnvironments.value.find(
+    (env) => env.id === selectedEnvironmentId.value,
+  );
+  return environment?.name || '';
+});
+
+// 版本模态框表格列定义
+const versionColumns = computed(() => [
+  {
+    dataIndex: 'projectName',
+    key: 'projectName',
+    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.projectName'),
+    width: 200,
+  },
+  {
+    dataIndex: 'projectType',
+    key: 'projectType',
+    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.projectType'),
+    width: 120,
+  },
+  {
+    dataIndex: 'version',
+    key: 'version',
+    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.version'),
+    width: 150,
+  },
+  {
+    dataIndex: 'deployedAt',
+    key: 'deployedAt',
+    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.deployedAt'),
+    width: 180,
+  },
+]);
 
 // 加载发布环境列表
 async function loadDeployEnvironments(force: boolean = false) {
@@ -320,6 +362,33 @@ async function handleRefresh() {
   }
 }
 
+// 显示部署版本模态框
+async function handleShowDeployedVersions() {
+  if (!selectedEnvironmentId.value) {
+    message.warning($t('deploy.projectManagement.projectRelease.selectEnvironmentFirst'));
+    return;
+  }
+
+  versionModalOpen.value = true;
+  versionModalLoading.value = true;
+
+  try {
+    const res = await getEnvironmentProjectVersions(selectedEnvironmentId.value);
+    deployedVersions.value = res.list || [];
+  } catch (error: any) {
+    console.error('获取环境项目版本失败:', error);
+    message.error(error.message || '获取环境项目版本失败');
+    deployedVersions.value = [];
+  } finally {
+    versionModalLoading.value = false;
+  }
+}
+
+// 关闭版本模态框
+function handleCloseVersionModal() {
+  versionModalOpen.value = false;
+}
+
 // 确认对话框
 function confirm(content: string, title: string) {
   return new Promise((resolve, reject) => {
@@ -501,6 +570,12 @@ function formatTime(timestamp: number) {
   });
 }
 
+// 格式化部署时间(模态框使用)
+function formatDeployedAt(timestamp: number) {
+  if (!timestamp) return '-';
+  return new Date(timestamp).toLocaleString('zh-CN');
+}
+
 // 获取项目类型名称
 function getProjectTypeName(type: string) {
   const typeMap: Record<string, string> = {
@@ -509,6 +584,24 @@ function getProjectTypeName(type: string) {
     submodule: '子模块',
   };
   return typeMap[type] || type || '-';
+}
+
+// 获取项目类型标签颜色(模态框使用)
+function getProjectTypeColor(type: string) {
+  if (type === 'frontend') return 'blue';
+  if (type === 'backend') return 'green';
+  return 'default';
+}
+
+// 获取项目类型文本(模态框使用)
+function getProjectTypeText(type: string) {
+  if (type === 'frontend') {
+    return $t('deploy.packageDeployManagement.environmentConfig.versionModal.frontend');
+  }
+  if (type === 'backend') {
+    return $t('deploy.packageDeployManagement.environmentConfig.versionModal.backend');
+  }
+  return type;
 }
 
 // 获取项目类型图标
@@ -727,6 +820,9 @@ onDeactivated(() => {
 
         <!-- 操作按钮组 -->
         <div class="flex flex-shrink-0 items-center gap-3">
+          <Button @click="handleShowDeployedVersions">
+            {{ $t('deploy.projectManagement.projectRelease.deployedVersions') }}
+          </Button>
           <Button @click="handleRefresh">刷新</Button>
         </div>
       </div>
@@ -856,6 +952,41 @@ onDeactivated(() => {
         </Collapse>
       </Spin>
     </Card>
+
+    <!-- 部署版本模态框 -->
+    <Modal
+      v-model:open="versionModalOpen"
+      :title="$t('deploy.packageDeployManagement.environmentConfig.versionModal.title', [currentEnvironmentName])"
+      width="800px"
+      :footer="null"
+      @cancel="handleCloseVersionModal"
+    >
+      <Table
+        :columns="versionColumns"
+        :data-source="deployedVersions"
+        :loading="versionModalLoading"
+        :pagination="false"
+        :scroll="{ y: 400 }"
+        row-key="projectConfigId"
+        size="middle"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'projectType'">
+            <Tag :color="getProjectTypeColor(record.projectType)">
+              {{ getProjectTypeText(record.projectType) }}
+            </Tag>
+          </template>
+          <template v-else-if="column.key === 'deployedAt'">
+            {{ formatDeployedAt(record.deployedAt) }}
+          </template>
+        </template>
+        <template #emptyText>
+          <div style="padding: 40px 0; text-align: center; color: #999;">
+            {{ $t('deploy.packageDeployManagement.environmentConfig.versionModal.noData') }}
+          </div>
+        </template>
+      </Table>
+    </Modal>
   </Page>
 </template>
 
@@ -1148,5 +1279,36 @@ onDeactivated(() => {
 /* 深色模式下的悬浮效果 */
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
   background-color: rgba(24, 144, 255, 0.15) !important;
+}
+
+/* 版本模态框表格样式 */
+:deep(.ant-modal .ant-table) {
+  font-size: 14px;
+}
+
+:deep(.ant-modal .ant-table-thead > tr > th) {
+  background-color: #fafafa;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 深色模式 */
+:deep(.dark .ant-modal .ant-table-thead > tr > th) {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+:deep(.dark .ant-modal .ant-table) {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+:deep(.dark .ant-modal .ant-table-tbody > tr > td) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+:deep(.dark .ant-modal .ant-table-tbody > tr:hover > td) {
+  background-color: rgba(255, 255, 255, 0.04);
 }
 </style>
