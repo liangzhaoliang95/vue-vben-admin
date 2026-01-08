@@ -362,6 +362,31 @@ async function handleRefresh() {
   }
 }
 
+// 排序部署版本列表
+function sortDeployedVersions(versions: any[]) {
+  if (!versions || !Array.isArray(versions)) {
+    return [];
+  }
+
+  return [...versions].sort((a, b) => {
+    // 1. 先按项目类型排序: backend -> frontend -> 其他
+    const typeOrder: Record<string, number> = {
+      backend: 1,
+      frontend: 2,
+    };
+
+    const orderA = typeOrder[a.projectType] || 999;
+    const orderB = typeOrder[b.projectType] || 999;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    // 2. 同类型按项目ID排序
+    return (a.projectConfigId || '').localeCompare(b.projectConfigId || '');
+  });
+}
+
 // 显示部署版本模态框
 async function handleShowDeployedVersions() {
   if (!selectedEnvironmentId.value) {
@@ -374,7 +399,8 @@ async function handleShowDeployedVersions() {
 
   try {
     const res = await getEnvironmentProjectVersions(selectedEnvironmentId.value);
-    deployedVersions.value = res.list || [];
+    // 对版本列表进行排序
+    deployedVersions.value = sortDeployedVersions(res.list || []);
   } catch (error: any) {
     console.error('获取环境项目版本失败:', error);
     message.error(error.message || '获取环境项目版本失败');
@@ -820,8 +846,8 @@ onDeactivated(() => {
 
         <!-- 操作按钮组 -->
         <div class="flex flex-shrink-0 items-center gap-3">
-          <Button @click="handleShowDeployedVersions">
-            {{ $t('deploy.projectManagement.projectRelease.deployedVersions') }}
+          <Button type="primary" @click="handleShowDeployedVersions">
+            📋 {{ $t('deploy.projectManagement.projectRelease.deployedVersions') }}
           </Button>
           <Button @click="handleRefresh">刷新</Button>
         </div>
