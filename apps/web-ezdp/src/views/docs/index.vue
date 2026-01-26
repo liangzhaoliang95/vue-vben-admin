@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { Page } from '@vben/common-ui';
 import { Card, Spin, Empty, Button, message } from 'ant-design-vue';
 import { $t } from '#/locales';
+import { copyToClipboard } from '#/utils/clipboard';
 import { loadDocList, loadDocContent, markdownToHtml } from './data';
 import type { DocItem, DocPageState } from './types';
 
@@ -45,18 +46,20 @@ async function loadDoc(docId: string) {
 }
 
 // 复制文档内容
-function copyContent() {
+async function copyContent() {
   if (!state.value.content) return;
 
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = state.value.content;
   const textContent = tempDiv.textContent || tempDiv.innerText || '';
 
-  navigator.clipboard.writeText(textContent).then(() => {
+  try {
+    await copyToClipboard(textContent);
     message.success($t('common.copySuccess'));
-  }).catch(() => {
+  } catch (error) {
+    console.error('复制失败:', error);
     message.error($t('common.copyFailed'));
-  });
+  }
 }
 
 // 初始化：加载文档列表并默认加载第一个文档

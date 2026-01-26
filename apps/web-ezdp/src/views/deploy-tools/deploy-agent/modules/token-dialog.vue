@@ -7,6 +7,7 @@ import { Copy } from '@vben/icons';
 import { Alert, Button, Input, message } from 'ant-design-vue';
 
 import { $t } from '#/locales';
+import { copyToClipboard } from '#/utils/clipboard';
 
 defineOptions({
   name: 'TokenDialog',
@@ -21,22 +22,13 @@ const token = computed(() => {
   return data?.token || '';
 });
 
-function handleCopy() {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(token.value).then(() => {
-      message.success($t('common.copySuccess'));
-    });
-  } else {
-    // Fallback for browsers that don't support clipboard API
-    const textarea = document.createElement('textarea');
-    textarea.value = token.value;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
+async function handleCopy() {
+  try {
+    await copyToClipboard(token.value);
     message.success($t('common.copySuccess'));
+  } catch (error) {
+    console.error('复制失败:', error);
+    message.error($t('common.copyFailed'));
   }
 }
 

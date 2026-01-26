@@ -26,6 +26,7 @@ import {
 } from '#/api/package-deploy-management/project-package';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
+import { copyToClipboard } from '#/utils/clipboard';
 
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
@@ -540,7 +541,7 @@ async function copyVersionAsMarkdown(version: any) {
     const fullMarkdown = versionHeader + versionInfo + markdownTable;
 
     // 复制到剪贴板
-    await navigator.clipboard.writeText(fullMarkdown);
+    await copyToClipboard(fullMarkdown);
     message.success('已复制为 Markdown 表格');
   } catch (error) {
     console.error('复制失败:', error);
