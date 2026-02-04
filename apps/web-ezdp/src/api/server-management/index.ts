@@ -64,9 +64,24 @@ export namespace ServerManagementApi {
 
   // 服务器相关接口
   export interface Server {
+    id: string;
     serverId: string;
     serverName: string;
-    lastSeen: string;
+    businessLineId: number;
+    serverAgentEnvironmentId: string;
+    environmentName: string;
+    hostname: string;
+    os: string;
+    arch: string;
+    version: string;
+    status: string;
+    lastSeenAt: number;
+    createdAt: number;
+    updatedAt: number;
+  }
+
+  export interface ServerListParams {
+    businessLineId?: number;
   }
 
   export interface ServerListResult {
@@ -74,10 +89,18 @@ export namespace ServerManagementApi {
     count: number;
   }
 
-  export function getServerList() {
+  export function getServerList(params?: ServerListParams) {
     return requestClient.post<ServerListResult>(
-      '/serverAgent/getOnlineServers',
-      {},
+      '/serverAgent/getServerList',
+      params || {},
     );
+  }
+
+  export function updateServer(params: { id: string; serverName: string }) {
+    return requestClient.post('/serverAgent/updateServer', params);
+  }
+
+  export function deleteServer(params: { id: string }) {
+    return requestClient.post('/serverAgent/deleteServer', params);
   }
 }

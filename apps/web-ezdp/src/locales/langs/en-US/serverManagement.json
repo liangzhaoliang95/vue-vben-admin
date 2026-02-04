@@ -17,7 +17,9 @@
     "openTerminal": "Open Terminal",
     "terminal": "Web Terminal",
     "terminalWarning": "Cannot Open Terminal",
-    "serverOffline": "Server is offline, cannot open terminal"
+    "serverOffline": "Server is offline, cannot open terminal",
+    "editServer": "Edit Server",
+    "deleteConfirm": "Are you sure to delete this server?"
   },
   "environmentAgent": {
     "title": "Environment Agents",

@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { Page } from '@vben/common-ui';
 
-import { Modal, Tag } from 'ant-design-vue';
+import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { ServerManagementApi } from '#/api/server-management';
@@ -17,6 +17,13 @@ defineOptions({
 const terminalVisible = ref(false);
 const currentServerId = ref('');
 const currentServerName = ref('');
+
+// 编辑弹窗状态
+const editVisible = ref(false);
+const editForm = ref({
+  id: '',
+  serverName: '',
+});
 
 // 打开终端
 const openTerminal = (row: any) => {
@@ -39,18 +46,77 @@ const closeTerminal = () => {
   currentServerName.value = '';
 };
 
-const [Grid] = useVbenVxeGrid({
+// 打开编辑弹窗
+const openEdit = (row: any) => {
+  editForm.value = {
+    id: row.id,
+    serverName: row.serverName,
+  };
+  editVisible.value = true;
+};
+
+// 保存编辑
+const saveEdit = async () => {
+  try {
+    await ServerManagementApi.updateServer(editForm.value);
+    message.success($t('common.updateSuccess'));
+    editVisible.value = false;
+    gridApi.query();
+  } catch (error) {
+    message.error($t('common.operationFailed'));
+  }
+};
+
+// 删除服务器
+const deleteServer = (row: any) => {
+  Modal.confirm({
+    title: $t('serverManagement.server.deleteConfirm'),
+    content: `${$t('serverManagement.server.serverName')}: ${row.serverName}`,
+    onOk: async () => {
+      try {
+        await ServerManagementApi.deleteServer({ id: row.id });
+        message.success($t('common.deleteSuccess'));
+        gridApi.query();
+      } catch (error) {
+        message.error($t('common.operationFailed'));
+      }
+    },
+  });
+};
+
+// 格式化时间戳为可读格式
+const formatTimestamp = (timestamp: number) => {
+  if (!timestamp) return '-';
+  return new Date(timestamp).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+};
+
+const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: [
       {
         field: 'serverId',
         title: $t('serverManagement.server.serverId'),
-        minWidth: 150,
+        minWidth: 200,
       },
       {
         field: 'serverName',
         title: $t('serverManagement.server.serverName'),
         minWidth: 150,
+        slots: {
+          default: 'serverName',
+        },
+      },
+      {
+        field: 'environmentName',
+        title: $t('serverManagement.server.environment'),
+        minWidth: 120,
       },
       {
         field: 'status',
@@ -61,19 +127,17 @@ const [Grid] = useVbenVxeGrid({
         },
       },
       {
-        field: 'lastSeen',
+        field: 'lastSeenAt',
         title: $t('serverManagement.server.lastSeen'),
         minWidth: 180,
         formatter: ({ cellValue }) => {
-          return cellValue
-            ? new Date(cellValue).toLocaleString('zh-CN')
-            : '-';
+          return formatTimestamp(cellValue);
         },
       },
       {
         field: 'actions',
         title: $t('common.action'),
-        width: 120,
+        width: 280,
         fixed: 'right',
         slots: {
           default: 'actions',
@@ -85,34 +149,15 @@ const [Grid] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async () => {
-          console.log('🔍 Fetching server list...');
           const res = await ServerManagementApi.getServerList();
-          console.log('✅ API Response:', res);
-          console.log('📋 Servers:', res.servers);
+          const servers = res.servers || [];
 
-          // 判断服务器是否在线（5分钟内有心跳）
-          const now = Date.now();
-          const servers = (res.servers || []).map((server) => ({
-            ...server,
-            status:
-              now - new Date(server.lastSeen).getTime() < 5 * 60 * 1000
-                ? 'online'
-                : 'offline',
-          }));
-
-          console.log('🎯 Processed servers:', servers);
-
-          // vxe-table 需要的格式
-          const result = {
+          return {
             page: {
               total: servers.length,
             },
             items: servers,
           };
-
-          console.log('📊 Returning result:', result);
-
-          return result;
         },
       },
     },
@@ -126,6 +171,22 @@ const [Grid] = useVbenVxeGrid({
 <template>
   <Page auto-content-height>
     <Grid>
+      <!-- 服务器名称（带 hover 显示详细信息） -->
+      <template #serverName="{ row }">
+        <Tooltip>
+          <template #title>
+            <div style="padding: 8px">
+              <div><strong>{{ $t('serverManagement.server.hostname') }}:</strong> {{ row.hostname || '-' }}</div>
+              <div><strong>{{ $t('serverManagement.server.os') }}:</strong> {{ row.os || '-' }}</div>
+              <div><strong>{{ $t('serverManagement.server.arch') }}:</strong> {{ row.arch || '-' }}</div>
+              <div><strong>{{ $t('serverManagement.server.version') }}:</strong> {{ row.version || '-' }}</div>
+            </div>
+          </template>
+          <span style="cursor: help; border-bottom: 1px dashed #999">{{ row.serverName }}</span>
+        </Tooltip>
+      </template>
+
+      <!-- 状态标签 -->
       <template #status="{ row }">
         <Tag v-if="row.status === 'online'" color="success">
           {{ $t('serverManagement.server.online') }}
@@ -135,15 +196,31 @@ const [Grid] = useVbenVxeGrid({
         </Tag>
       </template>
 
+      <!-- 操作按钮 -->
       <template #actions="{ row }">
-        <a-button
-          type="link"
-          size="small"
-          :disabled="row.status !== 'online'"
-          @click="openTerminal(row)"
-        >
-          {{ $t('serverManagement.server.openTerminal') }}
-        </a-button>
+        <Space>
+          <Button
+            type="primary"
+            size="small"
+            :disabled="row.status !== 'online'"
+            @click="openTerminal(row)"
+          >
+            {{ $t('serverManagement.server.openTerminal') }}
+          </Button>
+          <Button
+            size="small"
+            @click="openEdit(row)"
+          >
+            {{ $t('common.edit') }}
+          </Button>
+          <Button
+            danger
+            size="small"
+            @click="deleteServer(row)"
+          >
+            {{ $t('common.delete') }}
+          </Button>
+        </Space>
       </template>
     </Grid>
 
@@ -165,6 +242,19 @@ const [Grid] = useVbenVxeGrid({
           @close="closeTerminal"
         />
       </div>
+    </Modal>
+
+    <!-- 编辑弹窗 -->
+    <Modal
+      v-model:open="editVisible"
+      :title="$t('serverManagement.server.editServer')"
+      @ok="saveEdit"
+    >
+      <Form :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+        <FormItem :label="$t('serverManagement.server.serverName')">
+          <Input v-model:value="editForm.serverName" />
+        </FormItem>
+      </Form>
     </Modal>
   </Page>
 </template>

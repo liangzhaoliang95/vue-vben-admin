@@ -17,7 +17,9 @@
     "openTerminal": "打开终端",
     "terminal": "Web 终端",
     "terminalWarning": "无法打开终端",
-    "serverOffline": "服务器离线，无法打开终端"
+    "serverOffline": "服务器离线，无法打开终端",
+    "editServer": "编辑服务器",
+    "deleteConfirm": "确定要删除该服务器吗？"
   },
   "environmentAgent": {
     "title": "环境代理",
