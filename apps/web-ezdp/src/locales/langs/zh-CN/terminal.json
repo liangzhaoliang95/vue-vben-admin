@@ -1,0 +1,12 @@
+{
+  "title": "Web 终端",
+  "connected": "已连接",
+  "disconnected": "未连接",
+  "clear": "清空",
+  "fullscreen": "全屏",
+  "close": "关闭",
+  "selectServer": "选择服务器",
+  "selectServerHint": "请选择一个服务器以打开终端",
+  "connectionError": "连接失败",
+  "fetchServersError": "获取服务器列表失败"
+}

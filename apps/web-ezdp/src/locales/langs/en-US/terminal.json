@@ -1,0 +1,12 @@
+{
+  "title": "Web Terminal",
+  "connected": "Connected",
+  "disconnected": "Disconnected",
+  "clear": "Clear",
+  "fullscreen": "Fullscreen",
+  "close": "Close",
+  "selectServer": "Select Server",
+  "selectServerHint": "Please select a server to open terminal",
+  "connectionError": "Connection failed",
+  "fetchServersError": "Failed to fetch server list"
+}

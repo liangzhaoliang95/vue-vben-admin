@@ -15,5 +15,8 @@
     "title": "Integration Documentation",
     "description": "Agent integration guides and protocol documentation",
     "listTitle": "Document List"
+  },
+  "routes": {
+    "terminal": "Web Terminal"
   }
 }

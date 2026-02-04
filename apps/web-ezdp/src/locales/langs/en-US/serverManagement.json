@@ -13,7 +13,11 @@
     "os": "OS",
     "arch": "Architecture",
     "version": "Client Version",
-    "businessLine": "Business Line"
+    "businessLine": "Business Line",
+    "openTerminal": "Open Terminal",
+    "terminal": "Web Terminal",
+    "terminalWarning": "Cannot Open Terminal",
+    "serverOffline": "Server is offline, cannot open terminal"
   },
   "environmentAgent": {
     "title": "Environment Agents",

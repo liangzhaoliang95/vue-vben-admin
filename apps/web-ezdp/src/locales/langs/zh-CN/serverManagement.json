@@ -13,7 +13,11 @@
     "os": "操作系统",
     "arch": "架构",
     "version": "客户端版本",
-    "businessLine": "业务线"
+    "businessLine": "业务线",
+    "openTerminal": "打开终端",
+    "terminal": "Web 终端",
+    "terminalWarning": "无法打开终端",
+    "serverOffline": "服务器离线，无法打开终端"
   },
   "environmentAgent": {
     "title": "环境代理",
