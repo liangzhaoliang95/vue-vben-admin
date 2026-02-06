@@ -49,6 +49,10 @@ let terminal: Terminal | null = null;
 let fitAddon: FitAddon | null = null;
 let ws: WebSocket | null = null;
 let sessionId: string | null = null;
+let heartbeatTimer: number | null = null;
+let reconnectTimer: number | null = null;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
 
 // 初始化终端
 const initTerminal = () => {
@@ -156,6 +160,7 @@ const connectWebSocket = () => {
 
   ws.onopen = () => {
     connected.value = true;
+    reconnectAttempts = 0;
     terminal?.writeln('\x1b[1;32mConnected!\x1b[0m');
     terminal?.writeln('');
 
@@ -166,6 +171,9 @@ const connectWebSocket = () => {
       cols: terminal?.cols || 80,
       shell: '',  // 让服务端自动选择合适的 shell
     }));
+
+    // 启动心跳检测（客户端主动发送 ping）
+    startHeartbeat();
   };
 
   ws.onmessage = (event) => {
@@ -187,6 +195,10 @@ const connectWebSocket = () => {
           terminal?.writeln(`\x1b[1;33m\nSession closed: ${msg.data.reason}\x1b[0m`);
           connected.value = false;
           break;
+        case 'pong':
+          // 收到服务端的 pong 响应（可选）
+          console.log('📡 收到 pong');
+          break;
       }
     } catch (error) {
       console.error('Failed to parse WebSocket message:', error);
@@ -199,10 +211,48 @@ const connectWebSocket = () => {
     connected.value = false;
   };
 
-  ws.onclose = () => {
+  ws.onclose = (event) => {
     connected.value = false;
+    stopHeartbeat();
     terminal?.writeln('\x1b[1;31m\nConnection closed\x1b[0m');
+
+    // 非正常关闭且未超过重连次数，尝试重连
+    if (!event.wasClean && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      reconnectAttempts++;
+      terminal?.writeln(`\x1b[1;33mReconnecting (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...\x1b[0m`);
+      reconnectTimer = window.setTimeout(() => {
+        connectWebSocket();
+      }, 3000);
+    } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      terminal?.writeln('\x1b[1;31mMax reconnection attempts reached\x1b[0m');
+    }
   };
+};
+
+// 启动心跳检测
+const startHeartbeat = () => {
+  stopHeartbeat();
+  // 每 25 秒发送一次心跳（比服务端 30 秒间隔短）
+  heartbeatTimer = window.setInterval(() => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'ping',
+      }));
+      console.log('💓 发送心跳 ping');
+    }
+  }, 25000);
+};
+
+// 停止心跳检测
+const stopHeartbeat = () => {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer);
+    reconnectTimer = null;
+  }
 };
 
 // 清空终端
@@ -233,6 +283,7 @@ const handleClose = () => {
 
 // 清理资源
 const cleanup = () => {
+  stopHeartbeat();
   if (ws) {
     ws.close();
     ws = null;
@@ -242,6 +293,7 @@ const cleanup = () => {
     terminal = null;
   }
   sessionId = null;
+  reconnectAttempts = 0;
 };
 
 onMounted(() => {
