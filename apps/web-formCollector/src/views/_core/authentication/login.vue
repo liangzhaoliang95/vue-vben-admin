@@ -17,10 +17,10 @@ const formSchema = computed((): VbenFormSchema[] => {
     {
       component: 'VbenInput',
       componentProps: {
-        placeholder: $t('authentication.email'),
+        placeholder: '请输入邮箱',
       },
       fieldName: 'email',
-      label: $t('authentication.email'),
+      label: '邮箱',
       rules: z.string().email({ message: '请输入有效的邮箱地址' }),
     },
     {

@@ -9,5 +9,10 @@ export const overridesPreferences = defineOverridesPreferences({
   // overrides
   app: {
     name: import.meta.env.VITE_APP_TITLE,
+    defaultHomePath: '/dashboard/analytics',
+  },
+  breadcrumb: {
+    showHome: true,
+    styleType: 'background',
   },
 });

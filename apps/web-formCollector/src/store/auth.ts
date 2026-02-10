@@ -33,24 +33,24 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loginLoading.value = true;
 
-      // 调用后端登录接口，使用 email 和 password
-      const { accessToken, user } = await loginApi({
-        email: params.email || params.username, // 兼容 email 或 username 字段
+      // 调用后端登录接口，使用 loginName 和 password
+      const { tokenInfo, userInfo: backendUserInfo } = await loginApi({
+        loginName: params.loginName,
         password: params.password,
       });
 
       // 如果成功获取到 accessToken
-      if (accessToken) {
-        accessStore.setAccessToken(accessToken);
+      if (tokenInfo.accessToken) {
+        accessStore.setAccessToken(tokenInfo.accessToken);
 
-        // 将后端用户信息转换为前端 UserInfo 格式
+        // 使用后端返回的完整用户信息
         userInfo = {
-          userId: String(user.id),
-          username: user.username,
-          realName: user.username,
-          avatar: '',
+          userId: backendUserInfo.userId,
+          username: backendUserInfo.userName,
+          realName: backendUserInfo.userName,
+          avatar: backendUserInfo.avatar || '',
           roles: ['user'],
-          homePath: '/',
+          homePath: '/dashboard/analytics',
         } as UserInfo;
 
         userStore.setUserInfo(userInfo);

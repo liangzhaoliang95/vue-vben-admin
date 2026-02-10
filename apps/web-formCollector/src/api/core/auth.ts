@@ -3,22 +3,74 @@ import { baseRequestClient, requestClient } from '#/api/request';
 export namespace AuthApi {
   /** 登录接口参数 */
   export interface LoginParams {
-    email: string;
-    password: string;
+    email: string; // 邮箱
+    password: string; // 密码
+  }
+
+  /** Token 信息 */
+  export interface TokenInfo {
+    accessToken: string; // 访问令牌
+    expireTime: number; // 过期时间（毫秒时间戳）
+  }
+
+  /** 用户信息 */
+  export interface UserInfo {
+    userId: string; // 用户ID
+    userName: string; // 用户名（昵称）
+    phone: string; // 手机号
+    email: string; // 邮箱
+    avatar: string; // 头像URL
+  }
+
+  /** 登录接口返回值 */
+  export interface LoginResult {
+    tokenInfo: TokenInfo; // Token信息
+    userInfo: UserInfo; // 用户信息
   }
 
   /** 注册接口参数 */
   export interface RegisterParams {
-    username: string;
-    email: string;
-    password: string;
+    email: string; // 邮箱（必填）
+    userName: string; // 用户昵称（2-50字符）
+    password: string; // 密码（6-20字符）
+    code: string; // 邮箱验证码（6位）
+  }
+
+  /** 注册接口返回值 */
+  export interface RegisterResult {
+    token: string; // Token
+    userId: string; // 用户ID
+    userName: string; // 用户名
+    email: string; // 邮箱
+  }
+
+  /** 发送验证码参数 */
+  export interface SendCodeParams {
+    email: string; // 邮箱
+  }
+
+  /** 重置密码参数 */
+  export interface ResetPasswordParams {
+    email: string; // 邮箱
+    code: string; // 验证码
+    newPassword: string; // 新密码
+  }
+
+  /** 检查邮箱参数 */
+  export interface CheckEmailParams {
+    email: string; // 邮箱
+  }
+
+  /** 检查邮箱返回值 */
+  export interface CheckEmailResult {
+    exists: boolean; // 是否存在
   }
 
   /** 后端用户信息 */
   export interface BackendUser {
-    id: number;
-    username: string;
-    email: string;
+    userId: string; // 用户ID
+    loginName: string; // 登录名
+    userName: string; // 用户名
   }
 
   /** 后端响应格式 */
@@ -31,8 +83,7 @@ export namespace AuthApi {
 
   /** 登录接口返回值 */
   export interface LoginResult {
-    accessToken: string;
-    user: BackendUser;
+    accessToken: string; // 访问令牌
   }
 
   export interface RefreshTokenResult {
@@ -47,18 +98,12 @@ export namespace AuthApi {
 export async function loginApi(
   data: AuthApi.LoginParams,
 ): Promise<AuthApi.LoginResult> {
-  const response = await baseRequestClient.post<
-    AuthApi.BackendResponse<AuthApi.BackendUser>
-  >('/auth/login', data);
+  const response = await requestClient.post<AuthApi.LoginResult>(
+    '/nc/login/doLogin',
+    data,
+  );
 
-  if (!response.success) {
-    throw new Error(response.message || '登录失败');
-  }
-
-  return {
-    accessToken: response.token!,
-    user: response.user!,
-  };
+  return response;
 }
 
 /**
@@ -66,17 +111,52 @@ export async function loginApi(
  */
 export async function registerApi(
   data: AuthApi.RegisterParams,
-): Promise<AuthApi.BackendResponse> {
-  const response = await baseRequestClient.post<AuthApi.BackendResponse>(
+): Promise<AuthApi.RegisterResult> {
+  const response = await requestClient.post<AuthApi.RegisterResult>(
     '/auth/register',
     data,
   );
 
-  if (!response.success) {
-    throw new Error(response.message || '注册失败');
-  }
-
   return response;
+}
+
+/**
+ * 发送注册验证码
+ */
+export async function sendRegisterCodeApi(
+  data: AuthApi.SendCodeParams,
+): Promise<void> {
+  await requestClient.post('/auth/sendRegisterCode', data);
+}
+
+/**
+ * 发送重置密码验证码
+ */
+export async function sendResetPasswordCodeApi(
+  data: AuthApi.SendCodeParams,
+): Promise<void> {
+  await requestClient.post('/auth/sendResetPasswordCode', data);
+}
+
+/**
+ * 重置密码
+ */
+export async function resetPasswordApi(
+  data: AuthApi.ResetPasswordParams,
+): Promise<void> {
+  await requestClient.post('/auth/resetPassword', data);
+}
+
+/**
+ * 检查邮箱是否已存在
+ */
+export async function checkEmailExistsApi(
+  data: AuthApi.CheckEmailParams,
+): Promise<AuthApi.CheckEmailResult> {
+  return await requestClient.post<AuthApi.CheckEmailResult>(
+    '/auth/checkEmailExists',
+    data,
+  );
 }
 
 /**

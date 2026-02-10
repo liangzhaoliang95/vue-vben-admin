@@ -8,9 +8,9 @@ export default defineConfig(async () => {
         proxy: {
           '/api': {
             changeOrigin: true,
-            rewrite: (path) => path.replace(/^\/api/, ''),
-            // 后端服务地址
-            target: 'http://localhost:3000',
+            rewrite: (path) => path.replace(/^\/api/, '/server/formCollector'),
+            // 后端服务地址（后端运行在 80 端口）
+            target: 'http://localhost:80',
             ws: true,
           },
         },

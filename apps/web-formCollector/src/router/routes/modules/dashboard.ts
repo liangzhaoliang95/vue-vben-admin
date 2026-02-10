@@ -1,34 +1,33 @@
 import type { RouteRecordRaw } from 'vue-router';
 
-import { $t } from '#/locales';
-
 const routes: RouteRecordRaw[] = [
   {
     meta: {
       icon: 'lucide:layout-dashboard',
       order: -1,
-      title: $t('page.dashboard.title'),
+      title: '概览',
     },
     name: 'Dashboard',
     path: '/dashboard',
+    redirect: '/dashboard/analytics',
     children: [
       {
         name: 'Analytics',
-        path: '/analytics',
-        component: () => import('#/views/dashboard/analytics/index.vue'),
+        path: '/dashboard/analytics',
+        component: () => import('#/views/dashboard/analytics.vue'),
         meta: {
           affixTab: true,
           icon: 'lucide:area-chart',
-          title: $t('page.dashboard.analytics'),
+          title: '分析页',
         },
       },
       {
-        name: 'Workspace',
-        path: '/workspace',
-        component: () => import('#/views/dashboard/workspace/index.vue'),
+        name: 'Guide',
+        path: '/dashboard/guide',
+        component: () => import('#/views/dashboard/guide.vue'),
         meta: {
-          icon: 'carbon:workspace',
-          title: $t('page.dashboard.workspace'),
+          icon: 'lucide:book-open',
+          title: '使用说明',
         },
       },
     ],
