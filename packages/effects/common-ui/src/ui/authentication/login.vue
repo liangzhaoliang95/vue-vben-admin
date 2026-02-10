@@ -150,7 +150,7 @@ defineExpose({
     >
       <VbenButton
         v-if="showCodeLogin"
-        class="w-1/2"
+        :class="showQrcodeLogin ? 'w-1/2' : 'w-full'"
         variant="outline"
         @click="handleGo(codeLoginPath)"
       >
@@ -158,7 +158,7 @@ defineExpose({
       </VbenButton>
       <VbenButton
         v-if="showQrcodeLogin"
-        class="ml-4 w-1/2"
+        :class="showCodeLogin ? 'ml-4 w-1/2' : 'w-full'"
         variant="outline"
         @click="handleGo(qrCodeLoginPath)"
       >

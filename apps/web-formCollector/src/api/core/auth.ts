@@ -66,6 +66,12 @@ export namespace AuthApi {
     exists: boolean; // 是否存在
   }
 
+  /** 验证码登录参数 */
+  export interface CodeLoginParams {
+    email: string; // 邮箱
+    code: string; // 验证码
+  }
+
   /** 后端用户信息 */
   export interface BackendUser {
     userId: string; // 用户ID
@@ -113,7 +119,7 @@ export async function registerApi(
   data: AuthApi.RegisterParams,
 ): Promise<AuthApi.RegisterResult> {
   const response = await requestClient.post<AuthApi.RegisterResult>(
-    '/auth/register',
+    '/nc/auth/register',
     data,
   );
 
@@ -126,7 +132,7 @@ export async function registerApi(
 export async function sendRegisterCodeApi(
   data: AuthApi.SendCodeParams,
 ): Promise<void> {
-  await requestClient.post('/auth/sendRegisterCode', data);
+  await requestClient.post('/nc/auth/sendRegisterCode', data);
 }
 
 /**
@@ -135,7 +141,7 @@ export async function sendRegisterCodeApi(
 export async function sendResetPasswordCodeApi(
   data: AuthApi.SendCodeParams,
 ): Promise<void> {
-  await requestClient.post('/auth/sendResetPasswordCode', data);
+  await requestClient.post('/nc/auth/sendResetPasswordCode', data);
 }
 
 /**
@@ -144,7 +150,7 @@ export async function sendResetPasswordCodeApi(
 export async function resetPasswordApi(
   data: AuthApi.ResetPasswordParams,
 ): Promise<void> {
-  await requestClient.post('/auth/resetPassword', data);
+  await requestClient.post('/nc/auth/resetPassword', data);
 }
 
 /**
@@ -154,9 +160,32 @@ export async function checkEmailExistsApi(
   data: AuthApi.CheckEmailParams,
 ): Promise<AuthApi.CheckEmailResult> {
   return await requestClient.post<AuthApi.CheckEmailResult>(
-    '/auth/checkEmailExists',
+    '/nc/auth/checkEmailExists',
     data,
   );
+}
+
+/**
+ * 发送登录验证码
+ */
+export async function sendLoginCodeApi(
+  data: AuthApi.SendCodeParams,
+): Promise<void> {
+  await requestClient.post('/nc/auth/sendLoginCode', data);
+}
+
+/**
+ * 验证码登录
+ */
+export async function codeLoginApi(
+  data: AuthApi.CodeLoginParams,
+): Promise<AuthApi.LoginResult> {
+  const response = await requestClient.post<AuthApi.LoginResult>(
+    '/nc/auth/codeLogin',
+    data,
+  );
+
+  return response;
 }
 
 /**

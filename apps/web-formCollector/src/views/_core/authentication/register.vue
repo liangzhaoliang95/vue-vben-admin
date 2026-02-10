@@ -8,7 +8,7 @@ import { useRouter } from 'vue-router';
 import { AuthenticationRegister, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { Button, message } from 'ant-design-vue';
+import { message } from 'ant-design-vue';
 
 import { checkEmailExistsApi, registerApi, sendRegisterCodeApi } from '#/api/core/auth';
 
@@ -16,11 +16,8 @@ defineOptions({ name: 'Register' });
 
 const router = useRouter();
 const loading = ref(false);
-const sendingCode = ref(false);
-const countdown = ref(0);
 const checkingEmail = ref(false);
-let timer: NodeJS.Timeout | null = null;
-let formApi: any = null; // 保存表单 API 引用
+const currentEmail = ref(''); // 保存当前输入的邮箱
 
 // 检查邮箱是否已存在
 async function checkEmail(email: string) {
@@ -46,45 +43,34 @@ async function checkEmail(email: string) {
 }
 
 // 发送验证码
-async function sendCode(email: string) {
+async function handleSendCode() {
+  const email = currentEmail.value;
+
   if (!email) {
     message.warning('请先输入邮箱');
-    return;
+    return false;
   }
 
   // 验证邮箱格式
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(email)) {
     message.warning('请输入有效的邮箱地址');
-    return;
+    return false;
   }
 
   // 检查邮箱是否已存在
   const canSend = await checkEmail(email);
   if (!canSend) {
-    return;
+    return false;
   }
 
   try {
-    sendingCode.value = true;
     await sendRegisterCodeApi({ email });
     message.success('验证码已发送，请查收邮件');
-
-    // 开始倒计时
-    countdown.value = 60;
-    timer = setInterval(() => {
-      countdown.value--;
-      if (countdown.value <= 0) {
-        if (timer) {
-          clearInterval(timer);
-          timer = null;
-        }
-      }
-    }, 1000);
+    return true;
   } catch (error: any) {
     message.error(error.message || '发送验证码失败');
-  } finally {
-    sendingCode.value = false;
+    return false;
   }
 }
 
@@ -94,6 +80,9 @@ const formSchema = computed((): VbenFormSchema[] => {
       component: 'VbenInput',
       componentProps: {
         placeholder: '请输入邮箱',
+        onChange: (e: Event) => {
+          currentEmail.value = (e.target as HTMLInputElement).value;
+        },
         onBlur: async (e: FocusEvent) => {
           const email = (e.target as HTMLInputElement).value;
           if (email) {
@@ -113,35 +102,7 @@ const formSchema = computed((): VbenFormSchema[] => {
         createText: (countdown: number) => {
           return countdown > 0 ? `${countdown}秒后重试` : '发送验证码';
         },
-        handleSendCode: async () => {
-          const email = formApi?.values?.email;
-          if (!email) {
-            message.warning('请先输入邮箱');
-            return false;
-          }
-
-          // 验证邮箱格式
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(email)) {
-            message.warning('请输入有效的邮箱地址');
-            return false;
-          }
-
-          // 检查邮箱是否已存在
-          const canSend = await checkEmail(email);
-          if (!canSend) {
-            return false;
-          }
-
-          try {
-            await sendRegisterCodeApi({ email });
-            message.success('验证码已发送，请查收邮件');
-            return true;
-          } catch (error: any) {
-            message.error(error.message || '发送验证码失败');
-            return false;
-          }
-        },
+        handleSendCode: handleSendCode,
       },
       fieldName: 'code',
       label: '邮箱验证码',
@@ -236,7 +197,8 @@ async function handleSubmit(values: Recordable<any>) {
     message.success('注册成功！');
     router.push('/auth/login');
   } catch (error: any) {
-    message.error(error.message || '注册失败');
+    // 错误消息已由 HTTP 拦截器处理,这里不需要再次显示
+    // message.error(error.message || '注册失败');
   } finally {
     loading.value = false;
   }

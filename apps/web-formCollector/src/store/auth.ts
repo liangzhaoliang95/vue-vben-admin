@@ -10,7 +10,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
 
-import { loginApi, logoutApi } from '#/api';
+import { loginApi, logoutApi, codeLoginApi } from '#/api';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -33,10 +33,73 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loginLoading.value = true;
 
-      // 调用后端登录接口，使用 loginName 和 password
+      // 调用后端登录接口，使用 email 和 password
       const { tokenInfo, userInfo: backendUserInfo } = await loginApi({
-        loginName: params.loginName,
+        email: params.email,
         password: params.password,
+      });
+
+      // 如果成功获取到 accessToken
+      if (tokenInfo.accessToken) {
+        accessStore.setAccessToken(tokenInfo.accessToken);
+
+        // 使用后端返回的完整用户信息
+        userInfo = {
+          userId: backendUserInfo.userId,
+          username: backendUserInfo.userName,
+          realName: backendUserInfo.userName,
+          avatar: backendUserInfo.avatar || '',
+          roles: ['user'],
+          homePath: '/dashboard/analytics',
+        } as UserInfo;
+
+        userStore.setUserInfo(userInfo);
+        // 设置默认权限码
+        accessStore.setAccessCodes(['AC_100100', 'AC_100110', 'AC_100120']);
+
+        if (accessStore.loginExpired) {
+          accessStore.setLoginExpired(false);
+        } else {
+          onSuccess
+            ? await onSuccess?.()
+            : await router.push(
+                userInfo.homePath || preferences.app.defaultHomePath,
+              );
+        }
+
+        if (userInfo?.realName) {
+          notification.success({
+            description: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realName}`,
+            duration: 3,
+            message: $t('authentication.loginSuccess'),
+          });
+        }
+      }
+    } finally {
+      loginLoading.value = false;
+    }
+
+    return {
+      userInfo,
+    };
+  }
+
+  /**
+   * 验证码登录
+   * @param params 登录表单数据 (email, code)
+   */
+  async function authLoginByCode(
+    params: Recordable<any>,
+    onSuccess?: () => Promise<void> | void,
+  ) {
+    let userInfo: null | UserInfo = null;
+    try {
+      loginLoading.value = true;
+
+      // 调用后端验证码登录接口
+      const { tokenInfo, userInfo: backendUserInfo } = await codeLoginApi({
+        email: params.email,
+        code: params.code,
       });
 
       // 如果成功获取到 accessToken
@@ -117,6 +180,7 @@ export const useAuthStore = defineStore('auth', () => {
   return {
     $reset,
     authLogin,
+    authLoginByCode,
     fetchUserInfo,
     loginLoading,
     logout,
