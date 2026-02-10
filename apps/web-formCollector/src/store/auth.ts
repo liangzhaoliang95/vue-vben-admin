@@ -49,8 +49,11 @@ export const useAuthStore = defineStore('auth', () => {
           username: backendUserInfo.userName,
           realName: backendUserInfo.userName,
           avatar: backendUserInfo.avatar || '',
+          email: backendUserInfo.email,
           roles: ['user'],
           homePath: '/dashboard/analytics',
+          desc: '',
+          token: tokenInfo.accessToken,
         } as UserInfo;
 
         userStore.setUserInfo(userInfo);
@@ -112,8 +115,11 @@ export const useAuthStore = defineStore('auth', () => {
           username: backendUserInfo.userName,
           realName: backendUserInfo.userName,
           avatar: backendUserInfo.avatar || '',
+          email: backendUserInfo.email,
           roles: ['user'],
           homePath: '/dashboard/analytics',
+          desc: '',
+          token: tokenInfo.accessToken,
         } as UserInfo;
 
         userStore.setUserInfo(userInfo);

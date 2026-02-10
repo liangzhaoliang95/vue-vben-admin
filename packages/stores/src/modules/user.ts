@@ -22,6 +22,10 @@ interface BasicUserInfo {
    * 用户名
    */
   username: string;
+  /**
+   * 用户邮箱
+   */
+  email?: string;
 }
 
 interface AccessState {

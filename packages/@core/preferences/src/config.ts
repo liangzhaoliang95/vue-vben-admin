@@ -41,9 +41,9 @@ const defaultPreferences: Preferences = {
     styleType: 'normal',
   },
   copyright: {
-    companyName: 'Vben',
-    companySiteLink: 'https://www.vben.pro',
-    date: '2024',
+    companyName: 'Plaso RongKe',
+    companySiteLink: 'https://www.rkclass.cn',
+    date: '2026',
     enable: true,
     icp: '',
     icpLink: '',
@@ -65,7 +65,7 @@ const defaultPreferences: Preferences = {
   logo: {
     enable: true,
     fit: 'contain',
-    source: 'https://unpkg.com/@vbenjs/static-source@0.1.7/source/logo-v1.webp',
+    source: './logo.png',
   },
   navigation: {
     accordion: true,

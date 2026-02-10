@@ -6,11 +6,11 @@ export default defineConfig(async () => {
     vite: {
       server: {
         proxy: {
-          '/api': {
+          '/server': {
             changeOrigin: true,
-            rewrite: (path) => path.replace(/^\/api/, '/server/formCollector'),
-            // 后端服务地址（后端运行在 80 端口）
-            target: 'http://localhost:80',
+            rewrite: (path) => path.replace(/^\/server/, ''),
+            // 后端服务地址（使用 127.0.0.1 避免 DNS 解析延迟）
+            target: 'http://127.0.0.1/server',
             ws: true,
           },
         },
