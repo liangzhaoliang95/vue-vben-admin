@@ -101,7 +101,7 @@ const handleAnchorClick = (e: Event, link: { href: string }) => {
             <h3 class="text-base font-semibold">1. 创建采集任务</h3>
             <p class="mt-1 text-gray-500">
               在
-              <Link @click="router.push('/formCollector/task-list')">「任务管理」</Link>
+              <Link @click="router.push('/task-list')">「任务管理」</Link>
               中创建一个采集任务，获得 <Text code>taskId</Text>
             </p>
           </Timeline.Item>
@@ -117,7 +117,7 @@ const handleAnchorClick = (e: Event, link: { href: string }) => {
             <h3 class="text-base font-semibold">4. 查看收集数据</h3>
             <p class="mt-1 text-gray-500">
               在
-              <Link @click="router.push('/formCollector/task-list')">「任务管理」</Link>
+              <Link @click="router.push('/task-list')">「任务管理」</Link>
               中查看收集到的数据
             </p>
           </Timeline.Item>

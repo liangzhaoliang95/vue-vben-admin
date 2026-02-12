@@ -126,6 +126,12 @@ setupVbenVxeTable({
           edit: {
             text: $t('common.edit'),
           },
+          export: {
+            text: '数据导出',
+          },
+          aiPrompt: {
+            text: 'AI提示词',
+          },
           viewData: {
             text: $t('common.viewData'),
           },

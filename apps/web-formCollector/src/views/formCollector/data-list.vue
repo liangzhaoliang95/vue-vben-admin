@@ -25,6 +25,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteAllFormDataApi,
   deleteFormDataApi,
+  exportTaskDataApi,
   getFormDataListApi,
 } from '#/api/formCollector';
 
@@ -142,9 +143,42 @@ const handleDeleteAll = () => {
   });
 };
 
+// 导出数据
+const handleExport = async () => {
+  try {
+    message.loading({ content: '正在导出数据...', key: 'export', duration: 0 });
+
+    console.log('开始导出任务:', taskId.value);
+    const blob = await exportTaskDataApi(taskId.value);
+    console.log('导出成功，Blob 大小:', blob.size, 'bytes');
+
+    // 检查 Blob 是否有效
+    if (!blob || blob.size === 0) {
+      throw new Error('导出的文件为空');
+    }
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${taskName.value}_${new Date().getTime()}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+
+    // 清理
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    message.success({ content: '导出成功', key: 'export' });
+  } catch (error: any) {
+    console.error('导出失败:', error);
+    message.error({ content: `导出失败: ${error.message || '请稍后重试'}`, key: 'export' });
+  }
+};
+
 // 返回任务列表
 const handleBack = () => {
-  router.push('/formCollector/task-list');
+  router.push('/task-list');
 };
 </script>
 
@@ -163,9 +197,14 @@ const handleBack = () => {
     <!-- Grid 表格 -->
     <Grid :table-title="pageTitle">
       <template #toolbar-tools>
-        <Button danger type="primary" @click="handleDeleteAll">
-          删除所有数据
-        </Button>
+        <Space>
+          <Button danger type="primary" @click="handleDeleteAll">
+            删除所有数据
+          </Button>
+          <Button type="primary" @click="handleExport">
+            导出数据
+          </Button>
+        </Space>
       </template>
 
       <!-- 操作列插槽 -->

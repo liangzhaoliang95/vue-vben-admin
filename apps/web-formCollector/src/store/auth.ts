@@ -51,7 +51,7 @@ export const useAuthStore = defineStore('auth', () => {
           avatar: backendUserInfo.avatar || '',
           email: backendUserInfo.email,
           roles: ['user'],
-          homePath: '/dashboard/analytics',
+          homePath: '/analytics',
           desc: '',
           token: tokenInfo.accessToken,
         } as UserInfo;
@@ -117,7 +117,7 @@ export const useAuthStore = defineStore('auth', () => {
           avatar: backendUserInfo.avatar || '',
           email: backendUserInfo.email,
           roles: ['user'],
-          homePath: '/dashboard/analytics',
+          homePath: '/analytics',
           desc: '',
           token: tokenInfo.accessToken,
         } as UserInfo;

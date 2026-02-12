@@ -2,6 +2,8 @@
  * 表单采集器 API
  */
 
+import { useAccessStore } from '@vben/stores';
+
 import { requestClient } from '#/api/request';
 
 export namespace FormCollectorApi {
@@ -12,7 +14,7 @@ export namespace FormCollectorApi {
     taskDesc: string;
     status: number;
     permission: number; // 权限配置(位运算)
-    creatorName: string;
+    submitCount: number; // 提交数量
     createdAt: number;
   }
 
@@ -70,6 +72,13 @@ export namespace FormCollectorApi {
   export interface GetFormDataListResponse {
     total: number;
     list: FormDataInfo[];
+  }
+
+  /** 获取统计数据响应 */
+  export interface GetStatisticsResponse {
+    totalTasks: number;        // 总任务数
+    activeTasks: number;       // 活跃任务数
+    totalSubmissions: number;  // 总提交数
   }
 }
 
@@ -140,3 +149,53 @@ export async function deleteAllFormDataApi(taskId: string) {
   });
 }
 
+/**
+ * 导出任务数据为 Excel
+ */
+export async function exportTaskDataApi(taskId: string) {
+  const accessStore = useAccessStore();
+  const token = accessStore.accessToken;
+
+  // 获取 API 基础路径
+  const apiURL = import.meta.env.VITE_GLOB_API_URL || '/api';
+
+  // 使用原生 fetch API 来下载文件
+  const response = await fetch(`${apiURL}/tk/formTask/exportTaskData`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: token ? `Bearer ${token}` : '',
+    },
+    body: JSON.stringify({ taskId }),
+  });
+
+  if (!response.ok) {
+    // 尝试解析错误信息
+    let errorMessage = `HTTP ${response.status}`;
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } else {
+        const errorText = await response.text();
+        errorMessage = errorText || errorMessage;
+      }
+    } catch (e) {
+      // 忽略解析错误
+    }
+    throw new Error(errorMessage);
+  }
+
+  return await response.blob();
+}
+
+/**
+ * 获取统计数据
+ */
+export async function getStatisticsApi() {
+  return requestClient.post<FormCollectorApi.GetStatisticsResponse>(
+    '/tk/formTask/getStatistics',
+    {},
+  );
+}

@@ -36,9 +36,8 @@ export function useGridFormSchema(): VbenFormSchema[] {
 }
 
 export function useColumns(
-  onActionClick: OnActionClickFn<FormCollectorApi.TaskInfo>,
-  onViewDataClick: (row: FormCollectorApi.TaskInfo) => void,
   onStatusChange: (row: FormCollectorApi.TaskInfo, status: number) => void,
+  onViewDataClick: (row: FormCollectorApi.TaskInfo) => void,
 ): VxeTableGridOptions['columns'] {
   return [
     {
@@ -82,9 +81,10 @@ export function useColumns(
       },
     },
     {
-      field: 'creatorName',
-      title: '创建人',
+      field: 'submitCount',
+      title: '提交数量',
       minWidth: 120,
+      align: 'center',
     },
     {
       field: 'createdAt',
@@ -96,20 +96,13 @@ export function useColumns(
     },
     {
       align: 'center',
-      cellRender: {
-        attrs: {
-          onClick: onActionClick,
-        },
-        name: 'CellOperation',
-        options: ['viewData', 'edit', 'delete'],
-        props: {
-          type: 'default', // 使用默认按钮样式
-        },
-      },
       field: 'operation',
       fixed: 'right',
       title: '操作',
-      width: 250,
+      width: 260,
+      slots: {
+        default: 'operation',
+      },
     },
   ];
 }

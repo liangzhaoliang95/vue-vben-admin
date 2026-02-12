@@ -1,23 +1,21 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { Card, Statistic, Row, Col, Button } from 'ant-design-vue';
-import { getTaskListApi } from '#/api/formCollector';
+import { getStatisticsApi } from '#/api/formCollector';
 
 const totalTasks = ref(0);
 const activeTasks = ref(0);
+const totalSubmissions = ref(0);
 const loading = ref(false);
 
 // 加载统计数据
 const loadStats = async () => {
   loading.value = true;
   try {
-    const res = await getTaskListApi({
-      pageIndex: 1,
-      pageSize: 1,
-    });
-    totalTasks.value = res.total || 0;
-    // 这里可以添加更多统计逻辑
-    activeTasks.value = res.total || 0;
+    const res = await getStatisticsApi();
+    totalTasks.value = res.totalTasks || 0;
+    activeTasks.value = res.activeTasks || 0;
+    totalSubmissions.value = res.totalSubmissions || 0;
   } catch (error) {
     console.error('加载统计数据失败:', error);
   } finally {
@@ -32,7 +30,7 @@ onMounted(() => {
 
 <template>
   <div class="p-4">
-    <h1 class="mb-6 text-3xl font-bold">概览</h1>
+    <h1 class="mb-6 text-3xl font-bold">工作台</h1>
 
     <Row :gutter="16">
       <Col :span="8">
@@ -63,7 +61,7 @@ onMounted(() => {
       </Col>
       <Col :span="8">
         <Card>
-          <Statistic title="总提交数" :value="0" :loading="loading">
+          <Statistic title="总提交数" :value="totalSubmissions" :loading="loading">
             <template #prefix>
               <span class="text-purple-500">📊</span>
             </template>
@@ -74,10 +72,10 @@ onMounted(() => {
 
     <Card class="mt-6" title="快速操作">
       <div class="flex gap-4">
-        <Button type="primary" @click="$router.push('/dashboard/guide')">
+        <Button type="primary" @click="$router.push('/guide')">
           快速开始
         </Button>
-        <Button @click="$router.push('/formCollector/task-list')">
+        <Button @click="$router.push('/task-list')">
           管理任务
         </Button>
         <Button @click="loadStats">刷新数据</Button>

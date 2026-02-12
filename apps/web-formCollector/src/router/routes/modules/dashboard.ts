@@ -2,35 +2,25 @@ import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
+    name: 'Analytics',
+    path: '/analytics',
+    component: () => import('#/views/dashboard/analytics.vue'),
     meta: {
+      affixTab: true,
       icon: 'lucide:layout-dashboard',
-      order: -1,
-      title: '概览',
+      order: 1,
+      title: '工作台',
     },
-    name: 'Dashboard',
-    path: '/dashboard',
-    redirect: '/dashboard/analytics',
-    children: [
-      {
-        name: 'Analytics',
-        path: '/dashboard/analytics',
-        component: () => import('#/views/dashboard/analytics.vue'),
-        meta: {
-          affixTab: true,
-          icon: 'lucide:area-chart',
-          title: '分析页',
-        },
-      },
-      {
-        name: 'Guide',
-        path: '/dashboard/guide',
-        component: () => import('#/views/dashboard/guide.vue'),
-        meta: {
-          icon: 'lucide:book-open',
-          title: '使用说明',
-        },
-      },
-    ],
+  },
+  {
+    name: 'Guide',
+    path: '/guide',
+    component: () => import('#/views/dashboard/guide.vue'),
+    meta: {
+      icon: 'lucide:book-open',
+      order: 2,
+      title: '使用说明',
+    },
   },
 ];
 
