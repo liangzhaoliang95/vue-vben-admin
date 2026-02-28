@@ -65,7 +65,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         // 新建时，设置默认值
         formApi.setValues({
           status: 1,
-          permissionList: [],
+          permissionList: [1],
         });
       }
     }
