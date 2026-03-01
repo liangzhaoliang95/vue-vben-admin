@@ -55,6 +55,10 @@ export const useUserStore = defineStore('core-user', {
       this.userRoles = roles;
     },
   },
+  persist: {
+    // 持久化用户信息，刷新页面后可以从 localStorage 恢复
+    pick: ['userInfo', 'userRoles'],
+  },
   state: (): AccessState => ({
     userInfo: null,
     userRoles: [],

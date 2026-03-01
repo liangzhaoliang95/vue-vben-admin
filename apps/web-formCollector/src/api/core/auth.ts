@@ -212,3 +212,10 @@ export async function logoutApi() {
 export async function getAccessCodesApi() {
   return requestClient.get<string[]>('/auth/codes');
 }
+
+/**
+ * 获取当前登录用户信息
+ */
+export async function getSelfUserInfoApi(): Promise<AuthApi.UserInfo> {
+  return requestClient.get<AuthApi.UserInfo>('/user/info');
+}

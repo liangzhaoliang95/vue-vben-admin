@@ -10,7 +10,7 @@ import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
 
-import { loginApi, logoutApi, codeLoginApi } from '#/api';
+import { getSelfUserInfoApi, loginApi, logoutApi, codeLoginApi } from '#/api';
 import { $t } from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
@@ -174,9 +174,34 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function fetchUserInfo() {
-    // 从 store 中获取用户信息，因为后端登录时已经返回了用户信息
-    const userInfo = userStore.userInfo;
-    return userInfo;
+    // 如果 store 中已有用户信息，直接返回
+    if (userStore.userInfo) {
+      return userStore.userInfo;
+    }
+
+    // 否则从后端获取用户信息
+    try {
+      const backendUserInfo = await getSelfUserInfoApi();
+
+      const userInfo: UserInfo = {
+        userId: backendUserInfo.userId,
+        username: backendUserInfo.userName,
+        realName: backendUserInfo.userName,
+        avatar: backendUserInfo.avatar || '',
+        email: backendUserInfo.email,
+        roles: ['user'],
+        homePath: '/analytics',
+        desc: '',
+      };
+
+      // 保存到 store
+      userStore.setUserInfo(userInfo);
+
+      return userInfo;
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
+      return null;
+    }
   }
 
   function $reset() {
