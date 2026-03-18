@@ -150,6 +150,16 @@ export async function deleteAllFormDataApi(taskId: string) {
 }
 
 /**
+ * 批量删除表单数据
+ */
+export async function batchDeleteFormDataApi(taskId: string, dataIds: string[]) {
+  return requestClient.post<void>('/tk/formSubmit/batchDeleteFormData', {
+    taskId,
+    dataIds,
+  });
+}
+
+/**
  * 导出任务数据为 Excel
  */
 export async function exportTaskDataApi(taskId: string) {

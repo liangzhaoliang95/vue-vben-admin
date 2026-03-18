@@ -23,6 +23,7 @@ import {
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  batchDeleteFormDataApi,
   deleteAllFormDataApi,
   deleteFormDataApi,
   exportTaskDataApi,
@@ -92,6 +93,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     rowConfig: {
       keyField: 'dataId',
+    },
+    checkboxConfig: {
+      highlight: true,
     },
     toolbarConfig: {
       custom: true,
@@ -180,6 +184,35 @@ const handleExport = async () => {
 const handleBack = () => {
   router.push('/task-list');
 };
+
+// 获取选中的行
+const getSelectedRows = (): FormCollectorApi.FormDataInfo[] => {
+  return gridApi.grid?.getCheckboxRecords() ?? [];
+};
+
+// 批量删除
+const handleBatchDelete = () => {
+  const selected = getSelectedRows();
+  if (selected.length === 0) {
+    message.warning('请先选择要删除的数据');
+    return;
+  }
+  Modal.confirm({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${selected.length} 条数据吗？删除后无法恢复。`,
+    okType: 'danger',
+    onOk: async () => {
+      try {
+        const dataIds = selected.map((row) => row.dataId);
+        await batchDeleteFormDataApi(taskId.value, dataIds);
+        message.success(`成功删除 ${selected.length} 条数据`);
+        gridApi.query();
+      } catch {
+        message.error('批量删除失败');
+      }
+    },
+  });
+};
 </script>
 
 <template>
@@ -198,6 +231,9 @@ const handleBack = () => {
     <Grid :table-title="pageTitle">
       <template #toolbar-tools>
         <Space>
+          <Button danger @click="handleBatchDelete">
+            批量删除
+          </Button>
           <Button danger type="primary" @click="handleDeleteAll">
             删除所有数据
           </Button>
@@ -263,6 +299,15 @@ const handleBack = () => {
 </template>
 
 <style scoped>
+/* checkbox 颜色加深 */
+:deep(.vxe-checkbox--icon) {
+  border-color: #8c8c8c !important;
+}
+
+:deep(.vxe-checkbox--icon:hover) {
+  border-color: #1677ff !important;
+}
+
 /* 表格行悬浮效果 */
 :deep(.vxe-table--body) .vxe-body--row:hover {
   background-color: rgba(24, 144, 255, 0.08) !important;

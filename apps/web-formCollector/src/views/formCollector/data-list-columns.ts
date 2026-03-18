@@ -4,6 +4,11 @@ import type { FormCollectorApi } from '#/api/formCollector';
 export function useDataListColumns(): VxeTableGridOptions['columns'] {
   return [
     {
+      type: 'checkbox',
+      width: 50,
+      fixed: 'left',
+    },
+    {
       field: 'dataId',
       title: '数据ID',
       minWidth: 200,
