@@ -61,7 +61,7 @@
       "timeInfo": "时间信息",
       "currentTasks": "当前任务数",
       "totalTasks": "总任务数",
-      "tasks": "任务",
+      "tasks": "当前任务数",
       "successTasks": "成功任务数",
       "failedTasks": "失败任务数",
       "registeredAt": "注册时间",

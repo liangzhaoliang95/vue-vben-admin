@@ -200,14 +200,6 @@ export function useColumns<T = BuildAgentApi.BuildAgent>(
       },
     },
     {
-      field: 'lastHeartbeatAt',
-      minWidth: 180,
-      title: $t('deploy.tools.buildAgent.lastHeartbeatAt'),
-      formatter: ({ cellValue }: { cellValue: number }) => {
-        return formatDateTime(cellValue);
-      },
-    },
-    {
       field: 'hostname',
       minWidth: 150,
       showOverflow: true,
@@ -231,15 +223,30 @@ export function useColumns<T = BuildAgentApi.BuildAgent>(
       width: 150,
     },
     {
-      cellRender: {
-        name: 'CellRender',
-        setup: ({ row }: { row: BuildAgentApi.BuildAgent }) => {
-          return h('span', `${row.currentTasks}/${row.maxConcurrentTasks}`);
-        },
-      },
       field: 'currentTasks',
       title: $t('deploy.tools.buildAgent.tasks'),
       width: 120,
+      slots: {
+        default: ({ row }: { row: BuildAgentApi.BuildAgent }) => {
+          const currentTasks = row.currentTasks ?? 0;
+          const maxTasks = row.maxConcurrentTasks ?? 1; // 默认为 1
+          console.log('Agent task info:', {
+            name: row.name,
+            currentTasks,
+            maxConcurrentTasks: row.maxConcurrentTasks,
+            display: `${currentTasks}/${maxTasks}`
+          });
+          return h('span', `${currentTasks}/${maxTasks}`);
+        },
+      },
+    },
+    {
+      field: 'lastHeartbeatAt',
+      minWidth: 180,
+      title: $t('deploy.tools.buildAgent.lastHeartbeatAt'),
+      formatter: ({ cellValue }: { cellValue: number }) => {
+        return formatDateTime(cellValue);
+      },
     },
     {
       align: 'center',
