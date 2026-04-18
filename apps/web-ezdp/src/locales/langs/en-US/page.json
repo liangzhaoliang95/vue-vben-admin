@@ -14,7 +14,8 @@
   "docs": {
     "title": "Integration Documentation",
     "description": "Agent integration guides and protocol documentation",
-    "listTitle": "Document List"
+    "docList": "Document List",
+    "selectDoc": "Please select a document to view"
   },
   "routes": {
     "terminal": "Web Terminal"

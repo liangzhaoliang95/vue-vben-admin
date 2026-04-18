@@ -4,8 +4,10 @@
 export interface DocItem {
   id: string;
   title: string;
-  description: string;
-  fileName: string;
+  description?: string;
+  fileName?: string;
+  children?: DocItem[];
+  isCategory?: boolean;
 }
 
 /**

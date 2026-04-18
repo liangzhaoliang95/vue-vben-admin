@@ -14,7 +14,8 @@
   "docs": {
     "title": "接入文档中心",
     "description": "Agent 接入指南和协议文档",
-    "listTitle": "文档列表"
+    "docList": "文档列表",
+    "selectDoc": "请选择要查看的文档"
   },
   "routes": {
     "terminal": "Web 终端"

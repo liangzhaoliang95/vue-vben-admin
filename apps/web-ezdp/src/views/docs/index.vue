@@ -1,15 +1,20 @@
 <script lang="ts" setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import { Page } from '@vben/common-ui';
-import { Card, Spin, Empty, Button, message } from 'ant-design-vue';
+import { Card, Spin, Empty, Input, message, Tree, Tooltip } from 'ant-design-vue';
 import { $t } from '#/locales';
-import { copyToClipboard } from '#/utils/clipboard';
-import { loadDocList, loadDocContent, markdownToHtml } from './data';
+import { loadDocList, loadDocContent, markdownToHtml, findDocItem } from './data';
 import type { DocItem, DocPageState } from './types';
+import hljs from 'highlight.js';
 
 defineOptions({ name: 'DocCenter' });
 
 const docList = ref<DocItem[]>([]);
+const searchKeyword = ref('');
+const contentRef = ref<HTMLElement | null>(null);
+const tocItems = ref<{ id: string; text: string; level: number }[]>([]);
+const activeHeading = ref('');
+
 const state = ref<DocPageState>({
   selectedDoc: null,
   content: '',
@@ -17,26 +22,132 @@ const state = ref<DocPageState>({
   error: null,
 });
 
-// 当前选中的文档信息
+const expandedKeys = ref<string[]>([]);
+
 const currentDoc = computed(() => {
-  return docList.value.find((doc) => doc.id === state.value.selectedDoc);
+  if (!state.value.selectedDoc) return null;
+  return findDocItem(docList.value, state.value.selectedDoc);
 });
 
-// 加载文档内容
+// 搜索过滤后的树数据
+const filteredDocList = computed(() => {
+  if (!searchKeyword.value.trim()) return docList.value;
+  return filterDocItems(docList.value, searchKeyword.value.toLowerCase());
+});
+
+function filterDocItems(items: DocItem[], keyword: string): DocItem[] {
+  const result: DocItem[] = [];
+  for (const item of items) {
+    if (item.title.toLowerCase().includes(keyword)) {
+      result.push(item);
+    } else if (item.children) {
+      const filteredChildren = filterDocItems(item.children, keyword);
+      if (filteredChildren.length > 0) {
+        result.push({ ...item, children: filteredChildren });
+      }
+    }
+  }
+  return result;
+}
+
+const treeData = computed(() => {
+  function convertToTreeNode(item: DocItem): any {
+    const node: any = {
+      key: item.id,
+      title: item.title,
+      isLeaf: !item.isCategory,
+      selectable: !item.isCategory,
+      isCategory: item.isCategory,
+    };
+    if (item.children?.length) {
+      node.children = item.children.map(convertToTreeNode);
+    }
+    return node;
+  }
+  return filteredDocList.value.map(convertToTreeNode);
+});
+
+// 提取目录
+function extractToc(html: string) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const headings = div.querySelectorAll('h1, h2, h3, h4');
+  const items: { id: string; text: string; level: number }[] = [];
+  headings.forEach((h, index) => {
+    const level = parseInt(h.tagName[1]!);
+    const text = h.textContent || '';
+    const id = `heading-${index}`;
+    items.push({ id, text, level });
+  });
+  return items;
+}
+
+// 给内容中的标题添加 id，并给代码块添加高亮和复制按钮
+function enhanceContent(html: string): string {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+
+  // 给标题添加 id
+  const headings = div.querySelectorAll('h1, h2, h3, h4');
+  headings.forEach((h, index) => {
+    h.id = `heading-${index}`;
+  });
+
+  // 代码高亮 + 复制按钮
+  const codeBlocks = div.querySelectorAll('pre code');
+  codeBlocks.forEach((block) => {
+    hljs.highlightElement(block as HTMLElement);
+    const pre = block.parentElement!;
+    pre.style.position = 'relative';
+
+    // 获取语言
+    const langClass = Array.from(block.classList).find((c) => c.startsWith('language-'));
+    const lang = langClass ? langClass.replace('language-', '') : '';
+
+    // 添加语言标签和复制按钮的包装
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-block-wrapper';
+
+    const header = document.createElement('div');
+    header.className = 'code-block-header';
+    header.innerHTML = `
+      <span class="code-lang">${lang || 'code'}</span>
+      <button class="copy-btn" data-code="${encodeURIComponent(block.textContent || '')}">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        复制
+      </button>
+    `;
+
+    pre.parentNode?.insertBefore(wrapper, pre);
+    wrapper.appendChild(header);
+    wrapper.appendChild(pre);
+  });
+
+  return div.innerHTML;
+}
+
 async function loadDoc(docId: string) {
   state.value.selectedDoc = docId;
   state.value.loading = true;
   state.value.error = null;
   state.value.content = '';
+  tocItems.value = [];
 
   try {
-    const doc = docList.value.find((d) => d.id === docId);
-    if (!doc) {
-      throw new Error('文档不存在');
-    }
+    const doc = findDocItem(docList.value, docId);
+    if (!doc?.fileName) throw new Error('文档不存在');
 
     const content = await loadDocContent(doc.fileName);
-    state.value.content = markdownToHtml(content);
+    const html = markdownToHtml(content);
+    tocItems.value = extractToc(html);
+    state.value.content = enhanceContent(html);
+
+    await nextTick();
+    bindCopyButtons();
+    setupScrollSpy();
   } catch (error: any) {
     state.value.error = error.message || '加载文档失败';
     message.error(`加载文档失败: ${error.message}`);
@@ -45,31 +156,100 @@ async function loadDoc(docId: string) {
   }
 }
 
-// 复制文档内容
-async function copyContent() {
-  if (!state.value.content) return;
+function bindCopyButtons() {
+  const buttons = contentRef.value?.querySelectorAll('.copy-btn');
+  buttons?.forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const code = decodeURIComponent((btn as HTMLElement).dataset.code || '');
+      try {
+        await navigator.clipboard.writeText(code);
+        btn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          已复制
+        `;
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            复制
+          `;
+          btn.classList.remove('copied');
+        }, 2000);
+      } catch {
+        message.error('复制失败');
+      }
+    });
+  });
+}
 
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = state.value.content;
-  const textContent = tempDiv.textContent || tempDiv.innerText || '';
+function setupScrollSpy() {
+  const container = contentRef.value?.closest('.doc-body') as HTMLElement;
+  if (!container) return;
 
-  try {
-    await copyToClipboard(textContent);
-    message.success($t('common.copySuccess'));
-  } catch (error) {
-    console.error('复制失败:', error);
-    message.error($t('common.copyFailed'));
+  const handler = () => {
+    const headings = contentRef.value?.querySelectorAll('h1, h2, h3, h4');
+    if (!headings) return;
+    let current = '';
+    headings.forEach((h) => {
+      const rect = h.getBoundingClientRect();
+      if (rect.top <= 120) current = h.id;
+    });
+    if (current) activeHeading.value = current;
+  };
+
+  container.addEventListener('scroll', handler, { passive: true });
+}
+
+function scrollToHeading(id: string) {
+  const el = contentRef.value?.querySelector(`#${id}`);
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    activeHeading.value = id;
   }
 }
 
-// 初始化：加载文档列表并默认加载第一个文档
+function onTreeSelect(selectedKeys: string[]) {
+  if (selectedKeys.length > 0) loadDoc(selectedKeys[0]!);
+}
+
+function findFirstSelectableDoc(items: DocItem[]): DocItem | null {
+  for (const item of items) {
+    if (!item.isCategory && item.fileName) return item;
+    if (item.children) {
+      const found = findFirstSelectableDoc(item.children);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function collectCategoryKeys(items: DocItem[], keys: string[] = []): string[] {
+  for (const item of items) {
+    if (item.isCategory) keys.push(item.id);
+    if (item.children) collectCategoryKeys(item.children, keys);
+  }
+  return keys;
+}
+
+// 搜索时展开所有节点
+watch(searchKeyword, (val) => {
+  if (val) {
+    expandedKeys.value = collectCategoryKeys(filteredDocList.value);
+  }
+});
+
 onMounted(async () => {
   try {
     const docs = await loadDocList();
     docList.value = docs;
-    if (docs.length > 0) {
-      await loadDoc(docs[0]!.id);
-    }
+    expandedKeys.value = collectCategoryKeys(docs);
+    const firstDoc = findFirstSelectableDoc(docs);
+    if (firstDoc) await loadDoc(firstDoc.id);
   } catch (error: any) {
     message.error(`加载文档列表失败: ${error.message}`);
   }
@@ -78,453 +258,461 @@ onMounted(async () => {
 
 <template>
   <Page :title="$t('page.docs.title')" :description="$t('page.docs.description')">
-    <div class="doc-container">
-      <!-- 左侧文档列表 -->
-      <div class="doc-sidebar">
-        <Card :bordered="false" class="doc-list-card">
-          <template #title>
-            <span class="doc-list-title">📚 {{ $t('page.docs.listTitle') }}</span>
-          </template>
-          <div class="doc-list">
-            <div
-              v-for="doc in docList"
-              :key="doc.id"
-              class="doc-item"
-              :class="{ active: state.selectedDoc === doc.id }"
-              @click="loadDoc(doc.id)"
-            >
-              <div class="doc-item-title">{{ doc.title }}</div>
-              <div class="doc-item-desc">{{ doc.description }}</div>
-            </div>
-            <div v-if="docList.length === 0" class="doc-empty">
-              暂无文档
+    <div class="doc-layout">
+      <!-- 左侧导航 -->
+      <aside class="doc-sidebar">
+        <div class="sidebar-search">
+          <Input
+            v-model:value="searchKeyword"
+            placeholder="搜索文档..."
+            allow-clear
+            size="small"
+          >
+            <template #prefix>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </template>
+          </Input>
+        </div>
+        <div class="sidebar-tree">
+          <Tree
+            v-model:expanded-keys="expandedKeys"
+            :tree-data="treeData"
+            :selected-keys="state.selectedDoc ? [state.selectedDoc] : []"
+            :show-line="false"
+            :show-icon="false"
+            :block-node="true"
+            @select="onTreeSelect"
+          >
+            <template #title="{ title, isCategory }">
+              <span :class="['tree-node', isCategory ? 'tree-category' : 'tree-leaf']">
+                <span v-if="isCategory" class="tree-icon category-icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                  </svg>
+                </span>
+                <span v-else class="tree-icon leaf-icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg>
+                </span>
+                {{ title }}
+              </span>
+            </template>
+          </Tree>
+        </div>
+      </aside>
+
+      <!-- 中间内容区 -->
+      <main class="doc-main">
+        <Spin :spinning="state.loading" size="large">
+          <div v-if="state.error" class="doc-empty-state">
+            <Empty :description="state.error" />
+          </div>
+          <div v-else-if="!state.content && !state.loading" class="doc-empty-state">
+            <div class="welcome-box">
+              <div class="welcome-icon">📚</div>
+              <h2>Build Agent 接入文档</h2>
+              <p>从左侧选择文档开始阅读</p>
             </div>
           </div>
-        </Card>
-      </div>
+          <article v-else class="doc-article">
+            <div ref="contentRef" class="markdown-body" v-html="state.content" />
+          </article>
+        </Spin>
+      </main>
 
-      <!-- 右侧文档内容 -->
-      <div class="doc-content">
-        <Card
-          :bordered="false"
-          class="doc-content-card"
-          :loading="state.loading"
-        >
-          <template #title>
-            <div class="doc-header">
-              <span class="doc-title">{{ currentDoc?.title || '请选择文档' }}</span>
-              <div class="doc-actions" v-if="state.content">
-                <Button size="small" @click="copyContent" type="primary" ghost>
-                  📋 {{ $t('common.copy') }}
-                </Button>
-              </div>
-            </div>
-          </template>
-
-          <div class="doc-body">
-            <Spin v-if="state.loading" tip="文档加载中...">
-              <div class="loading-placeholder" />
-            </Spin>
-
-            <div
-              v-else-if="state.content"
-              class="markdown-content"
-              v-html="state.content"
-            />
-
-            <Empty
-              v-else-if="!state.content && !state.loading"
-              :description="state.error || '请选择左侧文档查看'"
-            />
-          </div>
-        </Card>
-      </div>
+      <!-- 右侧目录 -->
+      <nav v-if="tocItems.length > 0" class="doc-toc">
+        <div class="toc-title">本页目录</div>
+        <ul class="toc-list">
+          <li
+            v-for="item in tocItems"
+            :key="item.id"
+            :class="['toc-item', `toc-h${item.level}`, { active: activeHeading === item.id }]"
+            @click="scrollToHeading(item.id)"
+          >
+            {{ item.text }}
+          </li>
+        </ul>
+      </nav>
     </div>
   </Page>
 </template>
 
 <style scoped>
-.doc-wrapper {
-  background: #f5f7fa;
-  margin: -16px;
-  padding: 16px;
-  min-height: calc(100vh - 120px);
-}
+@import 'highlight.js/styles/github-dark.css';
 
-.doc-container {
+.doc-layout {
   display: flex;
-  gap: 16px;
-  height: calc(100vh - 220px);
+  gap: 24px;
+  height: calc(100vh - 180px);
   min-height: 600px;
 }
 
+/* 左侧导航 */
 .doc-sidebar {
   width: 280px;
   flex-shrink: 0;
-}
-
-.doc-content {
-  flex: 1;
-  overflow: hidden;
-}
-
-.doc-list-card,
-.doc-content-card {
-  height: 100%;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  background: var(--vben-background-color);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--vben-border-color);
+  overflow: hidden;
 }
 
-:deep(.ant-card-head) {
-  background: #fafafa;
-  border-bottom: 1px solid #f0f0f0;
-  padding: 12px 16px;
-  min-height: 48px;
+.sidebar-search {
+  padding: 16px;
+  border-bottom: 1px solid var(--vben-border-color);
 }
 
-:deep(.ant-card-body) {
+.sidebar-search :deep(.ant-input-affix-wrapper) {
+  border-radius: 6px;
+}
+
+.sidebar-tree {
   flex: 1;
-  overflow: auto;
-  padding: 0;
+  overflow-y: auto;
+  padding: 8px;
 }
 
-.doc-list-title {
-  font-size: 16px;
-  font-weight: 600;
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.tree-icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.6;
+}
+
+.category-icon {
   color: #1890ff;
 }
 
-.doc-list {
-  padding: 12px;
+.leaf-icon {
+  color: #52c41a;
 }
 
-.doc-item {
-  padding: 12px 14px;
-  margin-bottom: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid #f0f0f0;
-  background: #fff;
-}
-
-.doc-item:hover {
-  background: #f0f7ff;
-  border-color: #91caff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.15);
-}
-
-.doc-item.active {
-  background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
-  border-color: #1890ff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.25);
-}
-
-.doc-item-title {
+.tree-category {
   font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 4px;
-  color: #1f1f1f;
+  color: var(--vben-text-color);
 }
 
-.doc-item-desc {
-  font-size: 12px;
-  color: #666;
-  line-height: 1.4;
+.tree-leaf {
+  color: var(--vben-text-color-secondary);
 }
 
-.doc-empty {
-  text-align: center;
-  padding: 40px 12px;
-  color: #999;
-  font-size: 14px;
+:deep(.ant-tree-node-selected) .tree-node {
+  background: var(--vben-primary-color-light);
+  color: var(--vben-primary-color);
 }
 
-.doc-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 12px;
+:deep(.ant-tree-node-selected) .tree-icon {
+  opacity: 1;
 }
 
-.doc-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f1f1f;
+/* 中间内容区 */
+.doc-main {
   flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  background: var(--vben-background-color);
+  border-radius: 8px;
+  border: 1px solid var(--vben-border-color);
+  overflow-y: auto;
+  padding: 32px;
 }
 
-.doc-actions {
+.doc-empty-state {
   display: flex;
-  gap: 8px;
-  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
 }
 
-.doc-body {
-  height: 100%;
-  overflow: auto;
-  padding: 24px 28px;
-  background: #fff;
+.welcome-box {
+  text-align: center;
 }
 
-.loading-placeholder {
-  height: 200px;
+.welcome-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
 }
 
-/* Markdown 样式 - 专业版 */
-.markdown-content {
-  line-height: 1.7;
-  color: #2c3e50;
+.welcome-box h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--vben-text-color);
+}
+
+.welcome-box p {
   font-size: 14px;
+  color: var(--vben-text-color-secondary);
 }
 
-.markdown-content :deep(h1) {
-  font-size: 26px;
-  font-weight: 700;
-  margin: 28px 0 18px;
-  color: #1f1f1f;
-  border-bottom: 2px solid #1890ff;
+/* Markdown 内容样式 */
+.markdown-body {
+  color: var(--vben-text-color);
+  line-height: 1.8;
+}
+
+.markdown-body :deep(h1),
+.markdown-body :deep(h2),
+.markdown-body :deep(h3),
+.markdown-body :deep(h4) {
+  margin-top: 24px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--vben-text-color);
+  scroll-margin-top: 80px;
+}
+
+.markdown-body :deep(h1) {
+  font-size: 32px;
+  border-bottom: 2px solid var(--vben-border-color);
+  padding-bottom: 12px;
+}
+
+.markdown-body :deep(h2) {
+  font-size: 24px;
+  border-bottom: 1px solid var(--vben-border-color);
   padding-bottom: 8px;
 }
 
-.markdown-content :deep(h2) {
+.markdown-body :deep(h3) {
   font-size: 20px;
-  font-weight: 600;
-  margin: 24px 0 14px;
-  color: #1f1f1f;
-  border-left: 4px solid #1890ff;
-  padding-left: 12px;
-  background: linear-gradient(90deg, rgba(24,144,255,0.08) 0%, transparent 100%);
-  padding: 8px 12px;
-  border-radius: 4px;
 }
 
-.markdown-content :deep(h3) {
+.markdown-body :deep(h4) {
   font-size: 16px;
-  font-weight: 600;
-  margin: 18px 0 10px;
-  color: #3c3c3c;
 }
 
-.markdown-content :deep(p) {
-  margin: 12px 0;
-  text-align: justify;
-  color: #4a5568;
+.markdown-body :deep(p) {
+  margin-bottom: 16px;
 }
 
-.markdown-content :deep(ul), .markdown-content :deep(ol) {
-  margin: 12px 0;
+.markdown-body :deep(a) {
+  color: var(--vben-primary-color);
+  text-decoration: none;
+}
+
+.markdown-body :deep(a:hover) {
+  text-decoration: underline;
+}
+
+.markdown-body :deep(ul),
+.markdown-body :deep(ol) {
+  margin-bottom: 16px;
   padding-left: 24px;
 }
 
-.markdown-content :deep(li) {
-  margin: 6px 0;
-  line-height: 1.6;
-  color: #4a5568;
+.markdown-body :deep(li) {
+  margin-bottom: 8px;
 }
 
-.markdown-content :deep(li strong) {
-  color: #1890ff;
-}
-
-/* 行内代码 */
-.markdown-content :deep(code) {
-  background: #f0f7ff;
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: 12px;
-  color: #c41d7f;
-  border: 1px solid #bae7ff;
-  font-weight: 500;
-}
-
-/* 普通代码块 */
-.markdown-content :deep(pre.code-block) {
-  background: #f5f5f5;
-  padding: 16px;
-  border-radius: 6px;
-  overflow-x: auto;
+.markdown-body :deep(blockquote) {
   margin: 16px 0;
-  border: 1px solid #e8e8e8;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.markdown-content :deep(pre.code-block code) {
-  background: none;
-  padding: 0;
-  color: #2c3e50;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-/* 流程图 - 特殊样式 */
-.markdown-content :deep(pre.flowchart) {
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-  color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin: 18px 0;
-  border: 1px solid #096dd9;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-weight: 500;
-}
-
-.markdown-content :deep(pre.flowchart code) {
-  background: none;
-  padding: 0;
-  color: #fff;
-  font-size: 14px;
-  line-height: 1.8;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-/* 流程图中的箭头和步骤数字 */
-.markdown-content :deep(.arrow) {
-  color: #ffd666;
-  font-weight: 700;
-  font-size: 16px;
-  padding: 0 4px;
-}
-
-.markdown-content :deep(.step-num) {
-  color: #ffd666;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 2px 6px;
+  padding: 12px 16px;
+  border-left: 4px solid var(--vben-primary-color);
+  background: var(--vben-background-color-deep);
   border-radius: 4px;
-  margin-right: 4px;
 }
 
-/* JSON 数据块 */
-.markdown-content :deep(pre code .json-key) {
-  color: #e06c75;
-}
-
-.markdown-content :deep(pre code .json-string) {
-  color: #98c379;
-}
-
-.markdown-content :deep(pre code .json-number) {
-  color: #d19a66;
-}
-
-.markdown-content :deep(strong) {
-  font-weight: 600;
-  color: #1890ff;
-}
-
-.markdown-content :deep(a) {
-  color: #1890ff;
-  text-decoration: none;
-  border-bottom: 1px dashed #1890ff;
-}
-
-.markdown-content :deep(a:hover) {
-  color: #40a9ff;
-  border-bottom-style: solid;
-}
-
-.markdown-content :deep(table) {
-  border-collapse: collapse;
+.markdown-body :deep(table) {
   width: 100%;
   margin: 16px 0;
-  font-size: 13px;
-  border-radius: 6px;
+  border-collapse: collapse;
+  border: 1px solid var(--vben-border-color);
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.markdown-content :deep(th),
-.markdown-content :deep(td) {
-  border: 1px solid #e8e8e8;
-  padding: 12px 14px;
+.markdown-body :deep(th),
+.markdown-body :deep(td) {
+  padding: 12px 16px;
+  border: 1px solid var(--vben-border-color);
   text-align: left;
 }
 
-.markdown-content :deep(th) {
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-  color: #fff;
+.markdown-body :deep(th) {
+  background: var(--vben-background-color-deep);
   font-weight: 600;
-  border: none;
 }
 
-.markdown-content :deep(td) {
-  background: #fff;
+.markdown-body :deep(code) {
+  padding: 2px 6px;
+  background: var(--vben-background-color-deep);
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #e83e8c;
 }
 
-.markdown-content :deep(tr:nth-child(even) td) {
-  background: #fafafa;
+/* 代码块样式 */
+.markdown-body :deep(.code-block-wrapper) {
+  margin: 16px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--vben-border-color);
 }
 
-.markdown-content :deep(tr:hover td) {
-  background: #e6f7ff;
+.markdown-body :deep(.code-block-header) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #1f2937;
+  border-bottom: 1px solid #374151;
 }
 
-/* 分隔线 */
-.markdown-content :deep(hr) {
-  border: none;
-  border-top: 2px dashed #d9d9d9;
-  margin: 20px 0;
+.markdown-body :deep(.code-lang) {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* 引用块 */
-.markdown-content :deep(blockquote) {
-  border-left: 4px solid #1890ff;
-  background: #f0f7ff;
-  padding: 12px 16px;
-  margin: 12px 0;
-  border-radius: 0 6px 6px 0;
-  color: #4a5568;
+.markdown-body :deep(.copy-btn) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid #374151;
+  border-radius: 4px;
+  color: #9ca3af;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.markdown-body :deep(.copy-btn:hover) {
+  background: #374151;
+  color: #fff;
+  border-color: #4b5563;
+}
+
+.markdown-body :deep(.copy-btn.copied) {
+  color: #10b981;
+  border-color: #10b981;
+}
+
+.markdown-body :deep(pre) {
+  margin: 0;
+  padding: 16px;
+  background: #0d1117 !important;
+  overflow-x: auto;
+}
+
+.markdown-body :deep(pre code) {
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 右侧目录 */
+.doc-toc {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--vben-background-color);
+  border-radius: 8px;
+  border: 1px solid var(--vben-border-color);
+  padding: 16px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+}
+
+.toc-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vben-text-color);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--vben-border-color);
+}
+
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.toc-item {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--vben-text-color-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+
+.toc-item:hover {
+  background: var(--vben-background-color-deep);
+  color: var(--vben-text-color);
+}
+
+.toc-item.active {
+  color: var(--vben-primary-color);
+  background: var(--vben-primary-color-light);
+  border-left-color: var(--vben-primary-color);
+  font-weight: 500;
+}
+
+.toc-h1 {
+  padding-left: 12px;
+}
+
+.toc-h2 {
+  padding-left: 20px;
+}
+
+.toc-h3 {
+  padding-left: 28px;
+  font-size: 12px;
+}
+
+.toc-h4 {
+  padding-left: 36px;
+  font-size: 12px;
 }
 
 /* 响应式 */
-@media (max-width: 1200px) {
-  .doc-container {
-    height: calc(100vh - 160px);
-  }
-
-  .doc-sidebar {
-    width: 240px;
+@media (max-width: 1400px) {
+  .doc-toc {
+    display: none;
   }
 }
 
 @media (max-width: 768px) {
-  .doc-container {
+  .doc-layout {
     flex-direction: column;
     height: auto;
-    min-height: 800px;
   }
 
   .doc-sidebar {
     width: 100%;
-    height: 200px;
+    height: 300px;
   }
 
-  .doc-content {
-    min-height: 400px;
-  }
-
-  .doc-body {
-    padding: 16px 12px;
-  }
-
-  .markdown-content :deep(h1) {
-    font-size: 22px;
-  }
-
-  .markdown-content :deep(h2) {
-    font-size: 18px;
+  .doc-main {
+    padding: 16px;
   }
 }
 </style>
