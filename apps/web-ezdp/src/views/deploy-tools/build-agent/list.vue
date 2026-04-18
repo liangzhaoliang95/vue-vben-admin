@@ -21,6 +21,7 @@ import {
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
+import DetailModal from './modules/detail-modal.vue';
 import Form from './modules/form.vue';
 import TokenDialog from './modules/token-dialog.vue';
 
@@ -32,6 +33,7 @@ function openDocs() {
 
 const formRef = ref<InstanceType<typeof Form>>();
 const tokenDialogRef = ref<InstanceType<typeof TokenDialog>>();
+const detailModalRef = ref<InstanceType<typeof DetailModal>>();
 
 const businessStore = useBusinessStore();
 
@@ -96,6 +98,10 @@ watch(
 
 function onActionClick(e: OnActionClickParams<BuildAgentApi.BuildAgent>) {
   switch (e.code) {
+    case 'detail': {
+      onDetail(e.row);
+      break;
+    }
     case 'delete': {
       onDelete(e.row);
       break;
@@ -128,6 +134,10 @@ function onDelete(row: BuildAgentApi.BuildAgent) {
   });
 }
 
+function onDetail(row: BuildAgentApi.BuildAgent) {
+  detailModalRef.value?.open(row);
+}
+
 function onCreate() {
   formRef.value?.drawerApi.setData({}).open();
 }
@@ -145,6 +155,7 @@ function onRefresh(token?: string) {
   <Page auto-content-height>
     <Form ref="formRef" @success="onRefresh" />
     <TokenDialog ref="tokenDialogRef" />
+    <DetailModal ref="detailModalRef" />
     <Grid :table-title="$t('deploy.tools.buildAgent.title')">
       <template #toolbar-tools>
         <Button type="link" @click="openDocs" style="margin-right: 12px;">

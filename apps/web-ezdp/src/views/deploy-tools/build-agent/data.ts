@@ -165,14 +165,27 @@ export function useColumns<T = BuildAgentApi.BuildAgent>(
 ): VxeTableGridOptions['columns'] {
   return [
     {
-      field: 'businessLineName',
-      minWidth: 120,
-      title: $t('system.businessLine.name'),
-    },
-    {
       field: 'name',
       minWidth: 180,
       title: $t('deploy.tools.buildAgent.name'),
+      slots: {
+        default: ({ row }: { row: BuildAgentApi.BuildAgent }) => {
+          return h(
+            'a',
+            {
+              style: { color: '#1677ff', cursor: 'pointer', textDecoration: 'none' },
+              onClick: () => onActionClick({ code: 'detail', row }),
+              onMouseenter: (e: MouseEvent) => {
+                (e.target as HTMLElement).style.textDecoration = 'underline';
+              },
+              onMouseleave: (e: MouseEvent) => {
+                (e.target as HTMLElement).style.textDecoration = 'none';
+              },
+            },
+            row.name,
+          );
+        },
+      },
     },
     {
       field: 'status',
@@ -201,40 +214,32 @@ export function useColumns<T = BuildAgentApi.BuildAgent>(
       title: $t('deploy.tools.buildAgent.hostname'),
     },
     {
-      field: 'ipAddress',
+      field: 'publicIp',
       minWidth: 150,
       showOverflow: true,
-      title: $t('deploy.tools.buildAgent.ipAddress'),
+      title: $t('deploy.tools.buildAgent.publicIp'),
+    },
+    {
+      field: 'os',
+      slots: {
+        default: ({ row }: { row: BuildAgentApi.BuildAgent }) => {
+          if (!row.os && !row.arch) return h('span', '-');
+          return h('span', `${row.os || '-'}/${row.arch || '-'}`);
+        },
+      },
+      title: $t('deploy.tools.buildAgent.osArch'),
+      width: 150,
     },
     {
       cellRender: {
         name: 'CellRender',
         setup: ({ row }: { row: BuildAgentApi.BuildAgent }) => {
-          if (!row.os || !row.arch) return h('span', '-');
-          return h('span', `${row.os}/${row.arch}`);
+          return h('span', `${row.currentTasks}/${row.maxConcurrentTasks}`);
         },
       },
-      field: 'os',
-      title: $t('deploy.tools.buildAgent.osArch'),
-      width: 120,
-    },
-    {
       field: 'currentTasks',
-      title: $t('deploy.tools.buildAgent.currentTasks'),
-      width: 100,
-    },
-    {
-      field: 'totalTasks',
-      title: $t('deploy.tools.buildAgent.totalTasks'),
-      width: 100,
-    },
-    {
-      field: 'createdAt',
-      title: $t('common.createdAt'),
-      width: 180,
-      formatter: ({ cellValue }: { cellValue: number }) => {
-        return formatDateTime(cellValue);
-      },
+      title: $t('deploy.tools.buildAgent.tasks'),
+      width: 120,
     },
     {
       align: 'center',
@@ -245,12 +250,12 @@ export function useColumns<T = BuildAgentApi.BuildAgent>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['delete'],
+        options: ['detail', 'delete'],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('common.action'),
-      width: 100,
+      width: 150,
     },
   ];
 }

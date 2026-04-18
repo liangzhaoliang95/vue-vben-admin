@@ -15,6 +15,15 @@ export namespace BuildAgentApi {
     os: string;
     arch: string;
     version: string;
+    osVersion: string;
+    cpuCores: number;
+    cpuModel: string;
+    memoryTotal: number;
+    diskTotal: number;
+    publicIp: string;
+    cpuUsage: number;
+    memoryUsage: number;
+    diskUsage: number;
     maxConcurrentTasks: number;
     currentTasks: number;
     totalTasks: number;
