@@ -26,7 +26,7 @@ export const overridesPreferences = defineOverridesPreferences({
     enable: true,
     companyName: 'liangzhaoliang',
     companySiteLink: 'https://github.com/liangzhaoliang95',
-    date: '2025',
+    date: '2026',
     icp: '',
     icpLink: '',
     settingShow: true,
