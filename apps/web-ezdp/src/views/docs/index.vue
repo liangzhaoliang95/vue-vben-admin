@@ -5,6 +5,7 @@ import { Spin, Empty, Input, message, Tree, Table } from 'ant-design-vue';
 import { $t } from '#/locales';
 import { loadDocList, loadDocContent, findDocItem } from './data';
 import type { DocItem, DocPageState } from './types';
+import { SystemConfig } from '#/api/system/config';
 
 defineOptions({ name: 'DocCenter' });
 
@@ -13,6 +14,7 @@ const searchKeyword = ref('');
 const contentRef = ref<HTMLElement | null>(null);
 const tocItems = ref<{ id: string; text: string; level: number }[]>([]);
 const activeHeading = ref('');
+const systemConfig = ref<SystemConfig.ConfigData | null>(null);
 
 const state = ref<DocPageState>({
   selectedDoc: null,
@@ -93,15 +95,28 @@ async function loadDoc(docId: string) {
     const doc = findDocItem(docList.value, docId);
     if (!doc) throw new Error('文档不存在');
 
-    // 如果是事件类型，不需要加载 HTML 内容
-    if (doc.apiType === 'event') {
+    // 如果是事件类型或 HTTP API 类型，不需要加载 HTML 内容
+    if (doc.apiType === 'event' || doc.apiType === 'httpApi') {
       state.value.loading = false;
       return;
     }
 
     if (!doc.fileName) throw new Error('文档不存在');
 
-    const htmlContent = await loadDocContent(doc.fileName);
+    let htmlContent = await loadDocContent(doc.fileName);
+
+    // 如果是 DeployAgent 概述页面，使用系统配置替换域名
+    if (docId === 'deployAgent-overview' && systemConfig.value) {
+      const platformDomain = systemConfig.value.platformDomain || 'https://simple.plaso.cn';
+      const apiPrefix = systemConfig.value.apiPrefix || '/server/ezdp';
+      const fullApiUrl = `${platformDomain}${apiPrefix}`;
+
+      // 替换域名占位符
+      htmlContent = htmlContent.replace(/https:\/\/simple\.plaso\.cn/g, platformDomain);
+      htmlContent = htmlContent.replace(/\/server\/ezdp/g, apiPrefix);
+      htmlContent = htmlContent.replace(/https:\/\/simple\.plaso\.cn\/server\/ezdp/g, fullApiUrl);
+    }
+
     tocItems.value = extractToc(htmlContent);
     state.value.content = htmlContent;
 
@@ -246,6 +261,19 @@ const paramColumns = [
 
 onMounted(async () => {
   try {
+    // 加载系统配置
+    try {
+      const config = await SystemConfig.getConfig();
+      systemConfig.value = config;
+    } catch (error) {
+      console.warn('加载系统配置失败，使用默认配置:', error);
+      // 使用默认配置
+      systemConfig.value = {
+        platformDomain: 'https://simple.plaso.cn',
+        apiPrefix: '/server/ezdp',
+      };
+    }
+
     const docs = await loadDocList();
     docList.value = docs;
     expandedKeys.value = collectCategoryKeys(docs);
@@ -318,6 +346,162 @@ onMounted(async () => {
               <div class="welcome-icon">📚</div>
               <h2>Build Agent 接入文档</h2>
               <p>从左侧选择文档开始阅读</p>
+            </div>
+          </div>
+          <!-- HTTP API 文档 - Apifox 风格 -->
+          <div v-else-if="currentDoc?.apiType === 'httpApi' && currentDoc.httpApiData" class="api-doc">
+            <!-- 顶部 API 信息栏 -->
+            <div class="api-header">
+              <div class="api-header-left">
+                <div class="api-title-row">
+                  <span class="api-method-badge method-up">POST</span>
+                  <h1 class="api-title">{{ currentDoc.httpApiData.apiName }}</h1>
+                </div>
+                <div class="api-event-path">
+                  <span class="event-path-label">接口路径</span>
+                  <code class="event-path-value">{{ currentDoc.httpApiData.apiPath }}</code>
+                </div>
+              </div>
+              <div class="api-header-right">
+                <span class="api-direction-badge server-to-client">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M5 12h14"></path>
+                    <path d="M12 5l7 7-7 7"></path>
+                  </svg>
+                  客户端 → 服务端
+                </span>
+              </div>
+            </div>
+
+            <p class="api-desc">{{ currentDoc.httpApiData.description }}</p>
+
+            <!-- 双栏主体 -->
+            <div class="api-body">
+              <!-- 左栏：参数定义 -->
+              <div class="api-params-col">
+                <!-- 请求参数区块 -->
+                <div v-if="currentDoc.httpApiData.request" class="params-block">
+                  <div class="params-block-header">
+                    <span class="params-block-title">请求参数</span>
+                    <span class="params-schema-name">{{ currentDoc.httpApiData.request.name }}</span>
+                  </div>
+                  <div class="params-table-wrap">
+                    <Table
+                      :columns="paramColumns"
+                      :data-source="transformFieldsToTreeData(currentDoc.httpApiData.request.fields)"
+                      :pagination="false"
+                      :default-expand-all-rows="false"
+                      size="small"
+                      class="params-tree-table"
+                    >
+                      <template #bodyCell="{ column, record }">
+                        <template v-if="column.key === 'name'">
+                          <div class="param-name-cell">
+                            <span v-if="record.required" class="required-dot">*</span>
+                            <code class="param-name">{{ record.name }}</code>
+                          </div>
+                        </template>
+                        <template v-else-if="column.key === 'type'">
+                          <span class="type-pill" :class="'type-' + record.type">{{ record.type }}</span>
+                        </template>
+                        <template v-else-if="column.key === 'required'">
+                          <span v-if="record.required" class="req-yes">必填</span>
+                          <span v-else class="req-no">可选</span>
+                        </template>
+                        <template v-else-if="column.key === 'description'">
+                          <span class="param-desc">{{ record.description }}</span>
+                          <span v-if="record.enumValues" class="enum-values">
+                            枚举值: {{ record.enumValues.join(' | ') }}
+                          </span>
+                        </template>
+                      </template>
+                    </Table>
+                  </div>
+                </div>
+
+                <!-- 响应参数区块 -->
+                <div v-if="currentDoc.httpApiData.response" class="params-block" style="margin-top: 24px;">
+                  <div class="params-block-header">
+                    <span class="params-block-title">响应参数</span>
+                    <span class="params-schema-name">{{ currentDoc.httpApiData.response.name }}</span>
+                  </div>
+                  <div class="params-table-wrap">
+                    <Table
+                      :columns="paramColumns"
+                      :data-source="transformFieldsToTreeData(currentDoc.httpApiData.response.fields)"
+                      :pagination="false"
+                      :default-expand-all-rows="false"
+                      size="small"
+                      class="params-tree-table"
+                    >
+                      <template #bodyCell="{ column, record }">
+                        <template v-if="column.key === 'name'">
+                          <div class="param-name-cell">
+                            <span v-if="record.required" class="required-dot">*</span>
+                            <code class="param-name">{{ record.name }}</code>
+                          </div>
+                        </template>
+                        <template v-else-if="column.key === 'type'">
+                          <span class="type-pill" :class="'type-' + record.type">{{ record.type }}</span>
+                        </template>
+                        <template v-else-if="column.key === 'required'">
+                          <span v-if="record.required" class="req-yes">必填</span>
+                          <span v-else class="req-no">可选</span>
+                        </template>
+                        <template v-else-if="column.key === 'description'">
+                          <span class="param-desc">{{ record.description }}</span>
+                          <span v-if="record.enumValues" class="enum-values">
+                            枚举值: {{ record.enumValues.join(' | ') }}
+                          </span>
+                        </template>
+                      </template>
+                    </Table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 右栏：JSON 示例 -->
+              <div class="api-examples-col">
+                <div v-if="currentDoc.httpApiData.request" class="example-block">
+                  <div class="example-header">
+                    <span class="example-title">请求示例</span>
+                    <span class="example-lang">JSON</span>
+                  </div>
+                  <div class="code-box">
+                    <div class="code-box-header">
+                      <span class="code-box-title">application/json</span>
+                      <button class="copy-btn" @click="copyCode(currentDoc.httpApiData.request.example)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        复制
+                      </button>
+                    </div>
+                    <pre class="code-box"><code>{{ currentDoc.httpApiData.request.example }}</code></pre>
+                  </div>
+                </div>
+
+                <div v-if="currentDoc.httpApiData.response" class="example-block">
+                  <div class="example-header">
+                    <span class="example-title">响应示例</span>
+                    <span class="example-lang">JSON</span>
+                  </div>
+                  <div class="code-box">
+                    <div class="code-box-header">
+                      <span class="code-box-title">application/json</span>
+                      <button class="copy-btn" @click="copyCode(currentDoc.httpApiData.response ? currentDoc.httpApiData.response.example : currentDoc.httpApiData.example)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        复制
+                      </button>
+                    </div>
+                    <pre class="code-box"><code>{{ currentDoc.httpApiData.response ? currentDoc.httpApiData.response.example : currentDoc.httpApiData.example }}</code></pre>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <!-- Event API 文档 - Apifox 风格 -->
@@ -1215,6 +1399,229 @@ onMounted(async () => {
 }
 
 :deep(.tip-item code) {
+  padding: 1px 5px;
+  background: var(--vben-background-color-deep);
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #e83e8c;
+}
+
+/* 鉴权结果网格 */
+:deep(.auth-result-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+:deep(.auth-result-card) {
+  position: relative;
+  padding: 24px;
+  border-radius: 12px;
+  border: 2px solid;
+  background: var(--vben-background-color);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+:deep(.auth-result-card::before) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  transition: opacity 0.3s;
+}
+
+:deep(.auth-result-card:hover) {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.auth-result-card:hover::before) {
+  opacity: 0.08;
+}
+
+:deep(.auth-success) {
+  border-color: #52c41a;
+}
+
+:deep(.auth-success::before) {
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+}
+
+:deep(.auth-fail) {
+  border-color: #ff4d4f;
+}
+
+:deep(.auth-fail::before) {
+  background: linear-gradient(135deg, #ff4d4f 0%, #cf1322 100%);
+}
+
+:deep(.auth-result-header) {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+:deep(.auth-result-icon) {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s;
+}
+
+:deep(.auth-result-card:hover .auth-result-icon) {
+  transform: scale(1.1) rotate(5deg);
+}
+
+:deep(.auth-success .auth-result-icon) {
+  background: rgba(82, 196, 26, 0.15);
+  color: #52c41a;
+}
+
+:deep(.auth-fail .auth-result-icon) {
+  background: rgba(255, 77, 79, 0.15);
+  color: #ff4d4f;
+}
+
+:deep(.auth-result-header h4) {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--vben-text-color);
+}
+
+:deep(.auth-result-body) {
+  position: relative;
+  z-index: 1;
+}
+
+:deep(.auth-result-body > p) {
+  font-size: 13px;
+  color: var(--vben-text-color-secondary);
+  margin: 0 0 12px;
+}
+
+:deep(.auth-result-fields) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+:deep(.auth-field) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--vben-background-color-deep);
+  border-radius: 6px;
+  border: 1px solid var(--vben-border-color);
+}
+
+:deep(.auth-field-key) {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: var(--vben-text-color-secondary);
+  font-weight: 500;
+}
+
+:deep(.auth-field-value) {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: var(--vben-text-color);
+  font-weight: 600;
+}
+
+:deep(.auth-value-true) {
+  color: #52c41a;
+}
+
+:deep(.auth-value-false) {
+  color: #ff4d4f;
+}
+
+/* 安全建议卡片 */
+:deep(.security-cards) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+:deep(.security-card) {
+  display: flex;
+  gap: 14px;
+  padding: 20px;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 10px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+:deep(.security-card::before) {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.03) 100%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+:deep(.security-card:hover) {
+  transform: translateY(-4px);
+  border-color: rgba(24, 144, 255, 0.4);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.security-card:hover::before) {
+  opacity: 1;
+}
+
+:deep(.security-card-icon) {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.3s;
+}
+
+:deep(.security-card:hover .security-card-icon) {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+:deep(.security-card-body) {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+:deep(.security-card-body h4) {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 6px;
+  color: var(--vben-text-color);
+}
+
+:deep(.security-card-body p) {
+  font-size: 13px;
+  color: var(--vben-text-color-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+:deep(.security-card-body code) {
   padding: 1px 5px;
   background: var(--vben-background-color-deep);
   border-radius: 3px;
@@ -2562,5 +2969,318 @@ onMounted(async () => {
 
 :deep(.params-tree-table .ant-table-tbody > tr.ant-table-row-level-1 > td:first-child) {
   border-left: 3px solid #1890ff;
+}
+
+/* ===== DeployAgent 概述页面样式 ===== */
+:deep(.deploy-agent-overview) {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+:deep(.overview-header) {
+  text-align: center;
+  padding: 40px 20px 32px;
+  margin-bottom: 32px;
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.05) 0%, rgba(82, 196, 26, 0.05) 100%);
+  border-radius: 16px;
+}
+
+:deep(.overview-header h1) {
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  background: linear-gradient(135deg, #1890ff 0%, #52c41a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+:deep(.overview-desc) {
+  font-size: 16px;
+  color: var(--vben-text-color-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* 特性网格 */
+:deep(.features-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 48px;
+}
+
+:deep(.feature-item) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 20px;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+:deep(.feature-item:hover) {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+  border-color: transparent;
+}
+
+:deep(.feature-icon) {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+
+:deep(.feature-content h3) {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--vben-text-color);
+}
+
+:deep(.feature-content p) {
+  font-size: 14px;
+  color: var(--vben-text-color-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* 快速开始 */
+:deep(.quick-start) {
+  margin-bottom: 48px;
+}
+
+:deep(.quick-start h2) {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 24px;
+  color: var(--vben-text-color);
+}
+
+:deep(.start-steps) {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+:deep(.start-step) {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+:deep(.start-step:hover) {
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
+}
+
+:deep(.step-number) {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1890ff 0%, #52c41a 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+:deep(.step-text h4) {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--vben-text-color);
+}
+
+:deep(.step-text p) {
+  font-size: 14px;
+  color: var(--vben-text-color-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* 通信协议 */
+:deep(.protocol-section) {
+  margin-bottom: 48px;
+}
+
+:deep(.protocol-section h2) {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 20px;
+  color: var(--vben-text-color);
+}
+
+:deep(.protocol-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+:deep(.protocol-item) {
+  padding: 20px;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 10px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+:deep(.protocol-item:hover) {
+  border-color: #1890ff;
+  transform: scale(1.05);
+}
+
+:deep(.protocol-label) {
+  font-size: 12px;
+  color: var(--vben-text-color-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+:deep(.protocol-value) {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--vben-text-color);
+}
+
+/* 接入信息 */
+:deep(.access-info) {
+  margin-bottom: 48px;
+}
+
+:deep(.access-info h2) {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 20px;
+  color: var(--vben-text-color);
+}
+
+:deep(.access-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+:deep(.access-card) {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+:deep(.access-card:hover) {
+  border-color: #1890ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
+}
+
+:deep(.access-icon) {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: rgba(24, 144, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+:deep(.access-content h4) {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--vben-text-color);
+}
+
+:deep(.access-content code) {
+  display: block;
+  font-size: 13px;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+}
+
+:deep(.access-content p) {
+  font-size: 12px;
+  color: var(--vben-text-color-secondary);
+  margin: 0;
+}
+
+/* 部署方式 */
+:deep(.deploy-types) {
+  margin-bottom: 32px;
+}
+
+:deep(.deploy-types h2) {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 20px;
+  color: var(--vben-text-color);
+}
+
+:deep(.deploy-type-list) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+:deep(.deploy-type) {
+  padding: 20px;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 10px;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+:deep(.deploy-type:hover) {
+  border-color: #52c41a;
+  transform: translateY(-4px);
+}
+
+:deep(.deploy-type-icon) {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+:deep(.deploy-type h4) {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--vben-text-color);
+}
+
+:deep(.deploy-type p) {
+  font-size: 13px;
+  color: var(--vben-text-color-secondary);
+  line-height: 1.5;
+  margin: 0;
 }
 </style>

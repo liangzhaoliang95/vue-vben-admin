@@ -1,4 +1,4 @@
-import type { DocItem, EventData, MessageSchema, FieldDefinition } from './types';
+import type { DocItem, EventData } from './types';
 
 // 注册事件数据
 const registerEventData: EventData = {
@@ -621,116 +621,6 @@ const overviewContent = `<div class="page-doc">
   </div>
 </div>`;
 
-const quickstartContent = `<div class="page-doc">
-  <div class="page-hero">
-    <div class="page-hero-icon">🚀</div>
-    <h1>快速开始</h1>
-    <p>5 分钟快速部署 Build Agent</p>
-  </div>
-
-  <div class="page-section">
-    <h2>前置条件</h2>
-    <div class="page-cards">
-      <div class="page-card">
-        <div class="page-card-icon" style="background:#e8f4fd;color:#1890ff">🔧</div>
-        <div class="page-card-body">
-          <h3>Go 1.24.0+</h3>
-          <p>需要 Go 编译环境</p>
-        </div>
-      </div>
-      <div class="page-card">
-        <div class="page-card-icon" style="background:#f6ffed;color:#52c41a">🔑</div>
-        <div class="page-card-body">
-          <h3>认证 Token</h3>
-          <p>从管理界面获取</p>
-        </div>
-      </div>
-      <div class="page-card">
-        <div class="page-card-icon" style="background:#fff7e6;color:#fa8c16">🌐</div>
-        <div class="page-card-body">
-          <h3>网络连接</h3>
-          <p>可访问 EZDP 服务端</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="page-section">
-    <h2>安装</h2>
-    <div class="code-block">
-      <div class="code-header">
-        <span class="code-lang">bash</span>
-        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
-      </div>
-      <pre><code># 克隆代码
-git clone https://github.com/your-org/ezdp.git
-cd ezdp/backend/agent/buildAgent/cmd/agent
-
-# 编译
-go build -o ezdp-agent .</code></pre>
-    </div>
-  </div>
-
-  <div class="page-section">
-    <h2>配置</h2>
-    <p class="page-section-desc">创建配置文件 <code>config.yaml</code></p>
-    <div class="code-block">
-      <div class="code-header">
-        <span class="code-lang">yaml</span>
-        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
-      </div>
-      <pre><code>server:
-  url: "ws://your-server:8080/ws/agent"
-  token: "your-auth-token"
-
-agent:
-  name: "agent-01"
-  tags:
-    - "linux"
-    - "docker"
-
-heartbeat:
-  interval: 30s</code></pre>
-    </div>
-  </div>
-
-  <div class="page-section">
-    <h2>运行</h2>
-    <div class="run-options">
-      <div class="run-option">
-        <h4>交互式运行</h4>
-        <div class="code-block">
-          <div class="code-header">
-            <span class="code-lang">bash</span>
-            <button class="copy-btn" onclick="navigator.clipboard.writeText('./ezdp-agent -i').then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
-          </div>
-          <pre><code>./ezdp-agent -i</code></pre>
-        </div>
-      </div>
-      <div class="run-option">
-        <h4>指定配置文件运行</h4>
-        <div class="code-block">
-          <div class="code-header">
-            <span class="code-lang">bash</span>
-            <button class="copy-btn" onclick="navigator.clipboard.writeText('./ezdp-agent -c config.yaml').then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
-          </div>
-          <pre><code>./ezdp-agent -c config.yaml</code></pre>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="page-section">
-    <div class="alert alert-success">
-      <span class="alert-icon">✅</span>
-      <div>
-        <strong>验证</strong>
-        <p>Agent 启动后会自动注册到服务端，可以在 EZDP 管理界面查看 Agent 状态</p>
-      </div>
-    </div>
-  </div>
-</div>`;
-
 const authenticationContent = `<div class="page-doc">
   <div class="page-hero">
     <div class="page-hero-icon">🔐</div>
@@ -739,11 +629,29 @@ const authenticationContent = `<div class="page-doc">
   </div>
 
   <div class="page-section">
-    <h2>Token 获取</h2>
-    <div class="alert alert-info">
-      <span class="alert-icon">ℹ️</span>
-      <div>
-        <p>在 EZDP 管理界面创建 Build Agent 时，系统会自动生成唯一的认证 Token</p>
+    <h2>Token 获取流程</h2>
+    <p class="page-section-desc">在 EZDP 管理界面创建 Build Agent 时，系统会自动生成唯一的认证 Token</p>
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>创建 Build Agent</h4>
+          <p>在 EZDP 管理界面进入 Build Agent 管理页面</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>填写 Agent 信息</h4>
+          <p>输入 Agent 名称、描述等基本信息</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>获取认证 Token</h4>
+          <p>系统自动生成唯一的认证 Token，请妥善保管</p>
+        </div>
       </div>
     </div>
   </div>
@@ -758,11 +666,16 @@ const authenticationContent = `<div class="page-doc">
       </div>
       <pre><code>{
   "type": "register",
-  "requestId": "uuid",
-  "timestamp": 1234567890000,
+  "requestId": "507f1f77bcf86cd799439011",
+  "timestamp": 1640000000000,
   "data": {
-    "token": "your-auth-token",
-    "name": "agent-01"
+    "token": "your-auth-token-here",
+    "name": "build-agent-01",
+    "hostname": "ubuntu-server",
+    "ip": "192.168.1.100",
+    "os": "linux",
+    "arch": "amd64",
+    "version": "1.0.0"
   }
 }</code></pre>
     </div>
@@ -770,50 +683,751 @@ const authenticationContent = `<div class="page-doc">
 
   <div class="page-section">
     <h2>验证结果</h2>
-    <div class="result-cards">
-      <div class="result-card result-success">
-        <div class="result-icon">✅</div>
-        <h4>验证通过</h4>
-        <p>返回 <code>success: true</code> 和 <code>agentId</code></p>
+    <div class="auth-result-grid">
+      <div class="auth-result-card auth-success">
+        <div class="auth-result-header">
+          <div class="auth-result-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h4>验证通过</h4>
+        </div>
+        <div class="auth-result-body">
+          <p>服务端返回注册成功响应</p>
+          <div class="auth-result-fields">
+            <div class="auth-field">
+              <span class="auth-field-key">success</span>
+              <span class="auth-field-value auth-value-true">true</span>
+            </div>
+            <div class="auth-field">
+              <span class="auth-field-key">agentId</span>
+              <span class="auth-field-value">"507f191e810c19729de860ea"</span>
+            </div>
+            <div class="auth-field">
+              <span class="auth-field-key">message</span>
+              <span class="auth-field-value">"注册成功"</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="result-card result-fail">
-        <div class="result-icon">❌</div>
-        <h4>验证失败</h4>
-        <p>返回 <code>success: false</code> 和错误信息</p>
+      <div class="auth-result-card auth-fail">
+        <div class="auth-result-header">
+          <div class="auth-result-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+          <h4>验证失败</h4>
+        </div>
+        <div class="auth-result-body">
+          <p>Token 无效或已过期</p>
+          <div class="auth-result-fields">
+            <div class="auth-field">
+              <span class="auth-field-key">success</span>
+              <span class="auth-field-value auth-value-false">false</span>
+            </div>
+            <div class="auth-field">
+              <span class="auth-field-key">message</span>
+              <span class="auth-field-value">"Token 验证失败"</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="page-section">
     <h2>安全建议</h2>
-    <div class="tips-list">
-      <div class="tip-item">
-        <span class="tip-icon">⚠️</span>
-        <div>
+    <div class="security-cards">
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(250,173,20,0.1);color:#faad14">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="security-card-body">
           <h4>妥善保管 Token</h4>
-          <p>不要将 Token 提交到代码仓库或公开分享</p>
+          <p>不要将 Token 提交到代码仓库或公开分享，避免泄露风险</p>
         </div>
       </div>
-      <div class="tip-item">
-        <span class="tip-icon">🔄</span>
-        <div>
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(24,144,255,0.1);color:#1890ff">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </div>
+        <div class="security-card-body">
           <h4>定期轮换 Token</h4>
-          <p>建议定期更新 Token 以提高安全性</p>
+          <p>建议定期更新 Token 以提高安全性，降低长期使用风险</p>
         </div>
       </div>
-      <div class="tip-item">
-        <span class="tip-icon">🔒</span>
-        <div>
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(82,196,26,0.1);color:#52c41a">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="security-card-body">
           <h4>使用 WSS 加密传输</h4>
-          <p>生产环境务必使用 <code>wss://</code> 协议</p>
+          <p>生产环境务必使用 <code>wss://</code> 协议，确保通信安全</p>
+        </div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(114,46,209,0.1);color:#722ed1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="security-card-body">
+          <h4>限制 Token 权限</h4>
+          <p>每个 Agent 使用独立 Token，避免共享，便于权限管理和追踪</p>
         </div>
       </div>
     </div>
   </div>
 </div>`;
 
+// ============= DeployAgent 鉴权文档内容 =============
+
+const deployAgentAuthenticationContent = `<div class="page-doc">
+  <div class="page-hero">
+    <div class="page-hero-icon">🔐</div>
+    <h1>鉴权机制</h1>
+    <p>DeployAgent 使用 Token 认证机制确保只有授权的 Agent 才能接入平台</p>
+  </div>
+
+  <div class="page-section">
+    <h2>Token 认证</h2>
+    <p class="page-section-desc">所有 API 请求都需要在请求体中携带 <code>token</code> 字段进行鉴权</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">json - 请求格式</span>
+      </div>
+      <pre><code>{
+  "token": "your_agent_token_here",
+  ...其他接口特定参数
+}</code></pre>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>获取 Token</h2>
+    <p class="page-section-desc">在 EZDP 平台创建 DeployAgent 时获取认证 Token</p>
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>登录 EZDP 平台</h4>
+          <p>使用管理员账号登录</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>进入发布工具管理</h4>
+          <p>在左侧导航栏找到发布工具管理入口</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>点击发布代理</h4>
+          <p>进入 DeployAgent 管理页面</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>新增发布代理</h4>
+          <p>填写代理名称，关联目标环境</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>获取 Token</h4>
+          <p>创建成功后，系统生成唯一的 Agent Token</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>安全建议</h2>
+    <div class="security-cards">
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(250,173,20,0.1);color:#faad14">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+        </div>
+        <div class="security-card-body">
+          <h4>妥善保管 Token</h4>
+          <p>Token 仅在创建时显示一次，请立即复制并妥善保管</p>
+        </div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(24,144,255,0.1);color:#1890ff">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="security-card-body">
+          <h4>使用 HTTPS</h4>
+          <p>生产环境务必使用 HTTPS 协议，确保通信安全</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+// ============= DeployAgent 概述文档内容 =============
+
+const deployAgentOverviewContent = `<div class="page-doc">
+  <div class="deploy-agent-overview">
+    <!-- 头部标题区域 -->
+    <div class="overview-header">
+      <h1>DeployAgent API 接口</h1>
+      <p class="overview-desc">通过标准 HTTP API 实现版本发布，支持 K8s、OSS、OBS、Shell 等多种部署方式</p>
+    </div>
+
+    <!-- 核心特性 -->
+    <div class="features-grid">
+      <div class="feature-item">
+        <div class="feature-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)">🔒</div>
+        <div class="feature-content">
+          <h3>安全隔离</h3>
+          <p>K8s、OSS、OBS 等敏感凭证存储在本地配置文件，不上传服务器</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)">⚡</div>
+        <div class="feature-content">
+          <h3>本地执行</h3>
+          <p>在生产环境服务器上直接执行部署操作，网络延迟低</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)">📦</div>
+        <div class="feature-content">
+          <h3>灵活发布</h3>
+          <p>支持全量/增量/单项目发布，灵活控制发布范围和策略</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)">🔌</div>
+        <div class="feature-content">
+          <h3>易于接入</h3>
+          <p>标准 RESTful API 设计，支持任何编程语言实现自定义 Agent</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快速开始 -->
+    <div class="quick-start">
+      <h2>快速开始</h2>
+      <div class="start-steps">
+        <div class="start-step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <h4>获取 Token</h4>
+            <p>在 EZDP 平台创建 DeployAgent，系统会生成唯一的认证 Token</p>
+          </div>
+        </div>
+        <div class="start-step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <h4>配置 Agent</h4>
+            <p>设置平台域名、Token 以及各环境的部署配置（K8s、OSS、OBS）</p>
+          </div>
+        </div>
+        <div class="start-step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <h4>调用 API</h4>
+            <p>使用 HTTP API 获取版本信息并执行部署，完成后上报结果</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 通信协议 -->
+    <div class="protocol-section">
+      <h2>通信协议</h2>
+      <div class="protocol-grid">
+        <div class="protocol-item">
+          <div class="protocol-label">协议</div>
+          <div class="protocol-value">HTTP / HTTPS</div>
+        </div>
+        <div class="protocol-item">
+          <div class="protocol-label">方法</div>
+          <div class="protocol-value">POST</div>
+        </div>
+        <div class="protocol-item">
+          <div class="protocol-label">格式</div>
+          <div class="protocol-value">application/json</div>
+        </div>
+        <div class="protocol-item">
+          <div class="protocol-label">编码</div>
+          <div class="protocol-value">UTF-8</div>
+        </div>
+        <div class="protocol-item">
+          <div class="protocol-label">鉴权</div>
+          <div class="protocol-value">Token (请求体)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 接入信息 -->
+    <div class="access-info">
+      <h2>接入信息</h2>
+      <div class="access-grid">
+        <div class="access-card">
+          <div class="access-icon">🌐</div>
+          <div class="access-content">
+            <h4>平台域名</h4>
+            <code>https://simple.plaso.cn</code>
+            <p>生产环境推荐域名</p>
+          </div>
+        </div>
+        <div class="access-card">
+          <div class="access-icon">📡</div>
+          <div class="access-content">
+            <h4>API 基础路径</h4>
+            <code>/server/ezdp</code>
+            <p>所有 API 请求前缀</p>
+          </div>
+        </div>
+        <div class="access-card">
+          <div class="access-icon">🔑</div>
+          <div class="access-content">
+            <h4>接口路径示例</h4>
+            <code>/nc/deployAgent/getAgentInfo</code>
+            <p>无需登录认证的接口</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 支持的部署方式 -->
+    <div class="deploy-types">
+      <h2>支持的部署方式</h2>
+      <div class="deploy-type-list">
+        <div class="deploy-type">
+          <div class="deploy-type-icon">☸️</div>
+          <h4>Kubernetes</h4>
+          <p>支持 Deployment 和 CronJob 资源的更新部署</p>
+        </div>
+        <div class="deploy-type">
+          <div class="deploy-type-icon">📦</div>
+          <h4>阿里云 OSS</h4>
+          <p>静态资源上传到 OSS，支持 CDN 加速</p>
+        </div>
+        <div class="deploy-type">
+          <div class="deploy-type-icon">🗳️</div>
+          <h4>移动云 OBS</h4>
+          <p>静态资源上传到 OBS，支持移动云 CDN</p>
+        </div>
+        <div class="deploy-type">
+          <div class="deploy-type-icon">📜</div>
+          <h4>Shell 脚本</h4>
+          <p>执行自定义 Shell 脚本，灵活适配各种场景</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+// ============= DeployAgent HTTP API 数据定义 =============
+
+const getAgentInfoApiData = {
+  apiName: '获取代理信息',
+  apiPath: 'POST /nc/deployAgent/getAgentInfo',
+  description: '验证 Token 并获取代理基本信息和可访问的环境列表',
+  request: {
+    name: 'GetAgentInfoRequest',
+    description: '获取代理信息请求参数',
+    fields: [
+      { name: 'token', type: 'string', required: true, description: '代理 Token' }
+    ],
+    example: JSON.stringify({
+      token: 'your-agent-token-here'
+    }, null, 2)
+  },
+  response: {
+    name: 'GetAgentInfoResponse',
+    description: '获取代理信息响应数据',
+    fields: [
+      { name: 'id', type: 'string', required: true, description: '代理 ID' },
+      { name: 'businessLineId', type: 'number', required: true, description: '业务线 ID' },
+      { name: 'businessLineName', type: 'string', required: true, description: '业务线名称' },
+      { name: 'name', type: 'string', required: true, description: '代理名称' },
+      { name: 'environments', type: 'array', required: true, description: '可访问的环境列表',
+        nested: {
+          name: 'EnvironmentInfo',
+          description: '环境信息',
+          fields: [
+            { name: 'id', type: 'string', required: true, description: '环境 ID' },
+            { name: 'name', type: 'string', required: true, description: '环境名称' },
+            { name: 'description', type: 'string', required: true, description: '环境描述' },
+            { name: 'backendSecretName', type: 'string', required: true, description: 'K8s 集群名称（用于本地配置匹配）' },
+            { name: 'backendNamespace', type: 'string', required: true, description: 'K8s Namespace' },
+            { name: 'frontendStorageName', type: 'string', required: true, description: '对象存储名称（用于本地配置匹配）' },
+            { name: 'frontendBaseUrl', type: 'string', required: true, description: '前端发布路径' },
+            { name: 'currentVersion', type: 'string', required: true, description: '当前环境运行的版本号' },
+            { name: 'currentBuildVersionId', type: 'string', required: true, description: '当前环境运行的构建版本 ID' }
+          ],
+          example: ''
+        }
+      }
+    ],
+    example: ''
+  },
+  example: JSON.stringify({
+    id: '6954c2d1b0da271a3f4a7b07',
+    businessLineId: 2,
+    businessLineName: '融课',
+    name: '阿里云发布代理',
+    environments: [
+      {
+        id: '6954c288b0da271a3f4a7b06',
+        name: 'rongke-www',
+        description: '阿里云生产环境',
+        backendSecretName: '',
+        backendNamespace: '',
+        frontendStorageName: '',
+        frontendBaseUrl: '',
+        currentVersion: '2.41.30',
+        currentBuildVersionId: '69d4fb0bb0da27894703e0ff'
+      }
+    ]
+  }, null, 2)
+};
+
+const getBranchesApiData = {
+  apiName: '获取分支列表',
+  apiPath: 'POST /nc/deployAgent/getBranches',
+  description: '获取指定业务线的所有可发布分支',
+  request: {
+    name: 'GetBranchesRequest',
+    description: '获取分支列表请求参数',
+    fields: [
+      { name: 'token', type: 'string', required: true, description: '代理 Token' },
+      { name: 'businessLineId', type: 'number', required: true, description: '业务线 ID' }
+    ],
+    example: JSON.stringify({
+      token: 'your-agent-token-here',
+      businessLineId: 2
+    }, null, 2)
+  },
+  response: {
+    name: 'GetBranchesResponse',
+    description: '获取分支列表响应数据',
+    fields: [
+      { name: 'id', type: 'string', required: true, description: '分支 ID' },
+      { name: 'name', type: 'string', required: true, description: '分支名称' },
+      { name: 'description', type: 'string', required: true, description: '分支描述' },
+      { name: 'enabled', type: 'boolean', required: true, description: '是否启用' }
+    ],
+    example: JSON.stringify([
+      { id: '69d609bdb0da27894703e12b', name: '2.43', description: '20260420', enabled: true }
+    ], null, 2)
+  },
+  example: JSON.stringify([
+    { id: '69d609bdb0da27894703e12b', name: '2.43', description: '20260420', enabled: true }
+  ], null, 2)
+};
+
+const getVersionsByBranchApiData = {
+  apiName: '获取版本列表',
+  apiPath: 'POST /nc/deployAgent/getVersionsByBranch',
+  description: '分页获取指定分支下的构建版本',
+  request: {
+    name: 'GetVersionsByBranchRequest',
+    description: '获取版本列表请求参数',
+    fields: [
+      { name: 'token', type: 'string', required: true, description: '代理 Token' },
+      { name: 'branchId', type: 'string', required: true, description: '分支 ID' },
+      { name: 'pageIndex', type: 'number', required: true, description: '页码，从 1 开始' },
+      { name: 'pageSize', type: 'number', required: true, description: '每页数量（最大 100）' }
+    ],
+    example: JSON.stringify({
+      token: 'your-agent-token-here',
+      branchId: '69d609bdb0da27894703e12b',
+      pageIndex: 1,
+      pageSize: 20
+    }, null, 2)
+  },
+  response: {
+    name: 'GetVersionsByBranchResponse',
+    description: '获取版本列表响应数据',
+    fields: [
+      { name: 'total', type: 'number', required: true, description: '总记录数' },
+      { name: 'list', type: 'array', required: true, description: '版本列表',
+        nested: {
+          name: 'VersionInfo',
+          description: '版本信息',
+          fields: [
+            { name: 'id', type: 'string', required: true, description: '版本 ID' },
+            { name: 'version', type: 'string', required: true, description: '版本号' },
+            { name: 'description', type: 'string', required: true, description: '版本描述' },
+            { name: 'status', type: 'string', required: true, description: '版本状态' },
+            { name: 'buildTime', type: 'number', required: true, description: '构建时间（毫秒时间戳）' }
+          ],
+          example: ''
+        }
+      }
+    ],
+    example: JSON.stringify({
+    total: 13,
+    list: [
+      {
+        id: '69e61817b0da272fd15c917a',
+        version: '2.43.12',
+        description: '',
+        status: 'failed',
+        buildTime: 1776687127793
+      },
+      {
+        id: '69e5f647b0da272fd15c910d',
+        version: '2.43.11',
+        description: '',
+        status: 'success',
+        buildTime: 1776678471678
+      },
+      {
+        id: '69e5e936b0da272fd15c90d8',
+        version: '2.43.10',
+        description: '',
+        status: 'success',
+        buildTime: 1776675126842
+      }
+    ]
+  }, null, 2)
+}}
+
+const getVersionDetailApiData = {
+  apiName: '获取版本详情',
+  apiPath: 'POST /nc/deployAgent/getVersionDetail',
+  description: '获取指定版本包含的所有项目部署配置',
+  request: {
+    name: 'GetVersionDetailRequest',
+    description: '获取版本详情请求参数',
+    fields: [
+      { name: 'token', type: 'string', required: true, description: '代理 Token' },
+      { name: 'buildVersionId', type: 'string', required: true, description: '构建版本 ID' }
+    ],
+    example: JSON.stringify({
+      token: 'your-agent-token-here',
+      buildVersionId: '69e61817b0da272fd15c917a'
+    }, null, 2)
+  },
+  response: {
+    name: 'GetVersionDetailResponse',
+    description: '获取版本详情响应数据',
+    fields: [
+      { name: 'version', type: 'string', required: true, description: '版本号' },
+      { name: 'description', type: 'string', required: true, description: '版本描述' },
+      { name: 'buildTime', type: 'number', required: true, description: '构建时间（毫秒时间戳）' },
+      { name: 'projects', type: 'array', required: true, description: '项目列表',
+        nested: {
+          name: 'ProjectVersionInfo',
+          description: '项目版本信息',
+          fields: [
+            { name: 'projectConfigId', type: 'string', required: true, description: '项目配置 ID' },
+            { name: 'projectName', type: 'string', required: true, description: '项目名称' },
+            { name: 'projectType', type: 'string', required: true, description: '项目类型：frontend/backend' },
+            { name: 'version', type: 'string', required: true, description: '项目版本号' },
+            { name: 'imageName', type: 'string', required: true, description: 'Docker 镜像名称' },
+            { name: 'imageTag', type: 'string', required: true, description: 'Docker 镜像 Tag' },
+            { name: 'deployType', type: 'string', required: true, description: '部署类型：k8s/ossutil/obscmd/script' },
+            { name: 'k8sName', type: 'string', required: false, description: 'K8s 资源名称' },
+            { name: 'k8sType', type: 'string', required: false, description: 'K8s 资源类型：deployment/cronjob' },
+            { name: 'k8sContainerName', type: 'string', required: false, description: '容器名称' },
+            { name: 'ossPath', type: 'string', required: false, description: 'OSS 源路径' },
+            { name: 'ossBucket', type: 'string', required: false, description: 'OSS Bucket（源）' },
+            { name: 'ossPrefix', type: 'string', required: false, description: 'OSS 目标路径前缀' },
+            { name: 'ossTargetName', type: 'string', required: false, description: 'OSS 目标文件夹名称' },
+            { name: 'obsBucket', type: 'string', required: false, description: 'OBS Bucket（目标）' },
+            { name: 'obsPrefix', type: 'string', required: false, description: 'OBS 目标路径前缀' },
+            { name: 'obsTargetName', type: 'string', required: false, description: 'OBS 目标文件夹名称' },
+            { name: 'scriptContent', type: 'string', required: false, description: '脚本内容' }
+          ],
+          example: ''
+        }
+      }
+    ],
+    example: ''
+  },
+  example: JSON.stringify({
+    version: '2.43.12',
+    description: '',
+    buildTime: 1776687127793,
+    projects: [
+      {
+        projectConfigId: '1',
+        projectName: 'manage_service',
+        projectType: 'backend',
+        version: '2.43.5',
+        imageName: 'docker-yizhong.plaso.cn/manage_service',
+        imageTag: '2.43.5',
+        deployType: 'k8s',
+        k8sName: 'manage-service',
+        k8sType: 'deployment',
+        k8sContainerName: 'main',
+        ossPath: '',
+        ossBucket: '',
+        ossPrefix: '',
+        ossTargetName: '',
+        obsBucket: '',
+        obsPrefix: '',
+        obsTargetName: '',
+        scriptContent: ''
+      },
+      {
+        projectConfigId: '693d7c31c3666ea79b418289',
+        projectName: 'manageweb',
+        projectType: 'frontend',
+        version: '2.43.8',
+        imageName: 'docker-yizhong.plaso.cn/manageweb',
+        imageTag: '2.43.8',
+        deployType: 'ossutil',
+        k8sName: '',
+        k8sType: '',
+        k8sContainerName: '',
+        ossPath: 'static/build/2.43.8/manage',
+        ossBucket: 'plaso-school',
+        ossPrefix: '',
+        ossTargetName: 'manage',
+        obsBucket: '',
+        obsPrefix: '',
+        obsTargetName: '',
+        scriptContent: ''
+      }
+    ]
+  }, null, 2)
+};
+
+const submitDeployResultApiData = {
+  apiName: '提交部署结果',
+  apiPath: 'POST /nc/deployAgent/submitDeployResult',
+  description: '部署完成后上报执行结果，更新环境版本记录',
+  request: {
+    name: 'SubmitDeployResultRequest',
+    description: '提交部署结果请求参数',
+    fields: [
+      { name: 'token', type: 'string', required: true, description: '代理 Token' },
+      { name: 'deployEnvironmentId', type: 'string', required: true, description: '部署环境 ID' },
+      { name: 'buildVersionId', type: 'string', required: true, description: '构建版本 ID' },
+      { name: 'isFullDeploy', type: 'boolean', required: true, description: '是否全量部署' },
+      { name: 'startedAt', type: 'number', required: true, description: '开始时间（毫秒时间戳）' },
+      { name: 'finishedAt', type: 'number', required: true, description: '结束时间（毫秒时间戳）' },
+      { name: 'projectResults', type: 'array', required: true, description: '各项目部署结果',
+        nested: {
+          name: 'ProjectDeployResult',
+          description: '单个项目部署结果',
+          fields: [
+            { name: 'projectConfigId', type: 'string', required: true, description: '项目配置 ID' },
+            { name: 'projectName', type: 'string', required: true, description: '项目名称' },
+            { name: 'status', type: 'string', required: true, description: '部署状态', enumValues: ['success', 'failed'] },
+            { name: 'errorMessage', type: 'string', required: false, description: '错误信息（失败时必填）' },
+            { name: 'deployLogs', type: 'string', required: false, description: '部署日志' }
+          ],
+          example: ''
+        }
+      }
+    ],
+    example: JSON.stringify({
+      token: 'your-agent-token-here',
+      deployEnvironmentId: '6954c288b0da271a3f4a7b06',
+      buildVersionId: '69e61817b0da272fd15c917a',
+      isFullDeploy: false,
+      startedAt: 1745169600000,
+      finishedAt: 1745169720000,
+      projectResults: [
+        {
+          projectConfigId: '1',
+          projectName: 'manage_service',
+          status: 'success',
+          errorMessage: '',
+          deployLogs: 'Deployment updated successfully'
+        },
+        {
+          projectConfigId: '693d7c31c3666ea79b418289',
+          projectName: 'manageweb',
+          status: 'failed',
+          errorMessage: 'OSS upload failed: connection timeout',
+          deployLogs: 'Uploading to OSS...'
+        }
+      ]
+    }, null, 2)
+  },
+  response: {
+    name: 'SubmitDeployResultResponse',
+    description: '提交部署结果响应数据',
+    fields: [
+      { name: 'deployTaskId', type: 'string', required: true, description: '部署任务 ID' },
+      { name: 'success', type: 'boolean', required: true, description: '是否成功' },
+      { name: 'message', type: 'string', required: true, description: '响应消息' }
+    ],
+    example: ''
+  },
+  example: JSON.stringify({
+    deployTaskId: 'task-001',
+    success: true,
+    message: '部署结果已上报'
+  }, null, 2)
+};
+
 // ============= 文档树结构 =============
 export const docList: DocItem[] = [
+  {
+    id: 'deployAgent',
+    title: 'DeployAgent API 接口',
+    description: '发布代理 HTTP API 接口文档',
+    isCategory: true,
+    children: [
+      {
+        id: 'deployAgent-overview',
+        title: '概述',
+        apiType: 'markdown',
+        fileName: 'deploy-agent/overview.md',
+      },
+      {
+        id: 'deployAgent-authentication',
+        title: '鉴权机制',
+        apiType: 'markdown',
+        fileName: 'deploy-agent/authentication.md',
+      },
+      {
+        id: 'deployAgent-api',
+        title: 'HTTP API 接口',
+        isCategory: true,
+        children: [
+          {
+            id: 'deployAgent-getAgentInfo',
+            title: '获取代理信息',
+            description: 'POST /nc/deployAgent/getAgentInfo',
+            apiType: 'httpApi',
+            httpApiData: getAgentInfoApiData,
+          },
+          {
+            id: 'deployAgent-getBranches',
+            title: '获取分支列表',
+            description: 'POST /nc/deployAgent/getBranches',
+            apiType: 'httpApi',
+            httpApiData: getBranchesApiData,
+          },
+          {
+            id: 'deployAgent-getVersionsByBranch',
+            title: '获取版本列表',
+            description: 'POST /nc/deployAgent/getVersionsByBranch',
+            apiType: 'httpApi',
+            httpApiData: getVersionsByBranchApiData,
+          },
+          {
+            id: 'deployAgent-getVersionDetail',
+            title: '获取版本详情',
+            description: 'POST /nc/deployAgent/getVersionDetail',
+            apiType: 'httpApi',
+            httpApiData: getVersionDetailApiData,
+          },
+          {
+            id: 'deployAgent-submitDeployResult',
+            title: '提交部署结果',
+            description: 'POST /nc/deployAgent/submitDeployResult',
+            apiType: 'httpApi',
+            httpApiData: submitDeployResultApiData,
+          },
+        ],
+      },
+    ],
+  },
   {
     id: 'buildAgent',
     title: 'Build Agent 接入指南',
@@ -825,12 +1439,6 @@ export const docList: DocItem[] = [
         title: '概述',
         apiType: 'markdown',
         fileName: 'build-agent/overview.md',
-      },
-      {
-        id: 'buildAgent-quickstart',
-        title: '快速开始',
-        apiType: 'markdown',
-        fileName: 'build-agent/quickstart.md',
       },
       {
         id: 'buildAgent-authentication',
@@ -907,8 +1515,9 @@ export function loadDocList(): DocItem[] {
 export async function loadDocContent(fileName: string): Promise<string> {
   const contentMap: Record<string, string> = {
     'build-agent/overview.md': overviewContent,
-    'build-agent/quickstart.md': quickstartContent,
     'build-agent/authentication.md': authenticationContent,
+    'deploy-agent/overview.md': deployAgentOverviewContent,
+    'deploy-agent/authentication.md': deployAgentAuthenticationContent,
   };
 
   const content = contentMap[fileName];

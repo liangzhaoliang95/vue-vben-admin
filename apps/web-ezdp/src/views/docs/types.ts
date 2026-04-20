@@ -23,6 +23,15 @@ export interface EventData {
   response?: MessageSchema;
 }
 
+export interface HttpApiData {
+  apiName: string;
+  apiPath: string;
+  description: string;
+  request?: MessageSchema;
+  response?: MessageSchema;
+  example: string;
+}
+
 export interface DocItem {
   id: string;
   title: string;
@@ -30,8 +39,9 @@ export interface DocItem {
   fileName?: string;
   children?: DocItem[];
   isCategory?: boolean;
-  apiType?: 'event' | 'markdown';
+  apiType?: 'event' | 'httpApi' | 'markdown';
   eventData?: EventData;
+  httpApiData?: HttpApiData;
 }
 
 export interface DocPageState {

@@ -22,16 +22,6 @@ const routes: RouteRecordRaw[] = [
           title: $t('serverManagement.server.title'),
         },
       },
-      {
-        name: 'EnvironmentAgentList',
-        path: '/server-management/environment-agent',
-        component: () =>
-          import('#/views/server-management/environment-agent/list.vue'),
-        meta: {
-          icon: 'lucide:shield-check',
-          title: $t('serverManagement.environmentAgent.title'),
-        },
-      },
     ],
   },
 ];

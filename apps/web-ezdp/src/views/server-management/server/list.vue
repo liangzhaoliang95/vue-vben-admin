@@ -1,12 +1,14 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { Page } from '@vben/common-ui';
+import { Plus } from '@vben/icons';
 
-import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input } from 'ant-design-vue';
+import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { ServerManagementApi } from '#/api/server-management';
 import { $t } from '#/locales';
+import { copyToClipboard } from '#/utils/clipboard';
 import WebTerminal from '#/components/web-terminal/index.vue';
 
 defineOptions({
@@ -22,6 +24,22 @@ const currentServerName = ref('');
 const editVisible = ref(false);
 const editForm = ref({
   id: '',
+  serverName: '',
+});
+
+// 新建服务器弹窗状态
+const createVisible = ref(false);
+const createFormRef = ref();
+const createLoading = ref(false);
+const createFormData = ref({
+  name: '',
+  description: '',
+});
+
+// Token 结果弹窗状态
+const tokenResultVisible = ref(false);
+const tokenResultData = ref({
+  token: '',
   serverName: '',
 });
 
@@ -84,6 +102,79 @@ const deleteServer = (row: any) => {
   });
 };
 
+// 打开新建服务器弹窗
+const openCreateModal = () => {
+  createFormData.value = {
+    name: '',
+    description: '',
+  };
+  createVisible.value = true;
+};
+
+// 关闭新建服务器弹窗
+const closeCreateModal = () => {
+  createVisible.value = false;
+  createFormData.value = {
+    name: '',
+    description: '',
+  };
+};
+
+// 创建服务器
+const handleCreateServer = async () => {
+  try {
+    await createFormRef.value?.validate();
+    createLoading.value = true;
+
+    const result = await ServerManagementApi.createEnvironmentAgent({
+      name: createFormData.value.name,
+      description: createFormData.value.description,
+    });
+
+    message.success($t('serverManagement.environmentAgent.createSuccess'));
+
+    // 关闭创建弹窗
+    closeCreateModal();
+
+    // 显示Token结果弹窗
+    tokenResultData.value = {
+      token: result.token,
+      serverName: createFormData.value.name,
+    };
+    tokenResultVisible.value = true;
+
+    // 刷新列表
+    gridApi.query();
+  } catch (error: any) {
+    if (error?.errorFields) {
+      // 表单验证错误
+      return;
+    }
+    message.error(error?.message || $t('common.saveFailed'));
+  } finally {
+    createLoading.value = false;
+  }
+};
+
+// 复制Token
+const handleCopyToken = async () => {
+  try {
+    await copyToClipboard(tokenResultData.value.token);
+    message.success($t('serverManagement.environmentAgent.copySuccess'));
+  } catch {
+    message.error($t('common.copyFailed'));
+  }
+};
+
+// 关闭Token结果弹窗
+const closeTokenResult = () => {
+  tokenResultVisible.value = false;
+  tokenResultData.value = {
+    token: '',
+    serverName: '',
+  };
+};
+
 // 格式化时间戳为可读格式
 const formatTimestamp = (timestamp: number) => {
   if (!timestamp) return '-';
@@ -96,6 +187,44 @@ const formatTimestamp = (timestamp: number) => {
     second: '2-digit',
   });
 };
+
+// 新建表单验证规则
+const createRules = {
+  name: [
+    {
+      message: $t('serverManagement.environmentAgent.nameRequired'),
+      required: true,
+      trigger: 'blur',
+    },
+  ],
+};
+
+// 安装命令计算属性
+const installCommands = computed(() => ({
+  download: `# 下载安装脚本
+curl -fsSL https://oss.geekz.cn:81/devops/ezdp/install-server-agent.sh -o install.sh
+chmod +x install.sh
+
+# 安装
+sudo ./install.sh install`,
+  config: `# 配置 Token（从 EZDP 管理后台获取）
+sudo vim /etc/ezdp-server-agent/config.json
+
+# 在配置文件中填入 Token
+# {
+#   "serverAddr": "your-backend-server.com:82",
+#   "serverName": "${tokenResultData.value.serverName || 'your-server-name'}",
+#   "token": "${tokenResultData.value.token}"
+# }`,
+  start: `# 启动服务
+sudo ./install.sh start
+
+# 设置开机自启
+sudo ./install.sh enable
+
+# 查看服务状态
+sudo ./install.sh status`,
+}));
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -166,11 +295,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
   },
 });
+
+function onCreate() {
+  openCreateModal();
+}
 </script>
 
 <template>
   <Page auto-content-height>
-    <Grid>
+    <Grid :table-title="$t('serverManagement.server.title')">
+      <template #toolbar-tools>
+        <Button type="primary" @click="onCreate">
+          <Plus class="size-5" />
+          {{ $t('serverManagement.server.createServer') }}
+        </Button>
+      </template>
       <!-- 服务器名称（带 hover 显示详细信息） -->
       <template #serverName="{ row }">
         <Tooltip>
@@ -255,6 +394,157 @@ const [Grid, gridApi] = useVbenVxeGrid({
           <Input v-model:value="editForm.serverName" />
         </FormItem>
       </Form>
+    </Modal>
+
+    <!-- 新建服务器弹窗 -->
+    <Modal
+      v-model:open="createVisible"
+      :title="$t('serverManagement.server.createServer')"
+      :width="600"
+      :confirm-loading="createLoading"
+      @ok="handleCreateServer"
+      @cancel="closeCreateModal"
+    >
+      <Form
+        ref="createFormRef"
+        :label-col="{ span: 5 }"
+        :model="createFormData"
+        :rules="createRules"
+        :wrapper-col="{ span: 19 }"
+        layout="horizontal"
+      >
+        <FormItem
+          :label="$t('serverManagement.environmentAgent.name')"
+          name="name"
+        >
+          <Input
+            v-model:value="createFormData.name"
+            :placeholder="$t('serverManagement.environmentAgent.namePlaceholder')"
+          />
+        </FormItem>
+
+        <FormItem
+          :label="$t('serverManagement.environmentAgent.description')"
+          name="description"
+        >
+          <Input.TextArea
+            v-model:value="createFormData.description"
+            :placeholder="$t('serverManagement.environmentAgent.descriptionPlaceholder')"
+            :rows="3"
+          />
+        </FormItem>
+      </Form>
+
+      <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+        <div class="text-sm font-medium text-gray-700 mb-2">
+          {{ $t('serverManagement.server.instructionTitle') }}
+        </div>
+        <div class="space-y-2 text-xs text-gray-600">
+          <p>{{ $t('serverManagement.server.instruction1') }}</p>
+          <p>{{ $t('serverManagement.server.instruction2') }}</p>
+          <p>{{ $t('serverManagement.server.instruction3') }}</p>
+        </div>
+      </div>
+    </Modal>
+
+    <!-- Token 结果弹窗 -->
+    <Modal
+      v-model:open="tokenResultVisible"
+      :title="$t('serverManagement.server.tokenResult')"
+      :width="800"
+      :footer="null"
+      :mask-closable="false"
+    >
+      <div class="space-y-4">
+        <!-- 警告提示 -->
+        <Alert
+          :message="$t('serverManagement.environmentAgent.tokenAlertTitle')"
+          :description="$t('serverManagement.environmentAgent.tokenWarning')"
+          type="warning"
+          show-icon
+        />
+
+        <!-- Token 显示区域 -->
+        <div class="space-y-3">
+          <div>
+            <div class="text-sm font-medium mb-2">
+              {{ $t('serverManagement.environmentAgent.token') }}
+            </div>
+            <div class="flex items-center gap-2">
+              <Input
+                :value="tokenResultData.token"
+                readonly
+                class="font-mono text-sm"
+              />
+              <Button type="primary" @click="handleCopyToken">
+                {{ $t('serverManagement.environmentAgent.copyToken') }}
+              </Button>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t">
+            <div class="text-sm font-medium mb-1">
+              {{ $t('serverManagement.server.serverName') }}
+            </div>
+            <div class="text-gray-700 text-sm">{{ tokenResultData.serverName || '-' }}</div>
+          </div>
+        </div>
+
+        <!-- 安装教程 -->
+        <Collapse>
+          <CollapsePanel :header="$t('serverManagement.server.step1Title')" key="1">
+            <p class="mb-3 text-sm text-gray-600">
+              {{ $t('serverManagement.server.step1Desc') }}
+            </p>
+            <div class="bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto">
+              <pre class="text-xs font-mono whitespace-pre-wrap">{{
+                installCommands.download
+              }}</pre>
+            </div>
+          </CollapsePanel>
+
+          <CollapsePanel :header="$t('serverManagement.server.step2Title')" key="2">
+            <p class="mb-3 text-sm text-gray-600">
+              {{ $t('serverManagement.server.step2Desc') }}
+            </p>
+            <div class="bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto">
+              <pre class="text-xs font-mono whitespace-pre-wrap">{{
+                installCommands.config
+              }}</pre>
+            </div>
+          </CollapsePanel>
+
+          <CollapsePanel :header="$t('serverManagement.server.step3Title')" key="3">
+            <p class="mb-3 text-sm text-gray-600">
+              {{ $t('serverManagement.server.step3Desc') }}
+            </p>
+            <div class="bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto">
+              <pre class="text-xs font-mono whitespace-pre-wrap">{{
+                installCommands.start
+              }}</pre>
+            </div>
+          </CollapsePanel>
+        </Collapse>
+
+        <!-- 重要提示 -->
+        <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div class="font-medium text-blue-900 mb-2 text-sm">
+            {{ $t('serverManagement.server.importantNote') }}
+          </div>
+          <ul class="text-xs text-blue-800 space-y-1 list-disc list-inside">
+            <li>{{ $t('serverManagement.server.note1') }}</li>
+            <li>{{ $t('serverManagement.server.note2') }}</li>
+            <li>{{ $t('serverManagement.server.note3') }}</li>
+          </ul>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="flex justify-end pt-2">
+          <Button type="primary" @click="closeTokenResult">
+            {{ $t('serverManagement.server.closeAndReturn') }}
+          </Button>
+        </div>
+      </div>
     </Modal>
   </Page>
 </template>
