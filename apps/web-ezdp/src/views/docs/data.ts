@@ -1,6 +1,818 @@
-import type { DocItem } from './types';
-import { marked } from 'marked';
+import type { DocItem, EventData, MessageSchema, FieldDefinition } from './types';
 
+// 注册事件数据
+const registerEventData: EventData = {
+  eventName: 'register',
+  direction: 'client-to-server',
+  pairedEvent: 'register_response',
+  description: 'Agent 向服务端发起注册请求，携带认证 Token 和 Agent 基本信息',
+  request: {
+    name: 'RegisterRequest',
+    description: 'Agent 注册请求数据结构',
+    fields: [
+      { name: 'token', type: 'string', required: true, description: '认证令牌（必填）' },
+      { name: 'name', type: 'string', required: true, description: 'Agent 名称（必填）' },
+      { name: 'hostname', type: 'string', required: true, description: '主机名' },
+      { name: 'ip', type: 'string', required: true, description: 'IP 地址' },
+      { name: 'os', type: 'string', required: true, description: '操作系统' },
+      { name: 'arch', type: 'string', required: true, description: '架构（如 amd64）' },
+      { name: 'version', type: 'string', required: true, description: 'Agent 版本' },
+      { name: 'osVersion', type: 'string', required: true, description: '详细 OS 版本（如 ubuntu 22.04）' },
+      { name: 'cpuCores', type: 'number', required: true, description: 'CPU 核心数' },
+      { name: 'cpuModel', type: 'string', required: true, description: 'CPU 型号' },
+      { name: 'memoryTotal', type: 'number', required: true, description: '总内存（字节）' },
+      { name: 'diskTotal', type: 'number', required: true, description: '总磁盘（字节）' },
+      { name: 'publicIp', type: 'string', required: true, description: '公网 IP' },
+      { name: 'maxConcurrentTasks', type: 'number', required: true, description: '最大并发任务数' },
+      { name: 'tags', type: 'object', required: false, description: '标签（可选）' },
+    ],
+    example: JSON.stringify({
+      type: 'register',
+      requestId: '507f1f77bcf86cd799439011',
+      timestamp: 1640000000000,
+      data: {
+        token: 'your-auth-token-here',
+        name: 'build-agent-01',
+        hostname: 'ubuntu-server',
+        ip: '192.168.1.100',
+        os: 'linux',
+        arch: 'amd64',
+        version: '1.0.0',
+        osVersion: 'ubuntu 22.04',
+        cpuCores: 8,
+        cpuModel: 'Intel Core i7-9700K',
+        memoryTotal: 17179869184,
+        diskTotal: 536870912000,
+        publicIp: '203.0.113.1',
+        maxConcurrentTasks: 3,
+        tags: { env: 'production', region: 'us-west' }
+      }
+    }, null, 2)
+  },
+  response: {
+    name: 'RegisterResponse',
+    description: '服务端注册响应数据结构',
+    fields: [
+      { name: 'success', type: 'boolean', required: true, description: '是否成功' },
+      { name: 'agentId', type: 'string', required: false, description: 'Agent ID（成功时返回）' },
+      { name: 'message', type: 'string', required: true, description: '响应消息' },
+    ],
+    example: JSON.stringify({
+      type: 'register_response',
+      requestId: '507f1f77bcf86cd799439011',
+      timestamp: 1640000000100,
+      data: {
+        success: true,
+        agentId: '507f191e810c19729de860ea',
+        message: '注册成功'
+      }
+    }, null, 2)
+  }
+};
+
+
+// 心跳事件数据
+const heartbeatEventData: EventData = {
+  eventName: 'heartbeat',
+  direction: 'client-to-server',
+  pairedEvent: 'heartbeat_response',
+  description: 'Agent 定期向服务端发送心跳，上报当前状态和系统资源使用情况',
+  request: {
+    name: 'HeartbeatRequest',
+    description: 'Agent 心跳请求数据结构',
+    fields: [
+      { name: 'agentId', type: 'string', required: true, description: 'Agent ID（注册时获得）' },
+      { name: 'status', type: 'string', required: true, description: 'Agent 状态', enumValues: ['idle', 'busy'] },
+      { name: 'currentTasks', type: 'number', required: true, description: '当前正在执行的任务数' },
+      { name: 'cpuCores', type: 'number', required: true, description: 'CPU 核心数' },
+      { name: 'cpuModel', type: 'string', required: true, description: 'CPU 型号' },
+      { name: 'osVersion', type: 'string', required: true, description: '详细 OS 版本' },
+      { name: 'memoryTotal', type: 'number', required: true, description: '总内存（字节）' },
+      { name: 'diskTotal', type: 'number', required: true, description: '总磁盘（字节）' },
+      { name: 'publicIp', type: 'string', required: true, description: '公网 IP' },
+      {
+        name: 'systemInfo', type: 'object', required: true, description: '系统实时资源使用情况',
+        nested: {
+          name: 'SystemInfo',
+          description: '系统资源使用情况',
+          fields: [
+            { name: 'cpuUsage', type: 'number', required: true, description: 'CPU 实际使用量（核数），如 2.5 表示使用了 2.5 个核心' },
+            { name: 'memoryUsage', type: 'number', required: true, description: '内存实际使用量（字节）' },
+            { name: 'diskUsage', type: 'number', required: true, description: '硬盘实际使用量（字节）' },
+          ],
+          example: ''
+        }
+      },
+    ],
+    example: JSON.stringify({
+      type: 'heartbeat',
+      requestId: '507f1f77bcf86cd799439012',
+      timestamp: 1640000030000,
+      data: {
+        agentId: '507f191e810c19729de860ea',
+        status: 'idle',
+        currentTasks: 0,
+        cpuCores: 8,
+        cpuModel: 'Intel Core i7-9700K',
+        osVersion: 'ubuntu 22.04',
+        memoryTotal: 17179869184,
+        diskTotal: 536870912000,
+        publicIp: '203.0.113.1',
+        systemInfo: {
+          cpuUsage: 1.5,
+          memoryUsage: 4294967296,
+          diskUsage: 107374182400
+        }
+      }
+    }, null, 2)
+  },
+  response: {
+    name: 'HeartbeatResponse',
+    description: '服务端心跳响应数据结构',
+    fields: [
+      { name: 'success', type: 'boolean', required: true, description: '是否成功' },
+    ],
+    example: JSON.stringify({
+      type: 'heartbeat_response',
+      requestId: '507f1f77bcf86cd799439012',
+      timestamp: 1640000030100,
+      data: { success: true }
+    }, null, 2)
+  }
+};
+
+
+// 任务分发事件数据
+const taskDispatchEventData: EventData = {
+  eventName: 'task_dispatch',
+  direction: 'server-to-client',
+  description: '服务端向 Agent 下发构建任务',
+  request: {
+    name: 'TaskDispatchRequest',
+    description: '任务分发请求数据结构',
+    fields: [
+      { name: 'taskId', type: 'string', required: true, description: '任务 ID' },
+      { name: 'taskType', type: 'string', required: true, description: '任务类型' },
+      {
+        name: 'buildConfig', type: 'object', required: true, description: '构建配置',
+        nested: {
+          name: 'BuildConfig',
+          description: '构建配置详情',
+          fields: [
+            { name: 'branch', type: 'string', required: true, description: 'Git 分支' },
+            { name: 'tagPrefix', type: 'string', required: true, description: '标签前缀' },
+            { name: 'devopsPath', type: 'string', required: true, description: 'DevOps 路径' },
+            { name: 'businessLineId', type: 'number', required: true, description: '业务线 ID' },
+            {
+              name: 'projectDefine', type: 'object', required: true, description: '项目定义',
+              nested: {
+                name: 'ProjectDefine',
+                description: '项目定义详情',
+                fields: [
+                  { name: 'group', type: 'string', required: true, description: '项目组' },
+                  { name: 'url', type: 'string', required: true, description: '项目 Git URL' },
+                  { name: 'name', type: 'string', required: true, description: '项目名称' },
+                  { name: 'type', type: 'string', required: true, description: '项目类型' },
+                  { name: 'dockerfilePath', type: 'string', required: true, description: 'Dockerfile 路径' },
+                  { name: 'ossName', type: 'string', required: true, description: 'OSS 名称' },
+                ],
+                example: ''
+              }
+            },
+            {
+              name: 'gitlabConfig', type: 'object', required: true, description: 'GitLab 配置',
+              nested: {
+                name: 'GitlabConfig',
+                description: 'GitLab 配置详情',
+                fields: [
+                  { name: 'baseUrl', type: 'string', required: true, description: 'GitLab 基础 URL' },
+                  { name: 'token', type: 'string', required: true, description: 'GitLab 访问令牌' },
+                ],
+                example: ''
+              }
+            },
+            {
+              name: 'dockerConfig', type: 'object', required: true, description: 'Docker 配置',
+              nested: {
+                name: 'DockerConfig',
+                description: 'Docker 仓库配置详情',
+                fields: [
+                  { name: 'repo', type: 'string', required: true, description: 'Docker 仓库地址' },
+                  { name: 'username', type: 'string', required: true, description: '用户名' },
+                  { name: 'password', type: 'string', required: true, description: '密码' },
+                ],
+                example: ''
+              }
+            },
+            {
+              name: 'ossConfig', type: 'object', required: true, description: 'OSS 配置',
+              nested: {
+                name: 'OssConfig',
+                description: 'OSS 存储配置详情',
+                fields: [
+                  { name: 'endpoint', type: 'string', required: true, description: 'OSS 端点' },
+                  { name: 'bucket', type: 'string', required: true, description: '存储桶名称' },
+                  { name: 'accessKey', type: 'string', required: true, description: '访问密钥' },
+                  { name: 'accessSecret', type: 'string', required: true, description: '访问密钥密码' },
+                  { name: 'region', type: 'string', required: true, description: '区域' },
+                ],
+                example: ''
+              }
+            },
+          ],
+          example: ''
+        }
+      },
+    ],
+    example: JSON.stringify({
+      type: 'task_dispatch',
+      requestId: '507f1f77bcf86cd799439013',
+      timestamp: 1640000060000,
+      data: {
+        taskId: '507f191e810c19729de860eb',
+        taskType: 'build',
+        buildConfig: {
+          branch: 'main',
+          tagPrefix: 'v1.0',
+          devopsPath: '/devops',
+          businessLineId: 1,
+          projectDefine: {
+            group: 'frontend',
+            url: 'https://gitlab.com/example/project.git',
+            name: 'web-app',
+            type: 'nodejs',
+            dockerfilePath: './Dockerfile',
+            ossName: 'web-app-assets'
+          },
+          gitlabConfig: {
+            baseUrl: 'https://gitlab.com',
+            token: 'glpat-xxxxxxxxxxxx'
+          },
+          dockerConfig: {
+            repo: 'docker.io/myorg',
+            username: 'myuser',
+            password: 'mypassword'
+          },
+          ossConfig: {
+            endpoint: 'oss-cn-hangzhou.aliyuncs.com',
+            bucket: 'my-bucket',
+            accessKey: 'LTAI5txxxxxxxxxx',
+            accessSecret: 'xxxxxxxxxxxxxxxx',
+            region: 'cn-hangzhou'
+          }
+        }
+      }
+    }, null, 2)
+  }
+};
+
+
+// 任务更新事件数据
+const taskUpdateEventData: EventData = {
+  eventName: 'task_update',
+  direction: 'client-to-server',
+  description: 'Agent 向服务端上报任务执行进度和状态',
+  request: {
+    name: 'TaskUpdateRequest',
+    description: '任务状态更新请求数据结构',
+    fields: [
+      { name: 'taskId', type: 'string', required: true, description: '任务 ID' },
+      { name: 'status', type: 'string', required: true, description: '任务状态', enumValues: ['pending', 'building', 'success', 'failed', 'skipped'] },
+      { name: 'progress', type: 'number', required: true, description: '进度百分比（0-100）' },
+      { name: 'message', type: 'string', required: true, description: '状态消息' },
+    ],
+    example: JSON.stringify({
+      type: 'task_update',
+      requestId: '507f1f77bcf86cd799439014',
+      timestamp: 1640000090000,
+      data: {
+        taskId: '507f191e810c19729de860eb',
+        status: 'building',
+        progress: 50,
+        message: '正在构建 Docker 镜像...'
+      }
+    }, null, 2)
+  }
+};
+
+// 任务完成事件数据
+const taskCompleteEventData: EventData = {
+  eventName: 'task_complete',
+  direction: 'client-to-server',
+  description: 'Agent 向服务端上报任务执行完成结果',
+  request: {
+    name: 'TaskCompleteRequest',
+    description: '任务完成请求数据结构',
+    fields: [
+      { name: 'taskId', type: 'string', required: true, description: '任务 ID' },
+      { name: 'status', type: 'string', required: true, description: '最终任务状态', enumValues: ['success', 'failed', 'skipped'] },
+      {
+        name: 'result', type: 'object', required: false, description: '任务执行结果',
+        nested: {
+          name: 'TaskResult',
+          description: '任务执行结果详情',
+          fields: [
+            { name: 'newTag', type: 'string', required: true, description: '新生成的标签' },
+            { name: 'duration', type: 'number', required: true, description: '执行时长（毫秒）' },
+            { name: 'successCount', type: 'number', required: true, description: '成功数' },
+            { name: 'failCount', type: 'number', required: true, description: '失败数' },
+            { name: 'frontend', type: 'array', required: false, description: '前端构建产物列表' },
+            { name: 'backend', type: 'array', required: false, description: '后端构建产物列表' },
+          ],
+          example: ''
+        }
+      },
+    ],
+    example: JSON.stringify({
+      type: 'task_complete',
+      requestId: '507f1f77bcf86cd799439015',
+      timestamp: 1640000120000,
+      data: {
+        taskId: '507f191e810c19729de860eb',
+        status: 'success',
+        result: {
+          newTag: 'v1.0.1',
+          duration: 60000,
+          successCount: 2,
+          failCount: 0,
+          frontend: ['docker.io/myorg/web-app:v1.0.1'],
+          backend: ['docker.io/myorg/api-server:v1.0.1']
+        }
+      }
+    }, null, 2)
+  }
+};
+
+// 日志推送事件数据
+const logPushEventData: EventData = {
+  eventName: 'log_push',
+  direction: 'client-to-server',
+  description: 'Agent 向服务端实时推送构建日志',
+  request: {
+    name: 'LogPushRequest',
+    description: '日志推送请求数据结构',
+    fields: [
+      { name: 'taskId', type: 'string', required: true, description: '任务 ID' },
+      { name: 'businessLineId', type: 'number', required: true, description: '业务线 ID（用于路由日志到前端）' },
+      {
+        name: 'logs', type: 'array', required: true, description: '日志条目数组',
+        nested: {
+          name: 'LogEntry',
+          description: '日志条目',
+          fields: [
+            { name: 'timestamp', type: 'number', required: true, description: '时间戳（毫秒）' },
+            { name: 'level', type: 'string', required: true, description: '日志级别', enumValues: ['info', 'warn', 'error'] },
+            { name: 'message', type: 'string', required: true, description: '日志消息内容' },
+          ],
+          example: ''
+        }
+      },
+    ],
+    example: JSON.stringify({
+      type: 'log_push',
+      requestId: '507f1f77bcf86cd799439016',
+      timestamp: 1640000100000,
+      data: {
+        taskId: '507f191e810c19729de860eb',
+        businessLineId: 1,
+        logs: [
+          { timestamp: 1640000100000, level: 'info', message: '开始克隆代码...' },
+          { timestamp: 1640000105000, level: 'info', message: '代码克隆完成' },
+          { timestamp: 1640000110000, level: 'info', message: '开始构建 Docker 镜像...' }
+        ]
+      }
+    }, null, 2)
+  }
+};
+
+// 任务取消事件数据
+const taskCancelEventData: EventData = {
+  eventName: 'task_cancel',
+  direction: 'server-to-client',
+  description: '服务端通知 Agent 取消正在执行的任务',
+  request: {
+    name: 'TaskCancelRequest',
+    description: '任务取消请求数据结构',
+    fields: [
+      { name: 'taskId', type: 'string', required: true, description: '任务 ID' },
+      { name: 'reason', type: 'string', required: true, description: '取消原因' },
+    ],
+    example: JSON.stringify({
+      type: 'task_cancel',
+      requestId: '507f1f77bcf86cd799439017',
+      timestamp: 1640000095000,
+      data: {
+        taskId: '507f191e810c19729de860eb',
+        reason: '用户手动取消'
+      }
+    }, null, 2)
+  }
+};
+
+
+// ============= HTML 文档内容 =============
+
+const overviewContent = `<div class="page-doc">
+  <div class="page-hero">
+    <div class="page-hero-icon">🤖</div>
+    <h1>Build Agent 接入指南</h1>
+    <p>构建代理组件，通过 WebSocket 实现任务的实时分发、状态更新和日志推送</p>
+  </div>
+
+  <div class="page-cards">
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#e8f4fd;color:#1890ff">⚡</div>
+      <div class="page-card-body">
+        <h3>任务执行</h3>
+        <p>接收服务端分发的构建任务，执行构建流程</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#fff0f6;color:#eb2f96">💬</div>
+      <div class="page-card-body">
+        <h3>实时通信</h3>
+        <p>通过 WebSocket 保持与服务端的长连接</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#f6ffed;color:#52c41a">📊</div>
+      <div class="page-card-body">
+        <h3>状态上报</h3>
+        <p>实时上报任务执行状态和进度</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#fff7e6;color:#fa8c16">📝</div>
+      <div class="page-card-body">
+        <h3>日志推送</h3>
+        <p>将构建日志实时推送到服务端</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#f9f0ff;color:#722ed1">📈</div>
+      <div class="page-card-body">
+        <h3>资源监控</h3>
+        <p>定期上报系统资源使用情况</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>通信协议</h2>
+    <p class="page-section-desc">Build Agent 使用 WebSocket 协议与服务端通信，所有消息均为 JSON 格式</p>
+    <div class="ws-protocol-grid">
+      <div class="ws-event-card ws-card-up" style="--delay:0ms" data-event-id="event-register">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <span class="ws-direction-label">Client → Server</span>
+        </div>
+        <div class="ws-event-name">register</div>
+        <div class="ws-event-desc">Agent 启动时向服务端注册</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-down" style="--delay:60ms" data-event-id="event-register">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </div>
+          <span class="ws-direction-label">Server → Client</span>
+        </div>
+        <div class="ws-event-name">register_response</div>
+        <div class="ws-event-desc">服务端返回注册结果</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-up" style="--delay:120ms" data-event-id="event-heartbeat">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <span class="ws-direction-label">Client → Server</span>
+        </div>
+        <div class="ws-event-name">heartbeat</div>
+        <div class="ws-event-desc">定期发送心跳保持连接</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-down" style="--delay:180ms" data-event-id="event-heartbeat">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </div>
+          <span class="ws-direction-label">Server → Client</span>
+        </div>
+        <div class="ws-event-name">heartbeat_response</div>
+        <div class="ws-event-desc">服务端心跳响应</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-down" style="--delay:240ms" data-event-id="event-task-dispatch">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </div>
+          <span class="ws-direction-label">Server → Client</span>
+        </div>
+        <div class="ws-event-name">task_dispatch</div>
+        <div class="ws-event-desc">服务端下发构建任务</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-up" style="--delay:300ms" data-event-id="event-task-update">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <span class="ws-direction-label">Client → Server</span>
+        </div>
+        <div class="ws-event-name">task_update</div>
+        <div class="ws-event-desc">Agent 上报任务执行状态</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-up" style="--delay:360ms" data-event-id="event-task-complete">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <span class="ws-direction-label">Client → Server</span>
+        </div>
+        <div class="ws-event-name">task_complete</div>
+        <div class="ws-event-desc">Agent 上报任务执行结果</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-up" style="--delay:420ms" data-event-id="event-log-push">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <span class="ws-direction-label">Client → Server</span>
+        </div>
+        <div class="ws-event-name">log_push</div>
+        <div class="ws-event-desc">Agent 推送构建日志</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-down" style="--delay:480ms" data-event-id="event-task-cancel">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </div>
+          <span class="ws-direction-label">Server → Client</span>
+        </div>
+        <div class="ws-event-name">task_cancel</div>
+        <div class="ws-event-desc">服务端取消正在执行的任务</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>接入流程</h2>
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>获取认证 Token</h4>
+          <p>在 EZDP 管理界面创建 Build Agent，系统自动生成唯一认证 Token</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>建立 WebSocket 连接</h4>
+          <p>连接到服务端 WebSocket 端点 <code>ws://your-server/ws/agent</code></p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>发送注册请求</h4>
+          <p>携带 Token 和 Agent 基本信息发送 <code>register</code> 事件</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>维持心跳</h4>
+          <p>每 30 秒发送一次 <code>heartbeat</code> 事件，上报系统资源状态</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>接收并执行任务</h4>
+          <p>监听 <code>task_dispatch</code> 事件，执行构建并实时上报进度</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <h4>上报完成结果</h4>
+          <p>任务完成后发送 <code>task_complete</code> 事件上报最终结果</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+const quickstartContent = `<div class="page-doc">
+  <div class="page-hero">
+    <div class="page-hero-icon">🚀</div>
+    <h1>快速开始</h1>
+    <p>5 分钟快速部署 Build Agent</p>
+  </div>
+
+  <div class="page-section">
+    <h2>前置条件</h2>
+    <div class="page-cards">
+      <div class="page-card">
+        <div class="page-card-icon" style="background:#e8f4fd;color:#1890ff">🔧</div>
+        <div class="page-card-body">
+          <h3>Go 1.24.0+</h3>
+          <p>需要 Go 编译环境</p>
+        </div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-icon" style="background:#f6ffed;color:#52c41a">🔑</div>
+        <div class="page-card-body">
+          <h3>认证 Token</h3>
+          <p>从管理界面获取</p>
+        </div>
+      </div>
+      <div class="page-card">
+        <div class="page-card-icon" style="background:#fff7e6;color:#fa8c16">🌐</div>
+        <div class="page-card-body">
+          <h3>网络连接</h3>
+          <p>可访问 EZDP 服务端</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>安装</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+      </div>
+      <pre><code># 克隆代码
+git clone https://github.com/your-org/ezdp.git
+cd ezdp/backend/agent/buildAgent/cmd/agent
+
+# 编译
+go build -o ezdp-agent .</code></pre>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>配置</h2>
+    <p class="page-section-desc">创建配置文件 <code>config.yaml</code></p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">yaml</span>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+      </div>
+      <pre><code>server:
+  url: "ws://your-server:8080/ws/agent"
+  token: "your-auth-token"
+
+agent:
+  name: "agent-01"
+  tags:
+    - "linux"
+    - "docker"
+
+heartbeat:
+  interval: 30s</code></pre>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>运行</h2>
+    <div class="run-options">
+      <div class="run-option">
+        <h4>交互式运行</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText('./ezdp-agent -i').then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+          </div>
+          <pre><code>./ezdp-agent -i</code></pre>
+        </div>
+      </div>
+      <div class="run-option">
+        <h4>指定配置文件运行</h4>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-lang">bash</span>
+            <button class="copy-btn" onclick="navigator.clipboard.writeText('./ezdp-agent -c config.yaml').then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+          </div>
+          <pre><code>./ezdp-agent -c config.yaml</code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <div class="alert alert-success">
+      <span class="alert-icon">✅</span>
+      <div>
+        <strong>验证</strong>
+        <p>Agent 启动后会自动注册到服务端，可以在 EZDP 管理界面查看 Agent 状态</p>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+const authenticationContent = `<div class="page-doc">
+  <div class="page-hero">
+    <div class="page-hero-icon">🔐</div>
+    <h1>鉴权机制</h1>
+    <p>基于 Token 的安全认证，确保只有授权的 Agent 才能接入</p>
+  </div>
+
+  <div class="page-section">
+    <h2>Token 获取</h2>
+    <div class="alert alert-info">
+      <span class="alert-icon">ℹ️</span>
+      <div>
+        <p>在 EZDP 管理界面创建 Build Agent 时，系统会自动生成唯一的认证 Token</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>Token 使用</h2>
+    <p class="page-section-desc">Agent 在注册时需要在 <code>data.token</code> 字段中携带 Token</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">json</span>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+      </div>
+      <pre><code>{
+  "type": "register",
+  "requestId": "uuid",
+  "timestamp": 1234567890000,
+  "data": {
+    "token": "your-auth-token",
+    "name": "agent-01"
+  }
+}</code></pre>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>验证结果</h2>
+    <div class="result-cards">
+      <div class="result-card result-success">
+        <div class="result-icon">✅</div>
+        <h4>验证通过</h4>
+        <p>返回 <code>success: true</code> 和 <code>agentId</code></p>
+      </div>
+      <div class="result-card result-fail">
+        <div class="result-icon">❌</div>
+        <h4>验证失败</h4>
+        <p>返回 <code>success: false</code> 和错误信息</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>安全建议</h2>
+    <div class="tips-list">
+      <div class="tip-item">
+        <span class="tip-icon">⚠️</span>
+        <div>
+          <h4>妥善保管 Token</h4>
+          <p>不要将 Token 提交到代码仓库或公开分享</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <span class="tip-icon">🔄</span>
+        <div>
+          <h4>定期轮换 Token</h4>
+          <p>建议定期更新 Token 以提高安全性</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <span class="tip-icon">🔒</span>
+        <div>
+          <h4>使用 WSS 加密传输</h4>
+          <p>生产环境务必使用 <code>wss://</code> 协议</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+// ============= 文档树结构 =============
 export const docList: DocItem[] = [
   {
     id: 'buildAgent',
@@ -11,909 +823,108 @@ export const docList: DocItem[] = [
       {
         id: 'buildAgent-overview',
         title: '概述',
+        apiType: 'markdown',
         fileName: 'build-agent/overview.md',
-      },
-      {
-        id: 'buildAgent-authentication',
-        title: '鉴权机制',
-        fileName: 'build-agent/authentication.md',
-      },
-      {
-        id: 'buildAgent-protocol',
-        title: '协议规范',
-        fileName: 'build-agent/protocol.md',
       },
       {
         id: 'buildAgent-quickstart',
         title: '快速开始',
+        apiType: 'markdown',
         fileName: 'build-agent/quickstart.md',
+      },
+      {
+        id: 'buildAgent-authentication',
+        title: '鉴权机制',
+        apiType: 'markdown',
+        fileName: 'build-agent/authentication.md',
+      },
+      {
+        id: 'buildAgent-events',
+        title: 'WebSocket 事件',
+        isCategory: true,
+        children: [
+          {
+            id: 'event-register',
+            title: '注册事件',
+            description: 'register / register_response',
+            apiType: 'event',
+            eventData: registerEventData,
+          },
+          {
+            id: 'event-heartbeat',
+            title: '心跳事件',
+            description: 'heartbeat / heartbeat_response',
+            apiType: 'event',
+            eventData: heartbeatEventData,
+          },
+          {
+            id: 'event-task-dispatch',
+            title: '任务分发',
+            description: 'task_dispatch',
+            apiType: 'event',
+            eventData: taskDispatchEventData,
+          },
+          {
+            id: 'event-task-update',
+            title: '任务更新',
+            description: 'task_update',
+            apiType: 'event',
+            eventData: taskUpdateEventData,
+          },
+          {
+            id: 'event-task-complete',
+            title: '任务完成',
+            description: 'task_complete',
+            apiType: 'event',
+            eventData: taskCompleteEventData,
+          },
+          {
+            id: 'event-log-push',
+            title: '日志推送',
+            description: 'log_push',
+            apiType: 'event',
+            eventData: logPushEventData,
+          },
+          {
+            id: 'event-task-cancel',
+            title: '任务取消',
+            description: 'task_cancel',
+            apiType: 'event',
+            eventData: taskCancelEventData,
+          },
+        ],
       },
     ],
   },
 ];
 
-const docContents: Record<string, string> = {
-  'build-agent/overview.md': `# Build Agent 接入指南
+// ============= 辅助函数 =============
 
-## 什么是 Build Agent？
-
-Build Agent 是 EZDP 平台的构建代理机制，允许您将自己的构建服务器接入到 EZDP 平台，接收构建任务并执行。
-
-**核心特点：**
-
-- **协议标准化**：基于 WebSocket 的双向通信协议
-- **实现自由**：您可以使用任何编程语言实现 Agent
-- **构建灵活**：构建逻辑完全由您自己决定
-- **实时通信**：支持实时日志推送和任务状态更新
-
-## 工作原理
-
-\`\`\`
-┌─────────────┐                    ┌─────────────┐
-│             │   WebSocket 连接    │             │
-│  EZDP Server│◄──────────────────►│ Build Agent │
-│             │                    │             │
-└─────────────┘                    └─────────────┘
-       │                                  │
-       │ 1. 注册 (register)               │
-       │◄─────────────────────────────────┤
-       │                                  │
-       │ 2. 注册响应 (register_response)  │
-       ├─────────────────────────────────►│
-       │                                  │
-       │ 3. 心跳 (heartbeat)              │
-       │◄─────────────────────────────────┤
-       │                                  │
-       │ 4. 任务分发 (task_dispatch)      │
-       ├─────────────────────────────────►│
-       │                                  │
-       │ 5. 日志推送 (log_push)           │
-       │◄─────────────────────────────────┤
-       │                                  │
-       │ 6. 任务完成 (task_complete)      │
-       │◄─────────────────────────────────┤
-\`\`\`
-
-## 接入流程
-
-### 1. 获取 Token
-
-在 EZDP 平台创建 Build Agent 配置，获取认证 Token。
-
-### 2. 建立 WebSocket 连接
-
-连接到 EZDP Server 的 WebSocket 端点：
-
-\`\`\`
-ws://your-ezdp-server/ws/buildAgent
-\`\`\`
-
-### 3. 发送注册消息
-
-连接成功后，立即发送注册消息，携带 Token 和 Agent 信息。
-
-### 4. 等待任务分发
-
-注册成功后，保持连接并定期发送心跳，等待 Server 下发构建任务。
-
-### 5. 执行构建任务
-
-收到任务后，根据任务参数执行您自己的构建逻辑。
-
-### 6. 上报结果
-
-构建过程中实时推送日志，完成后上报任务结果。
-
-## 您需要实现什么？
-
-作为接入方，您需要实现以下功能：
-
-1. **WebSocket 客户端**：连接到 EZDP Server
-2. **消息处理**：解析和发送符合协议的 JSON 消息
-3. **心跳机制**：定期发送心跳保持连接
-4. **任务执行**：根据任务参数执行构建（具体逻辑由您决定）
-5. **日志上报**：将构建日志实时推送到 Server
-6. **状态管理**：管理 Agent 状态和任务状态
-
-## 您不需要关心什么？
-
-- **构建工具**：使用 Docker、Jenkins、自定义脚本都可以
-- **编程语言**：Go、Python、Node.js、Java 等任何语言
-- **部署方式**：物理机、虚拟机、容器、Kubernetes 都支持
-- **构建流程**：完全由您自己定义
-
-## 下一步
-
-- [鉴权机制](./authentication.md)：Token 获取和使用方式
-- [协议规范](./protocol.md)：详细的消息格式和字段说明
-- [快速开始](./quickstart.md)：5 分钟快速接入示例
-`,
-
-  'build-agent/authentication.md': `# 鉴权机制
-
-Build Agent 使用 **Token 认证**接入 EZDP 平台。
-
-## 获取 Token
-
-1. 登录 EZDP 管理后台
-2. 进入 **构建管理 → Build Agent**
-3. 点击 **创建 Token**，填写描述并选择业务线
-4. 复制生成的 Token（**仅显示一次，请妥善保存**）
-
-Token 格式示例：
-\`\`\`
-ezdp_agent_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
-\`\`\`
-
-## 使用 Token
-
-Token 在 **注册阶段** 通过 \`register\` 消息传递给 Server，后续通信不再需要携带 Token。
-
-\`\`\`json
-{
-  "type": "register",
-  "requestId": "req_abc123",
-  "timestamp": 1704067200000,
-  "data": {
-    "token": "ezdp_agent_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
-    "name": "my-build-agent-01",
-    ...
-  }
-}
-\`\`\`
-
-## Token 与业务线
-
-每个 Token 绑定到一个**业务线**，Agent 注册后只能接收该业务线的构建任务。
-
-## 注册失败处理
-
-| 错误信息 | 原因 | 处理方式 |
-|---------|------|---------|
-| \`Token 不存在\` | Token 错误或已删除 | 检查 Token 是否正确 |
-| \`Token 已禁用\` | 管理员禁用了该 Token | 联系管理员或创建新 Token |
-| \`业务线不存在或已禁用\` | 绑定的业务线被删除 | 重新创建 Token |
-
-注册失败时，Agent 应**退出程序**，不应继续重试（Token 问题无法通过重试解决）。
-
-## 安全建议
-
-- 配置文件权限设置为 \`600\`，防止 Token 泄露
-- 不要将 Token 提交到版本控制系统
-- 生产环境使用 \`wss://\`（TLS 加密）而非 \`ws://\`
-- 定期轮换 Token（建议每 90 天）
-`,
-
-  'build-agent/protocol.md': `# 协议规范
-
-Build Agent 与 EZDP Server 之间通过 **WebSocket** 进行双向通信，所有消息均为 **JSON 格式**。
-
-## 消息基础结构
-
-所有消息都遵循统一的基础结构：
-
-\`\`\`json
-{
-  "type": "消息类型",
-  "requestId": "请求唯一标识",
-  "timestamp": 1704067200000,
-  "data": { /* 具体数据 */ }
-}
-\`\`\`
-
-### 字段说明
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| \`type\` | string | 是 | 消息类型，见下方消息类型列表 |
-| \`requestId\` | string | 是 | 请求唯一标识，建议使用 UUID |
-| \`timestamp\` | int64 | 是 | 消息时间戳（毫秒） |
-| \`data\` | object | 是 | 消息数据，根据 type 不同而不同 |
-
-## 消息类型
-
-### Agent → Server
-
-| 类型 | 说明 | 触发时机 |
-|------|------|---------|
-| \`register\` | 注册请求 | WebSocket 连接成功后立即发送 |
-| \`heartbeat\` | 心跳请求 | 定期发送（建议 30 秒） |
-| \`task_update\` | 任务状态更新 | 任务执行过程中 |
-| \`task_complete\` | 任务完成 | 任务执行完成（成功或失败） |
-| \`log_push\` | 日志推送 | 任务执行过程中实时推送 |
-
-### Server → Agent
-
-| 类型 | 说明 | 触发时机 |
-|------|------|---------|
-| \`register_response\` | 注册响应 | 收到注册请求后 |
-| \`heartbeat_response\` | 心跳响应 | 收到心跳请求后 |
-| \`task_dispatch\` | 任务分发 | 有新任务需要执行 |
-| \`task_cancel\` | 任务取消 | 用户取消任务 |
-
----
-
-## 1. register（注册请求）
-
-**方向：** Agent → Server
-**时机：** WebSocket 连接成功后立即发送
-
-\`\`\`json
-{
-  "type": "register",
-  "requestId": "req_abc123",
-  "timestamp": 1704067200000,
-  "data": {
-    "token": "ezdp_agent_xxx",
-    "name": "my-build-agent-01",
-    "hostname": "build-server-01",
-    "ip": "192.168.1.100",
-    "os": "linux",
-    "arch": "amd64",
-    "version": "1.0.0",
-    "osVersion": "Ubuntu 22.04",
-    "cpuCores": 8,
-    "cpuModel": "Intel Xeon E5-2680",
-    "memoryTotal": 17179869184,
-    "diskTotal": 107374182400,
-    "publicIp": "203.0.113.10",
-    "maxConcurrentTasks": 3,
-    "tags": {
-      "env": "production",
-      "region": "us-west"
-    }
-  }
-}
-\`\`\`
-
-### 字段说明
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| \`token\` | string | **是** | 认证 Token |
-| \`name\` | string | **是** | Agent 名称（唯一标识） |
-| \`hostname\` | string | 否 | 主机名 |
-| \`ip\` | string | 否 | 内网 IP |
-| \`os\` | string | 否 | 操作系统：\`linux\`/\`windows\`/\`darwin\` |
-| \`arch\` | string | 否 | CPU 架构：\`amd64\`/\`arm64\` |
-| \`version\` | string | 否 | Agent 版本号 |
-| \`osVersion\` | string | 否 | 操作系统详细版本 |
-| \`cpuCores\` | int | 否 | CPU 核心数 |
-| \`cpuModel\` | string | 否 | CPU 型号 |
-| \`memoryTotal\` | int64 | 否 | 总内存（字节） |
-| \`diskTotal\` | int64 | 否 | 总磁盘空间（字节） |
-| \`publicIp\` | string | 否 | 公网 IP |
-| \`maxConcurrentTasks\` | int | 否 | 最大并发任务数，默认 1 |
-| \`tags\` | object | 否 | 自定义标签（键值对） |
-
----
-
-## 2. register_response（注册响应）
-
-**方向：** Server → Agent
-
-\`\`\`json
-{
-  "type": "register_response",
-  "requestId": "req_abc123",
-  "timestamp": 1704067200100,
-  "data": {
-    "success": true,
-    "agentId": "agent_xyz789",
-    "message": "注册成功"
-  }
-}
-\`\`\`
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| \`success\` | bool | 是否成功 |
-| \`agentId\` | string | Agent ID（成功时返回） |
-| \`message\` | string | 响应消息 |
-
----
-
-## 3. heartbeat（心跳请求）
-
-**方向：** Agent → Server
-**时机：** 定期发送（建议 30 秒）
-
-\`\`\`json
-{
-  "type": "heartbeat",
-  "requestId": "req_def456",
-  "timestamp": 1704067230000,
-  "data": {
-    "agentId": "agent_xyz789",
-    "status": "idle",
-    "currentTasks": 0,
-    "cpuCores": 8,
-    "cpuModel": "Intel Xeon E5-2680",
-    "osVersion": "Ubuntu 22.04",
-    "memoryTotal": 17179869184,
-    "diskTotal": 107374182400,
-    "publicIp": "203.0.113.10",
-    "systemInfo": {
-      "cpuUsage": 2.5,
-      "memoryUsage": 8589934592,
-      "diskUsage": 53687091200
-    }
-  }
-}
-\`\`\`
-
-### 字段说明
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| \`agentId\` | string | **是** | Agent ID（注册时获得） |
-| \`status\` | string | **是** | Agent 状态：\`idle\`/\`busy\` |
-| \`currentTasks\` | int | **是** | 当前正在执行的任务数 |
-| \`cpuCores\` | int | 否 | CPU 核心数 |
-| \`cpuModel\` | string | 否 | CPU 型号 |
-| \`osVersion\` | string | 否 | 操作系统版本 |
-| \`memoryTotal\` | int64 | 否 | 总内存（字节） |
-| \`diskTotal\` | int64 | 否 | 总磁盘空间（字节） |
-| \`publicIp\` | string | 否 | 公网 IP |
-| \`systemInfo\` | object | 否 | 系统资源使用情况 |
-
-#### systemInfo 字段
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| \`cpuUsage\` | float64 | CPU 使用量（核数），如 2.5 表示使用了 2.5 个核心 |
-| \`memoryUsage\` | int64 | 内存使用量（字节） |
-| \`diskUsage\` | int64 | 磁盘使用量（字节） |
-
----
-
-## 4. heartbeat_response（心跳响应）
-
-**方向：** Server → Agent
-
-\`\`\`json
-{
-  "type": "heartbeat_response",
-  "requestId": "req_def456",
-  "timestamp": 1704067230100,
-  "data": {
-    "success": true
-  }
-}
-\`\`\`
-
----
-
-## 5. task_dispatch（任务分发）
-
-**方向：** Server → Agent
-**时机：** 有新任务需要执行
-
-\`\`\`json
-{
-  "type": "task_dispatch",
-  "requestId": "req_ghi789",
-  "timestamp": 1704067260000,
-  "data": {
-    "taskId": "task_001",
-    "taskType": "build",
-    "buildConfig": {
-      "branch": "main",
-      "tagPrefix": "v1.0",
-      "devopsPath": "/path/to/devops",
-      "businessLineId": 1,
-      "projectDefine": {
-        "group": "my-group",
-        "url": "https://gitlab.com/my-group/my-project.git",
-        "name": "my-project",
-        "type": "docker",
-        "dockerfilePath": "./Dockerfile",
-        "ossName": "my-project-artifacts"
-      },
-      "gitlabConfig": {
-        "baseUrl": "https://gitlab.com",
-        "token": "glpat-xxx"
-      },
-      "dockerConfig": {
-        "repo": "docker.io/myorg",
-        "username": "myuser",
-        "password": "mypass"
-      },
-      "ossConfig": {
-        "endpoint": "oss-cn-hangzhou.aliyuncs.com",
-        "bucket": "my-bucket",
-        "accessKey": "LTAI...",
-        "accessSecret": "xxx",
-        "region": "cn-hangzhou"
-      }
-    }
-  }
-}
-\`\`\`
-
-### buildConfig 字段
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| \`branch\` | string | **是** | Git 分支名 |
-| \`tagPrefix\` | string | 否 | Tag 前缀 |
-| \`devopsPath\` | string | 否 | DevOps 脚本路径 |
-| \`businessLineId\` | uint | **是** | 业务线 ID |
-| \`projectDefine\` | object | **是** | 项目定义 |
-| \`gitlabConfig\` | object | **是** | GitLab 配置 |
-| \`dockerConfig\` | object | 否 | Docker 仓库配置 |
-| \`ossConfig\` | object | 否 | OSS 配置 |
-
-**重要提示：** 这些配置参数仅供参考，您可以根据自己的构建流程使用或忽略任何字段。
-
----
-
-## 6. task_update（任务状态更新）
-
-**方向：** Agent → Server
-**时机：** 任务执行过程中（可选）
-
-\`\`\`json
-{
-  "type": "task_update",
-  "requestId": "req_jkl012",
-  "timestamp": 1704067280000,
-  "data": {
-    "taskId": "task_001",
-    "status": "running",
-    "progress": 50,
-    "message": "正在构建 Docker 镜像..."
-  }
-}
-\`\`\`
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| \`taskId\` | string | **是** | 任务 ID |
-| \`status\` | string | **是** | 任务状态：\`running\`/\`success\`/\`failed\` |
-| \`progress\` | int | 否 | 进度百分比（0-100） |
-| \`message\` | string | 否 | 状态描述 |
-
----
-
-## 7. task_complete（任务完成）
-
-**方向：** Agent → Server
-**时机：** 任务执行完成（成功或失败）
-
-\`\`\`json
-{
-  "type": "task_complete",
-  "requestId": "req_mno345",
-  "timestamp": 1704067300000,
-  "data": {
-    "taskId": "task_001",
-    "status": "success",
-    "result": {
-      "newTag": "v1.0.1",
-      "duration": 120000,
-      "successCount": 2,
-      "failCount": 0,
-      "frontend": ["docker.io/myorg/frontend:v1.0.1"],
-      "backend": ["docker.io/myorg/backend:v1.0.1"]
-    }
-  }
-}
-\`\`\`
-
-### result 字段
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| \`newTag\` | string | 新生成的 Tag（成功时） |
-| \`duration\` | int64 | 执行耗时（毫秒） |
-| \`successCount\` | int | 成功数量 |
-| \`failCount\` | int | 失败数量 |
-| \`frontend\` | []string | 前端镜像列表 |
-| \`backend\` | []string | 后端镜像列表 |
-
----
-
-## 8. log_push（日志推送）
-
-**方向：** Agent → Server
-**时机：** 任务执行过程中实时推送
-
-\`\`\`json
-{
-  "type": "log_push",
-  "requestId": "req_pqr678",
-  "timestamp": 1704067290000,
-  "data": {
-    "taskId": "task_001",
-    "businessLineId": 1,
-    "logs": [
-      {
-        "timestamp": 1704067290000,
-        "level": "info",
-        "message": "开始克隆代码..."
-      },
-      {
-        "timestamp": 1704067292000,
-        "level": "error",
-        "message": "构建失败: Dockerfile not found"
-      }
-    ]
-  }
-}
-\`\`\`
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| \`taskId\` | string | **是** | 任务 ID |
-| \`businessLineId\` | uint | **是** | 业务线 ID（用于前端路由） |
-| \`logs\` | []object | **是** | 日志条目数组 |
-| \`logs[].timestamp\` | int64 | **是** | 日志时间戳（毫秒） |
-| \`logs[].level\` | string | **是** | 日志级别：\`info\`/\`warn\`/\`error\` |
-| \`logs[].message\` | string | **是** | 日志内容 |
-
-**建议：** 批量推送日志（如每秒或每 10 条），避免频繁发送单条日志。
-
----
-
-## 9. task_cancel（任务取消）
-
-**方向：** Server → Agent
-**时机：** 用户取消任务
-
-\`\`\`json
-{
-  "type": "task_cancel",
-  "requestId": "req_stu901",
-  "timestamp": 1704067295000,
-  "data": {
-    "taskId": "task_001",
-    "reason": "用户手动取消"
-  }
-}
-\`\`\`
-
-**处理方式：** Agent 应立即停止该任务的执行，并发送 \`task_complete\` 消息（status 为 \`failed\`）。
-
----
-
-## 连接管理
-
-### 重连机制
-
-WebSocket 连接断开后，Agent 应：
-
-1. 等待 5-10 秒后重新连接
-2. 重新发送 \`register\` 消息
-3. 继续执行未完成的任务
-
-### 超时处理
-
-- **心跳超时**：Server 90 秒未收到心跳，将 Agent 标记为离线
-- **任务超时**：建议 Agent 设置任务超时时间（如 30 分钟），超时后自动取消
-
-### 并发控制
-
-Agent 应根据 \`maxConcurrentTasks\` 控制并发任务数，超过限制时拒绝新任务。
-`,
-
-  'build-agent/quickstart.md': `# 快速开始
-
-本文档通过一个最简示例，帮助您快速理解如何接入 Build Agent。
-
-## 前置条件
-
-- 已获取 EZDP Agent Token（见[鉴权机制](./authentication.md)）
-- 了解 WebSocket 基础知识
-- 任意编程语言环境
-
-## 最简接入示例（Go）
-
-以下是一个最简化的 Go 实现，展示接入的核心流程：
-
-\`\`\`go
-package main
-
-import (
-    "encoding/json"
-    "fmt"
-    "log"
-    "time"
-
-    "github.com/gorilla/websocket"
-)
-
-const serverURL = "ws://your-ezdp-server/ws/buildAgent"
-const agentToken = "ezdp_agent_your_token_here"
-
-type Message struct {
-    Type      string      \`json:"type"\`
-    RequestID string      \`json:"requestId"\`
-    Timestamp int64       \`json:"timestamp"\`
-    Data      interface{} \`json:"data"\`
-}
-
-func main() {
-    conn, _, err := websocket.DefaultDialer.Dial(serverURL, nil)
-    if err != nil {
-        log.Fatal("连接失败:", err)
-    }
-    defer conn.Close()
-
-    // 1. 发送注册消息
-    register(conn)
-
-    // 2. 读取注册响应
-    agentID := waitRegisterResponse(conn)
-    fmt.Println("注册成功，Agent ID:", agentID)
-
-    // 3. 启动心跳
-    go heartbeatLoop(conn, agentID)
-
-    // 4. 处理消息
-    for {
-        _, data, err := conn.ReadMessage()
-        if err != nil {
-            log.Println("连接断开:", err)
-            return
-        }
-        handleMessage(conn, agentID, data)
-    }
-}
-
-func register(conn *websocket.Conn) {
-    msg := Message{
-        Type:      "register",
-        RequestID: "req_001",
-        Timestamp: time.Now().UnixMilli(),
-        Data: map[string]interface{}{
-            "token":              agentToken,
-            "name":               "my-agent-01",
-            "maxConcurrentTasks": 2,
-        },
-    }
-    data, _ := json.Marshal(msg)
-    conn.WriteMessage(websocket.TextMessage, data)
-}
-
-func waitRegisterResponse(conn *websocket.Conn) string {
-    _, data, _ := conn.ReadMessage()
-    var msg Message
-    json.Unmarshal(data, &msg)
-    respData := msg.Data.(map[string]interface{})
-    if respData["success"].(bool) {
-        return respData["agentId"].(string)
-    }
-    log.Fatal("注册失败:", respData["message"])
-    return ""
-}
-
-func heartbeatLoop(conn *websocket.Conn, agentID string) {
-    ticker := time.NewTicker(30 * time.Second)
-    for range ticker.C {
-        msg := Message{
-            Type:      "heartbeat",
-            RequestID: fmt.Sprintf("hb_%d", time.Now().Unix()),
-            Timestamp: time.Now().UnixMilli(),
-            Data: map[string]interface{}{
-                "agentId":      agentID,
-                "status":       "idle",
-                "currentTasks": 0,
-            },
-        }
-        data, _ := json.Marshal(msg)
-        conn.WriteMessage(websocket.TextMessage, data)
-    }
-}
-
-func handleMessage(conn *websocket.Conn, agentID string, raw []byte) {
-    var msg Message
-    json.Unmarshal(raw, &msg)
-
-    switch msg.Type {
-    case "task_dispatch":
-        go executeTask(conn, agentID, msg)
-    case "task_cancel":
-        // 处理取消逻辑
-    }
-}
-
-func executeTask(conn *websocket.Conn, agentID string, msg Message) {
-    taskData := msg.Data.(map[string]interface{})
-    taskID := taskData["taskId"].(string)
-
-    // 推送日志
-    pushLog(conn, taskID, 1, "info", "开始执行构建任务...")
-
-    // ===== 在这里实现您自己的构建逻辑 =====
-    // 例如：执行 shell 脚本、调用 Docker API、运行 CI 工具等
-    time.Sleep(5 * time.Second) // 模拟构建过程
-    // =======================================
-
-    // 上报完成
-    complete(conn, taskID, "success")
-}
-
-func pushLog(conn *websocket.Conn, taskID string, businessLineID int, level, message string) {
-    msg := Message{
-        Type:      "log_push",
-        RequestID: fmt.Sprintf("log_%d", time.Now().UnixNano()),
-        Timestamp: time.Now().UnixMilli(),
-        Data: map[string]interface{}{
-            "taskId":         taskID,
-            "businessLineId": businessLineID,
-            "logs": []map[string]interface{}{
-                {
-                    "timestamp": time.Now().UnixMilli(),
-                    "level":     level,
-                    "message":   message,
-                },
-            },
-        },
-    }
-    data, _ := json.Marshal(msg)
-    conn.WriteMessage(websocket.TextMessage, data)
-}
-
-func complete(conn *websocket.Conn, taskID, status string) {
-    msg := Message{
-        Type:      "task_complete",
-        RequestID: fmt.Sprintf("done_%d", time.Now().Unix()),
-        Timestamp: time.Now().UnixMilli(),
-        Data: map[string]interface{}{
-            "taskId": taskID,
-            "status": status,
-            "result": map[string]interface{}{
-                "duration":     5000,
-                "successCount": 1,
-                "failCount":    0,
-            },
-        },
-    }
-    data, _ := json.Marshal(msg)
-    conn.WriteMessage(websocket.TextMessage, data)
-}
-\`\`\`
-
-## 最简接入示例（Python）
-
-\`\`\`python
-import asyncio
-import json
-import time
-import websockets
-
-SERVER_URL = "ws://your-ezdp-server/ws/buildAgent"
-AGENT_TOKEN = "ezdp_agent_your_token_here"
-
-async def main():
-    async with websockets.connect(SERVER_URL) as ws:
-        # 1. 注册
-        await ws.send(json.dumps({
-            "type": "register",
-            "requestId": "req_001",
-            "timestamp": int(time.time() * 1000),
-            "data": {
-                "token": AGENT_TOKEN,
-                "name": "my-python-agent",
-                "maxConcurrentTasks": 2
-            }
-        }))
-
-        # 2. 等待注册响应
-        resp = json.loads(await ws.recv())
-        agent_id = resp["data"]["agentId"]
-        print(f"注册成功，Agent ID: {agent_id}")
-
-        # 3. 启动心跳
-        async def heartbeat():
-            while True:
-                await asyncio.sleep(30)
-                await ws.send(json.dumps({
-                    "type": "heartbeat",
-                    "requestId": f"hb_{int(time.time())}",
-                    "timestamp": int(time.time() * 1000),
-                    "data": {
-                        "agentId": agent_id,
-                        "status": "idle",
-                        "currentTasks": 0
-                    }
-                }))
-
-        asyncio.create_task(heartbeat())
-
-        async for message in ws:
-            msg = json.loads(message)
-            if msg["type"] == "task_dispatch":
-                asyncio.create_task(execute_task(ws, msg))
-
-async def execute_task(ws, msg):
-    task_id = msg["data"]["taskId"]
-    business_line_id = msg["data"]["buildConfig"]["businessLineId"]
-
-    # 推送日志
-    await ws.send(json.dumps({
-        "type": "log_push",
-        "requestId": f"log_{int(time.time())}",
-        "timestamp": int(time.time() * 1000),
-        "data": {
-            "taskId": task_id,
-            "businessLineId": business_line_id,
-            "logs": [{"timestamp": int(time.time() * 1000), "level": "info", "message": "开始构建..."}]
-        }
-    }))
-
-    # ===== 在这里实现您自己的构建逻辑 =====
-    await asyncio.sleep(5)  # 模拟构建
-    # =======================================
-
-    # 上报完成
-    await ws.send(json.dumps({
-        "type": "task_complete",
-        "requestId": f"done_{int(time.time())}",
-        "timestamp": int(time.time() * 1000),
-        "data": {
-            "taskId": task_id,
-            "status": "success",
-            "result": {"duration": 5000, "successCount": 1, "failCount": 0}
-        }
-    }))
-
-asyncio.run(main())
-\`\`\`
-
-## 接入检查清单
-
-完成接入后，请确认以下几点：
-
-- [ ] WebSocket 连接成功
-- [ ] 注册消息发送正确，Token 有效
-- [ ] 心跳每 30 秒发送一次
-- [ ] 收到 \`task_dispatch\` 后能正确解析任务参数
-- [ ] 构建过程中实时推送日志（包含 \`businessLineId\`）
-- [ ] 任务完成后发送 \`task_complete\`
-- [ ] 连接断开后能自动重连
-
-## 下一步
-
-- [协议规范](./protocol.md)：查看所有消息的完整字段说明
-`,
-};
-
-export async function loadDocList(): Promise<DocItem[]> {
+export function loadDocList(): DocItem[] {
   return docList;
 }
 
 export async function loadDocContent(fileName: string): Promise<string> {
-  const content = docContents[fileName];
+  const contentMap: Record<string, string> = {
+    'build-agent/overview.md': overviewContent,
+    'build-agent/quickstart.md': quickstartContent,
+    'build-agent/authentication.md': authenticationContent,
+  };
+
+  const content = contentMap[fileName];
   if (!content) {
     throw new Error(`文档 ${fileName} 不存在`);
   }
   return content;
 }
 
-export function markdownToHtml(markdown: string): string {
-  if (!markdown) return '';
-  marked.setOptions({ breaks: true, gfm: true });
-  return marked.parse(markdown) as string;
-}
-
-export function findDocItem(docList: DocItem[], docId: string): DocItem | null {
-  for (const doc of docList) {
-    if (doc.id === docId) return doc;
-    if (doc.children) {
-      const found = findDocItem(doc.children, docId);
+export function findDocItem(items: DocItem[], id: string): DocItem | null {
+  for (const item of items) {
+    if (item.id === id) return item;
+    if (item.children) {
+      const found = findDocItem(item.children, id);
       if (found) return found;
     }
   }
   return null;
-}
-
-export function getAllAccessibleDocs(docList: DocItem[]): DocItem[] {
-  const result: DocItem[] = [];
-  for (const doc of docList) {
-    if (!doc.isCategory && doc.fileName) result.push(doc);
-    if (doc.children) result.push(...getAllAccessibleDocs(doc.children));
-  }
-  return result;
 }
