@@ -119,6 +119,17 @@ function setupAccessGuard(router: Router) {
       routes: accessRoutes,
     });
 
+    // 已登录但没有任何可访问路由时，进入无权限页而不是默认首页落到 404。
+    if (!accessibleRoutes || accessibleRoutes.length === 0) {
+      accessStore.setAccessMenus([]);
+      accessStore.setAccessRoutes([]);
+      accessStore.setIsAccessChecked(true);
+      return {
+        path: '/auth/no-permission',
+        replace: true,
+      };
+    }
+
     // 保存菜单信息和路由信息
     accessStore.setAccessMenus(accessibleMenus);
     accessStore.setAccessRoutes(accessibleRoutes);

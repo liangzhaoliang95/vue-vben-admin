@@ -4,7 +4,9 @@
     "register": "Register",
     "codeLogin": "Code Login",
     "qrcodeLogin": "Qr Code Login",
-    "forgetPassword": "Forget Password"
+    "workWechatQrcodeLogin": "Work WeChat Qr Code Login",
+    "forgetPassword": "Forget Password",
+    "noPermission": "No Permission"
   },
   "dashboard": {
     "title": "Dashboard",

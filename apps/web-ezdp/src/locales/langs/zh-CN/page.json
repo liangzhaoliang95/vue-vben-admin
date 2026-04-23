@@ -4,7 +4,9 @@
     "register": "注册",
     "codeLogin": "验证码登录",
     "qrcodeLogin": "二维码登录",
-    "forgetPassword": "忘记密码"
+    "workWechatQrcodeLogin": "企业微信扫码登录",
+    "forgetPassword": "忘记密码",
+    "noPermission": "暂无权限"
   },
   "dashboard": {
     "title": "概览",

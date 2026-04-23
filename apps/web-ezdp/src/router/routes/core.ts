@@ -110,6 +110,15 @@ const coreRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        name: 'NoPermission',
+        path: 'no-permission',
+        component: () =>
+          import('#/views/_core/authentication/no-permission.vue'),
+        meta: {
+          title: $t('authentication.noPermissionTitle'),
+        },
+      },
+      {
         name: 'ForgetPassword',
         path: 'forget-password',
         component: () =>

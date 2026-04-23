@@ -73,6 +73,17 @@ async function handleLoginSuccess(accessToken: string) {
     accessStore.setAccessCodes(accessCodes);
     await businessStore.init(true, businessLines ?? []);
 
+    // 检查业务线是否为空，如果为空则跳转到无权限页面
+    if (!businessLines || businessLines.length === 0) {
+      // 清除登录过期状态
+      if (accessStore.loginExpired) {
+        accessStore.setLoginExpired(false);
+      }
+      // 跳转到无权限页面
+      router.push('/auth/no-permission');
+      return;
+    }
+
     // 清除登录过期状态
     if (accessStore.loginExpired) {
       accessStore.setLoginExpired(false);

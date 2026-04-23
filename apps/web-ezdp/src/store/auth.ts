@@ -64,7 +64,20 @@ export const useAuthStore = defineStore('auth', () => {
 
         await businessStore.init(true, businessLines ?? []);
 
-        if (accessStore.loginExpired) {
+        // 检查业务线是否为空，如果为空则跳转到无权限页面
+        if (!businessLines || businessLines.length === 0) {
+          if (accessStore.loginExpired) {
+            accessStore.setLoginExpired(false);
+          } else {
+            await router.push('/auth/no-permission');
+          }
+          // 显示无权限通知
+          notification.warning({
+            description: $t('authentication.noPermissionDescription'),
+            duration: 5,
+            message: $t('authentication.noPermissionTitle'),
+          });
+        } else if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
         } else {
           onSuccess
