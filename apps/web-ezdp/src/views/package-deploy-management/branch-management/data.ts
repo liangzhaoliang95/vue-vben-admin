@@ -62,6 +62,12 @@ export function useColumns(
       minWidth: 250,
     },
     {
+      field: 'versionTemplate',
+      title: $t('deploy.packageDeployManagement.branchManagement.versionTemplate'),
+      minWidth: 220,
+      formatter: ({ cellValue }) => cellValue || '-',
+    },
+    {
       field: 'enabled',
       title: $t('deploy.packageDeployManagement.branchManagement.status'),
       minWidth: 120,

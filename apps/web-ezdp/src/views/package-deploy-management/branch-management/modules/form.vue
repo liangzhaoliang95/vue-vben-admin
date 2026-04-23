@@ -50,6 +50,19 @@ const formSchema = computed(() => [
     label: $t('deploy.packageDeployManagement.branchManagement.sortOrder'),
   },
   {
+    component: 'Input',
+    componentProps: {
+      placeholder: $t(
+        'deploy.packageDeployManagement.branchManagement.versionTemplatePlaceholder',
+      ),
+    },
+    fieldName: 'versionTemplate',
+    help: $t(
+      'deploy.packageDeployManagement.branchManagement.versionTemplateHelp',
+    ),
+    label: $t('deploy.packageDeployManagement.branchManagement.versionTemplate'),
+  },
+  {
     component: 'Textarea',
     componentProps: {
       placeholder: $t(
@@ -86,6 +99,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         id.value = data.id;
         formApi.setValues({
           name: data.name,
+          versionTemplate: data.versionTemplate || '',
           sortOrder: data.sortOrder || 0,
           description: data.description || '',
           businessLineId: data.businessLineId,
@@ -125,6 +139,7 @@ async function handleConfirm() {
   // 构建提交数据
   const submitData: any = {
     name: values.name,
+    versionTemplate: values.versionTemplate?.trim() || '',
     description: values.description,
   };
 

@@ -7,6 +7,7 @@ export namespace BranchManagementApi {
     id: string;
     businessLineId: number;
     name: string;
+    versionTemplate: string;
     description: string;
     enabled: boolean;
     sortOrder: number;
