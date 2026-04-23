@@ -1166,7 +1166,7 @@ onDeactivated(() => {
 .project-item {
   position: relative;
   display: grid;
-  grid-template-columns: 200px 90px 100px 110px 1fr 80px;
+  grid-template-columns: 200px 90px 150px 110px 1fr 80px;
   column-gap: 16px;
   align-items: center;
   padding: 16px 20px;

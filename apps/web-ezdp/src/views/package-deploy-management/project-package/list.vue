@@ -889,7 +889,7 @@ onDeactivated(() => {
 .project-item {
   position: relative;
   display: grid;
-  grid-template-columns: 200px 90px 100px 110px;
+  grid-template-columns: 200px 90px minmax(0, 160px) 90px;
   column-gap: 16px;
   align-items: center;
   padding: 16px 20px;
@@ -987,10 +987,16 @@ onDeactivated(() => {
 }
 
 .version-tag {
+  display: inline-block;
   justify-self: start;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   font-family: Consolas, Monaco, 'Courier New', monospace;
   font-weight: 600;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  padding: 4px 10px;
 }
 
 .status-tag {
@@ -1009,6 +1015,12 @@ onDeactivated(() => {
   font-size: 14px;
   line-height: 20px;
   text-align: center;
+}
+
+.project-item .version-tag {
+  min-width: 0;
+  max-width: 100%;
+  padding: 4px 10px;
 }
 
 /* 表格行悬浮效果 */
