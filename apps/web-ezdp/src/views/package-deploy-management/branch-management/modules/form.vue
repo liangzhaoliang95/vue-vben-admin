@@ -52,15 +52,11 @@ const formSchema = computed(() => [
   {
     component: 'Input',
     componentProps: {
-      placeholder: $t(
-        'deploy.packageDeployManagement.branchManagement.versionTemplatePlaceholder',
-      ),
+      placeholder: '可选：如 5.66.4{{number:3}}',
     },
     fieldName: 'versionTemplate',
-    help: $t(
-      'deploy.packageDeployManagement.branchManagement.versionTemplateHelp',
-    ),
-    label: $t('deploy.packageDeployManagement.branchManagement.versionTemplate'),
+    help: '仅支持 {{number:N}}，如 {{number:3}} -> 001',
+    label: '版本号模板',
   },
   {
     component: 'Textarea',

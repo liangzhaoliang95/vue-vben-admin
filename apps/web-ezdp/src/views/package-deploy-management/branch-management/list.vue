@@ -11,7 +11,7 @@ import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 import { useBusinessStore } from '@vben/stores';
 
-import { Button, message, Modal } from 'ant-design-vue';
+import { Button, message } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -118,7 +118,7 @@ async function onToggleEnabled(row: BranchManagementApi.BranchManagement) {
       ]),
     );
     gridApi.query();
-  } catch (error) {
+  } catch {
     message.error(
       $t('deploy.packageDeployManagement.branchManagement.toggleFailed', [
         actionText,
