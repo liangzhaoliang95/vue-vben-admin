@@ -97,7 +97,7 @@ catalogs:
       specifier: ^14.0.3
       version: 14.0.3
     '@types/qrcode':
-      specifier: ^1.5.5
+      specifier: 1.5.6
       version: 1.5.6
     '@types/qs':
       specifier: ^6.14.0
@@ -340,7 +340,7 @@ catalogs:
       specifier: ^0.3.12
       version: 0.3.15
     qrcode:
-      specifier: ^1.5.4
+      specifier: 1.5.4
       version: 1.5.4
     qs:
       specifier: ^6.14.0
@@ -505,6 +505,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.10.0
+      '@types/qrcode':
+        specifier: 'catalog:'
+        version: 1.5.6
       '@vben/commitlint-config':
         specifier: workspace:*
         version: link:internal/lint-configs/commitlint-config
@@ -562,6 +565,9 @@ importers:
       playwright:
         specifier: 'catalog:'
         version: 1.56.1
+      qrcode:
+        specifier: 'catalog:'
+        version: 1.5.4
       rimraf:
         specifier: 'catalog:'
         version: 6.1.0
@@ -637,6 +643,9 @@ importers:
       '@vueuse/core':
         specifier: 'catalog:'
         version: 13.9.0(vue@3.5.23(typescript@5.9.3))
+      '@wecom/jssdk':
+        specifier: ^2.3.4
+        version: 2.3.4
       '@xterm/addon-fit':
         specifier: ^0.10.0
         version: 0.10.0(@xterm/xterm@5.5.0)
@@ -4445,6 +4454,9 @@ packages:
     resolution: {integrity: sha512-c+YJg3L8WuwftsTBnHw56knMERkKJSmB+GOqPENE+MBNKPvHTohEuSV5XcY7UAK25lXwkWNKZjEkbEzNZZS5ig==}
     peerDependencies:
       vue: ^3.5.17
+
+  '@wecom/jssdk@2.3.4':
+    resolution: {integrity: sha512-oLfuvwMBZCRRMowVi/JkKx/dLNGHCmmUbQfCYG7XGmHYbgkQJlAlack4jKBk+NVG4G0S24fIrAF+XwQuXXxgAw==}
 
   '@xterm/addon-fit@0.10.0':
     resolution: {integrity: sha512-UFYkDm4HUahf2lnEyHvio51TNGiLK66mqP2JoATy7hRZeXaGMRDr00JiSF7m63vR5WKATF605yEggJKsw0JpMQ==}
@@ -13013,6 +13025,8 @@ snapshots:
       dom-zindex: 1.0.6
       vue: 3.5.23(typescript@5.9.3)
       xe-utils: 3.7.9
+
+  '@wecom/jssdk@2.3.4': {}
 
   '@xterm/addon-fit@0.10.0(@xterm/xterm@5.5.0)':
     dependencies:

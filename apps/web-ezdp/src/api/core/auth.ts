@@ -50,3 +50,35 @@ export async function getAccessCodesApi() {
   // return requestClient.get<string[]>('/auth/codes');
   return [];
 }
+
+export namespace WorkWechatApi {
+  /** 生成二维码配置返回值 */
+  export interface QrcodeResult {
+    corpId: string;
+    agentId: string;
+  }
+
+  /** 通过企业微信code登录参数 */
+  export interface LoginParams {
+    key: string;
+  }
+
+  /** 登录返回值（与账号登录一致） */
+  export interface LoginResult {
+    accessToken: string;
+  }
+}
+
+/**
+ * 生成企业微信登录二维码配置
+ */
+export async function generateWorkWechatQrcodeApi() {
+  return requestClient.post<WorkWechatApi.QrcodeResult>('/nc/wechatWork/generateQrCode');
+}
+
+/**
+ * 通过企业微信code登录
+ */
+export async function workWechatLoginApi(params: WorkWechatApi.LoginParams) {
+  return requestClient.post<WorkWechatApi.LoginResult>('/nc/wechatWork/checkLoginStatus', params);
+}

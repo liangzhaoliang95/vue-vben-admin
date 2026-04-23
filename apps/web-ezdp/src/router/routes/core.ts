@@ -101,6 +101,15 @@ const coreRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        name: 'WorkWechatQrcodeLogin',
+        path: 'work-wechat-qrcode-login',
+        component: () =>
+          import('#/views/_core/authentication/work-wechat-qrcode-login.vue'),
+        meta: {
+          title: $t('authentication.workWechatQrcodeLogin'),
+        },
+      },
+      {
         name: 'ForgetPassword',
         path: 'forget-password',
         component: () =>
