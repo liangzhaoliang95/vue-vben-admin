@@ -14,6 +14,7 @@ import {
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 
+import { BarChart2 } from 'lucide-vue-next';
 import { Button, Form, Input, message, Modal } from 'ant-design-vue';
 import { marked } from 'marked';
 
@@ -320,7 +321,8 @@ watch(
     <!-- 实时日志按钮 - 放在搜索框左边 (index=45 < REFERENCE_VALUE=50) -->
     <template #header-right-45>
       <Button type="primary" class="realtime-log-btn mr-6" @click="openLogViewer">
-        📊 {{ $t('deploy.packageDeployManagement.projectPackage.realtimeLog') }}
+        <BarChart2 class="mr-1 size-4" />
+        {{ $t('deploy.packageDeployManagement.projectPackage.realtimeLog') }}
       </Button>
     </template>
 

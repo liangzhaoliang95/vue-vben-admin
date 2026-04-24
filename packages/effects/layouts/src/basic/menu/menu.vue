@@ -97,7 +97,19 @@ function handleMenuOpen(key: string, path: string[]) {
 </script>
 
 <template>
-  <div class="business-line-select">
+  <!-- 菜单收起时只显示 logo 图标 -->
+  <div v-if="collapse" class="business-line-collapsed">
+    <img
+      v-if="selectedOption?.logoUrl"
+      :src="selectedOption.logoUrl"
+      :alt="selectedOption.label"
+      class="size-6 object-contain"
+    />
+    <SvgAvatar2Icon v-else class="size-6" />
+  </div>
+
+  <!-- 菜单展开时显示完整下拉 -->
+  <div v-else class="business-line-select">
     <Select
       v-model="selectedValue"
       :disabled="switchingBusinessLine || businessStore.loading"
@@ -168,5 +180,14 @@ $namespace: vben;
 
 :deep(.business-line-select-content) {
   width: 100px !important;
+}
+
+// 收起状态只显示 logo
+.business-line-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 10px 0;
 }
 </style>
