@@ -10,9 +10,33 @@ export namespace SystemUserApi {
     phone: string;
     email: string;
     avatar: string;
+    externalId: string;
     status: 0 | 1;
     createdAt: number;
     updatedAt: number;
+  }
+
+  export interface WecomDepartment {
+    id: number;
+    name: string;
+    parentId: number;
+    order: number;
+  }
+
+  export interface WecomUser {
+    externalId: string;
+    loginName: string;
+    userName: string;
+    phone: string;
+    email: string;
+    avatar: string;
+    position: string;
+    status: number;
+    departmentIds: number[];
+    existsInSystem: boolean;
+    canSync: boolean;
+    conflictReason: string;
+    systemUserId?: string;
   }
 }
 
@@ -31,7 +55,7 @@ async function getUserList(params: Recordable<any>) {
  * @param data 用户数据
  */
 async function createUser(
-  data: Omit<SystemUserApi.User, 'createdAt' | 'id' | 'updatedAt'> & {
+  data: Omit<SystemUserApi.User, 'createdAt' | 'externalId' | 'id' | 'updatedAt'> & {
     password: string;
   },
 ) {
@@ -46,7 +70,9 @@ async function createUser(
  */
 async function updateUser(
   id: number | string,
-  data: Partial<Omit<SystemUserApi.User, 'createdAt' | 'id' | 'updatedAt'>> & {
+  data: Partial<
+    Omit<SystemUserApi.User, 'createdAt' | 'id' | 'updatedAt'>
+  > & {
     password?: string;
   },
 ) {
@@ -106,12 +132,30 @@ async function deleteUserBusinessLine(
   return requestClient.delete(`/user/${id}/business-line/${businessLineId}`);
 }
 
+async function getWecomSyncPreview() {
+  return requestClient.post<{
+    departments: SystemUserApi.WecomDepartment[];
+    users: SystemUserApi.WecomUser[];
+  }>('/user/wecom/sync-preview', {});
+}
+
+async function syncWecomUsers(externalIds: string[]) {
+  return requestClient.post<{
+    createdCount: number;
+    users: SystemUserApi.WecomUser[];
+  }>('/user/wecom/sync', {
+    externalIds,
+  });
+}
+
 export {
   createUser,
   deleteUser,
   deleteUserBusinessLine,
   getUserList,
   getUserPermissions,
+  getWecomSyncPreview,
   saveUserPermissions,
+  syncWecomUsers,
   updateUser,
 };

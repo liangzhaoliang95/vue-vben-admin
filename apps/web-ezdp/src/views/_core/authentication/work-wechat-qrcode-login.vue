@@ -167,6 +167,38 @@ function handleBackToLogin() {
   router.push('/auth/login');
 }
 
+// 重新生成二维码
+async function handleRetryQrcode() {
+  // 重置状态
+  hasError.value = false;
+  isLoading.value = true;
+  loginStatus.value = 'waiting';
+
+  // 清理旧的登录实例
+  if (wwLoginInstance && wwLoginInstance.unmount) {
+    wwLoginInstance.unmount();
+    wwLoginInstance = null;
+  }
+
+  try {
+    // 重新获取企业微信配置
+    const result = await generateWorkWechatQrcodeApi();
+
+    if (result) {
+      const config = {
+        agentId: result.agentId || 'your_agent_id',
+        corpId: result.corpId || 'your_corp_id',
+      };
+      // 重新初始化登录组件
+      await initWorkWechatLogin(config);
+    }
+  } catch (error) {
+    console.error('重新加载企业微信配置失败:', error);
+    isLoading.value = false;
+    hasError.value = true;
+  }
+}
+
 // 组件卸载时清理
 onBeforeUnmount(() => {
   if (wwLoginInstance && wwLoginInstance.unmount) {
@@ -244,13 +276,22 @@ onMounted(async () => {
       >
         <div class="text-center">
           <div class="text-destructive mb-4">二维码加载失败或登录失败</div>
-          <button
-            class="bg-primary text-primary-foreground hover:bg-primary/90 rounded px-4 py-2 text-sm"
-            type="button"
-            @click="handleBackToLogin"
-          >
-            返回账号登录
-          </button>
+          <div class="flex flex-col gap-2">
+            <button
+              class="bg-primary text-primary-foreground hover:bg-primary/90 rounded px-4 py-2 text-sm"
+              type="button"
+              @click="handleRetryQrcode"
+            >
+              重新生成二维码
+            </button>
+            <button
+              class="border-input bg-background hover:bg-accent hover:text-accent-foreground rounded border px-4 py-2 text-sm"
+              type="button"
+              @click="handleBackToLogin"
+            >
+              返回账号登录
+            </button>
+          </div>
         </div>
       </div>
 

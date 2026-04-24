@@ -9,6 +9,7 @@ import type { SystemUserApi } from '#/api/system/user';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
+import { ref } from 'vue';
 
 import { Button, message, Modal } from 'ant-design-vue';
 
@@ -18,6 +19,7 @@ import { $t } from '#/locales';
 import Form from '#/views/usermanage/modules/form.vue';
 import { useColumns, useGridFormSchema } from '#/views/usermanage/user/data';
 import PermissionContent from '#/views/usermanage/user/modules/permission.vue';
+import WecomSyncModal from '#/views/usermanage/user/modules/wecom-sync-modal.vue';
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -28,6 +30,8 @@ const [PermissionDrawer, permissionDrawerApi] = useVbenDrawer({
   connectedComponent: PermissionContent,
   destroyOnClose: true,
 });
+
+const wecomSyncOpen = ref(false);
 
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
@@ -147,6 +151,10 @@ function onCreate() {
   formDrawerApi.setData({}).open();
 }
 
+function onOpenWecomSync() {
+  wecomSyncOpen.value = true;
+}
+
 function onPermissionSetting(row: SystemUserApi.User) {
   permissionDrawerApi.setData({
     userId: row.id,
@@ -164,12 +172,24 @@ function onPermissionSuccess() {
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
     <PermissionDrawer @success="onPermissionSuccess" />
+    <WecomSyncModal v-model:open="wecomSyncOpen" @success="onRefresh" />
     <Grid :table-title="$t('system.user.title')">
       <template #toolbar-tools>
-        <Button type="primary" @click="onCreate">
-          <Plus class="size-5" />
-          {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
-        </Button>
+        <div class="flex items-center gap-2">
+          <!-- 企微同步按钮已隐藏 -->
+          <!-- <Button @click="onOpenWecomSync">
+            <img
+              alt="企业微信"
+              class="mr-1 size-4"
+              src="https://developer.work.weixin.qq.com/favicon.ico"
+            />
+            企微同步
+          </Button> -->
+          <Button type="primary" @click="onCreate">
+            <Plus class="size-5" />
+            {{ $t('ui.actionTitle.create', [$t('system.user.name')]) }}
+          </Button>
+        </div>
       </template>
     </Grid>
   </Page>

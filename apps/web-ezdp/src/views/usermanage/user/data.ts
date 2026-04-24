@@ -49,6 +49,12 @@ export function useColumns(
       width: 150,
     },
     {
+      field: 'externalId',
+      title: 'External ID',
+      width: 180,
+      showOverflow: true,
+    },
+    {
       field: 'phone',
       title: $t('system.user.phone'),
       width: 150,
@@ -186,6 +192,20 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: z
         .union([
           z.string().max(500, { message: $t('system.user.avatarMaxLength') }),
+          z.literal(''),
+        ])
+        .optional(),
+    },
+    {
+      component: 'Input',
+      componentProps: {
+        placeholder: $t('system.user.externalIdPlaceholder'),
+      },
+      fieldName: 'externalId',
+      label: $t('system.user.externalId'),
+      rules: z
+        .union([
+          z.string().max(100, { message: $t('system.user.externalIdMaxLength') }),
           z.literal(''),
         ])
         .optional(),

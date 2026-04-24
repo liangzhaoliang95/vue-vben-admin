@@ -42,6 +42,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
         if (!submitData.password || submitData.password.trim() === '') {
           delete submitData.password;
         }
+        // 调试：打印提交数据
+        console.log('提交数据:', submitData);
         await updateUser(id.value, submitData as any);
       } else {
         // 新建
