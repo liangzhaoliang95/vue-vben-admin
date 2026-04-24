@@ -6,7 +6,7 @@ import type {
   WorkbenchTrendItem,
 } from '@vben/common-ui';
 
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 import {
@@ -18,12 +18,60 @@ import {
   WorkbenchTrends,
 } from '@vben/common-ui';
 import { preferences } from '@vben/preferences';
-import { useUserStore } from '@vben/stores';
+import { useBusinessStore, useUserStore } from '@vben/stores';
 import { openWindow } from '@vben/utils';
+
+import { Card, message, Select, Spin } from 'ant-design-vue';
+
+import { setUserDefaultBusinessLine } from '#/api/system/user';
 
 import AnalyticsVisitsSource from '../analytics/analytics-visits-source.vue';
 
 const userStore = useUserStore();
+const businessStore = useBusinessStore();
+
+// 默认业务线设置
+const loading = ref(false);
+const selectedBusinessLineId = ref<number | undefined>();
+
+// 计算当前默认业务线
+const defaultBusinessLine = computed(() => {
+  return businessStore.businessLines.find((item) => item.businessLine.isDefault);
+});
+
+// 初始化选中的业务线
+onMounted(() => {
+  if (defaultBusinessLine.value) {
+    selectedBusinessLineId.value = defaultBusinessLine.value.businessLine.id;
+  }
+});
+
+// 设置默认业务线
+async function handleSetDefaultBusinessLine(businessLineId: number) {
+  if (businessLineId === defaultBusinessLine.value?.businessLine.id) {
+    return;
+  }
+
+  loading.value = true;
+  try {
+    await setUserDefaultBusinessLine(businessLineId);
+    message.success('设置默认业务线成功');
+
+    // 刷新业务线数据
+    await businessStore.init(true);
+
+    // 更新选中的业务线
+    selectedBusinessLineId.value = businessLineId;
+  } catch (error: any) {
+    message.error(error.message || '设置默认业务线失败');
+    // 恢复之前的选择
+    if (defaultBusinessLine.value) {
+      selectedBusinessLineId.value = defaultBusinessLine.value.businessLine.id;
+    }
+  } finally {
+    loading.value = false;
+  }
+}
 
 // 这是一个示例数据，实际项目中需要根据实际情况进行调整
 // url 也可以是内部路由，在 navTo 方法中识别处理，进行内部跳转
@@ -250,9 +298,65 @@ function navTo(nav: WorkbenchProjectItem | WorkbenchQuickNavItem) {
         <WorkbenchTrends :items="trendItems" class="mt-5" title="最新动态" />
       </div>
       <div class="w-full lg:w-2/5">
+        <!-- 默认业务线设置 -->
+        <Card class="mt-5 lg:mt-0" title="默认业务线设置">
+          <Spin :spinning="loading">
+            <div v-if="businessStore.businessLines.length > 0">
+              <div class="mb-2 text-sm text-gray-500">
+                选择您的默认业务线，登录后将自动切换到该业务线
+              </div>
+              <Select
+                v-model:value="selectedBusinessLineId"
+                class="w-full"
+                placeholder="请选择默认业务线"
+                size="large"
+                @change="handleSetDefaultBusinessLine"
+              >
+                <template #suffixIcon>
+                  <span class="text-gray-400">▼</span>
+                </template>
+                <template #labelRender="{ label, value }">
+                  <div class="flex h-full items-center gap-2">
+                    <template
+                      v-for="item in businessStore.businessLines"
+                      :key="item.businessLine.id"
+                    >
+                      <template v-if="item.businessLine.id === value">
+                        <img
+                          v-if="item.businessLine.logoUrl"
+                          :src="item.businessLine.logoUrl"
+                          alt=""
+                          class="h-5 w-5 flex-shrink-0 rounded"
+                        />
+                      </template>
+                    </template>
+                    <span class="font-medium leading-none">{{ label }}</span>
+                  </div>
+                </template>
+                <Select.Option
+                  v-for="item in businessStore.businessLines"
+                  :key="item.businessLine.id"
+                  :value="item.businessLine.id"
+                >
+                  <div class="flex items-center gap-2">
+                    <img
+                      v-if="item.businessLine.logoUrl"
+                      :src="item.businessLine.logoUrl"
+                      alt=""
+                      class="h-5 w-5 flex-shrink-0 rounded"
+                    />
+                    <span class="font-medium">{{ item.businessLine.name }}</span>
+                  </div>
+                </Select.Option>
+              </Select>
+            </div>
+            <div v-else class="text-center text-gray-500">暂无业务线</div>
+          </Spin>
+        </Card>
+
         <WorkbenchQuickNav
           :items="quickNavItems"
-          class="mt-5 lg:mt-0"
+          class="mt-5"
           title="快捷导航"
           @click="navTo"
         />

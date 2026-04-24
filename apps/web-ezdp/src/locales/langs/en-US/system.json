@@ -42,6 +42,8 @@
     "isInternal": "Is Internal",
     "status": "Status",
     "sortOrder": "Sort Order",
+    "isDefault": "Is Default",
+    "setDefault": "Set as Default",
     "operation": "Operation",
     "keyword": "Keyword"
   },

@@ -39,8 +39,8 @@ export function useFormSchema(): VbenFormSchema[] {
         optionType: 'button',
       },
       defaultValue: 0,
-      fieldName: 'isInternal',
-      label: $t('system.businessLine.isInternal'),
+      fieldName: 'isDefault',
+      label: $t('system.businessLine.isDefault'),
     },
     {
       component: 'InputNumber',
@@ -129,6 +129,20 @@ export function useColumns<T = SystemBusinessLineApi.BusinessLine>(
     },
     {
       cellRender: {
+        attrs: {
+          options: [
+            { label: $t('common.no'), value: 0 },
+            { label: $t('common.yes'), value: 1 },
+          ],
+        },
+        name: 'CellTag',
+      },
+      field: 'isDefault',
+      title: $t('system.businessLine.isDefault'),
+      width: 120,
+    },
+    {
+      cellRender: {
         attrs: { beforeChange: onStatusChange },
         name: onStatusChange ? 'CellSwitch' : 'CellTag',
       },
@@ -145,12 +159,19 @@ export function useColumns<T = SystemBusinessLineApi.BusinessLine>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['edit'],
+        options: [
+          'edit',
+          {
+            code: 'setDefault',
+            label: $t('system.businessLine.setDefault'),
+            ifShow: (row: T) => (row as any).isDefault !== 1,
+          },
+        ],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('system.businessLine.operation'),
-      width: 130,
+      width: 180,
     },
   ];
 }

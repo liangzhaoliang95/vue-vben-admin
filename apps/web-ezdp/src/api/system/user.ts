@@ -148,6 +148,16 @@ async function syncWecomUsers(externalIds: string[]) {
   });
 }
 
+/**
+ * 设置用户默认业务线
+ * @param businessLineId 业务线 ID
+ */
+async function setUserDefaultBusinessLine(businessLineId: number) {
+  return requestClient.post('/user/setDefaultBusinessLine', {
+    businessLineId,
+  });
+}
+
 export {
   createUser,
   deleteUser,
@@ -156,6 +166,7 @@ export {
   getUserPermissions,
   getWecomSyncPreview,
   saveUserPermissions,
+  setUserDefaultBusinessLine,
   syncWecomUsers,
   updateUser,
 };

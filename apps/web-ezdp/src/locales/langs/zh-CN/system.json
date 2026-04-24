@@ -42,6 +42,8 @@
     "isInternal": "是否内部业务线",
     "status": "状态",
     "sortOrder": "排序",
+    "isDefault": "是否默认",
+    "setDefault": "设为默认",
     "operation": "操作",
     "keyword": "搜索关键词"
   },

@@ -15,6 +15,7 @@ import { Button, Modal } from 'ant-design-vue';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   getBusinessLineList,
+  setDefaultBusinessLine,
   updateBusinessLine,
 } from '#/api/system/business-line';
 import { $t } from '#/locales';
@@ -69,6 +70,10 @@ function onActionClick(
       onEdit(e.row);
       break;
     }
+    case 'setDefault': {
+      onSetDefault(e.row);
+      break;
+    }
   }
 }
 
@@ -120,6 +125,19 @@ async function onStatusChange(
 
 function onEdit(row: SystemBusinessLineApi.BusinessLine) {
   formDrawerApi.setData(row).open();
+}
+
+async function onSetDefault(row: SystemBusinessLineApi.BusinessLine) {
+  try {
+    await confirm(
+      `确定要将 ${row.name} 设为默认业务线吗？`,
+      '设置默认业务线',
+    );
+    await setDefaultBusinessLine(row.id);
+    onRefresh();
+  } catch {
+    // 用户取消操作
+  }
 }
 
 function onRefresh() {

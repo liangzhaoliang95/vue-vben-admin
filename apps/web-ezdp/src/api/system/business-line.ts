@@ -14,6 +14,7 @@ export namespace SystemBusinessLineApi {
     isInternal: number;
     status: 0 | 1;
     sortOrder: number;
+    isDefault: number;
     createdAt: number;
     updatedAt: number;
   }
@@ -67,9 +68,18 @@ async function switchBusinessLine(businessLineId: number) {
   });
 }
 
+/**
+ * 设置默认业务线
+ * @param id 业务线 ID
+ */
+async function setDefaultBusinessLine(id: number | string) {
+  return requestClient.post(`/businessLine/${id}/setDefault`, {});
+}
+
 export {
   createBusinessLine,
   getBusinessLineList,
+  setDefaultBusinessLine,
   switchBusinessLine,
   updateBusinessLine,
 };
