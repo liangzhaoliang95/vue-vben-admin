@@ -4,11 +4,13 @@ import type { WorkbenchProjectItem } from '@vben/common-ui';
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { WorkbenchHeader, WorkbenchProject } from '@vben/common-ui';
+import { WorkbenchHeader } from '@vben/common-ui';
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 
 import { Card, message, Select, Spin } from 'ant-design-vue';
+import { Package, Rocket } from 'lucide-vue-next';
+import { Solar } from 'lunar-javascript';
 
 import { setUserDefaultBusinessLine } from '#/api/system/user';
 
@@ -32,6 +34,7 @@ onMounted(() => {
     selectedBusinessLineId.value = defaultBusinessLine.value.businessLine.id;
   }
   fetchWeather();
+  fetchHitokoto();
 });
 
 async function handleSetDefaultBusinessLine(businessLineId: number) {
@@ -56,35 +59,20 @@ async function handleSetDefaultBusinessLine(businessLineId: number) {
 
 // ---- 天气 & 问候语 ----
 
-const WMO_CODES: Record<number, string> = {
-  0: '晴',
-  1: '晴间多云',
-  2: '多云',
-  3: '阴',
-  45: '雾',
-  48: '雾凇',
-  51: '小毛毛雨',
-  53: '毛毛雨',
-  55: '大毛毛雨',
-  61: '小雨',
-  63: '中雨',
-  65: '大雨',
-  71: '小雪',
-  73: '中雪',
-  75: '大雪',
-  77: '冰粒',
-  80: '阵雨',
-  81: '中阵雨',
-  82: '强阵雨',
-  85: '阵雪',
-  86: '强阵雪',
-  95: '雷阵雨',
-  96: '雷阵雨伴冰雹',
-  99: '强雷阵雨伴冰雹',
-};
+interface WeatherInfo {
+  desc: string;
+  temp: string;
+  feelsLike: string;
+  humidity: string;
+  windSpeed: string;
+  iconUrl: string;
+  city: string;
+  region: string;
+  minTemp: string;
+  maxTemp: string;
+}
 
-const weatherDesc = ref('');
-const weatherTemp = ref('');
+const weather = ref<WeatherInfo | null>(null);
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -98,29 +86,66 @@ function getGreeting(): string {
 
 const greeting = computed(() => getGreeting());
 
-async function fetchWeather() {
+const hitokoto = ref('');
+
+async function fetchHitokoto() {
   try {
-    const geoRes = await fetch('https://ipapi.co/json/');
-    const geo = await geoRes.json();
-    const { latitude: lat, longitude: lon } = geo;
-
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weathercode&temperature_unit=celsius&timezone=auto`;
-    const weatherRes = await fetch(url);
-    const data = await weatherRes.json();
-
-    const code: number = data.current.weathercode;
-    const temp: number = Math.round(data.current.temperature_2m);
-    const feelsLike: number = Math.round(data.current.apparent_temperature);
-
-    weatherDesc.value = WMO_CODES[code] ?? '未知';
-    weatherTemp.value = `${temp}℃（体感 ${feelsLike}℃）`;
+    const res = await fetch('https://v1.hitokoto.cn/?c=b&c=d&c=h', { cache: 'no-cache' });
+    const data = await res.json();
+    hitokoto.value = data.hitokoto ?? '';
   } catch {
-    weatherDesc.value = '';
-    weatherTemp.value = '';
+    hitokoto.value = '';
   }
 }
 
-// ---- 快捷入口（使用 WorkbenchProject 样式）----
+async function fetchWeather() {
+  try {
+    const res = await fetch('https://wttr.in/?format=j1', { cache: 'no-cache' });
+    const data = await res.json();
+    const current = data.current_condition?.[0];
+    const area = data.nearest_area?.[0];
+    if (!current) return;
+
+    const todayWeather = data.weather?.[0];
+    weather.value = {
+      desc: current.weatherDesc?.[0]?.value ?? '',
+      temp: current.temp_C ?? '',
+      feelsLike: current.FeelsLikeC ?? '',
+      humidity: current.humidity ?? '',
+      windSpeed: current.windspeedKmph ?? '',
+      iconUrl: current.weatherIconUrl?.[0]?.value ?? '',
+      city: area?.areaName?.[0]?.value ?? '',
+      region: area?.region?.[0]?.value ?? area?.country?.[0]?.value ?? '',
+      minTemp: todayWeather?.mintempC ?? '',
+      maxTemp: todayWeather?.maxtempC ?? '',
+    };
+  } catch {
+    weather.value = null;
+  }
+}
+
+// ---- 日期 & 黄历（lunar-javascript 真实数据）----
+
+const WEEK_DAYS = ['日', '一', '二', '三', '四', '五', '六'];
+
+const today = new Date();
+const solar = Solar.fromDate(today);
+const lunar = solar.getLunar();
+
+const dateStr = computed(() => {
+  const y = today.getFullYear();
+  const m = String(today.getMonth() + 1).padStart(2, '0');
+  const d = String(today.getDate()).padStart(2, '0');
+  return `${y}年${m}月${d}日`;
+});
+const weekStr = computed(() => `星期${WEEK_DAYS[today.getDay()]}`);
+const lunarDate = computed(() => ({
+  year: `${lunar.getYearInGanZhi()}${lunar.getYearShengXiao()}年`,
+  month: `${lunar.getMonthInChinese()}月`,
+  day: lunar.getDayInChinese(),
+}));
+const luckyList = computed(() => lunar.getDayYi().slice(0, 2).join('、') || '诸事不宜');
+const unluckyList = computed(() => lunar.getDayJi().slice(0, 2).join('、') || '百无禁忌');
 
 const hasPackagePermission = computed(
   () =>
@@ -172,22 +197,90 @@ function navTo(nav: WorkbenchProjectItem) {
       :avatar="userStore.userInfo?.avatar || preferences.app.defaultAvatar"
     >
       <template #title>
-        {{ greeting }}, {{ userStore.userInfo?.realName }}, 开始您一天的工作吧！
+        {{ greeting }}, {{ userStore.userInfo?.realName }}，{{ hitokoto || '开始您一天的工作吧！' }}
       </template>
       <template #description>
-        <span v-if="weatherDesc">{{ weatherDesc }}，{{ weatherTemp }}</span>
-        <span v-else>加载天气中...</span>
+        <div v-if="weather" class="flex items-center gap-3">
+          <img
+            v-if="weather.iconUrl"
+            :src="weather.iconUrl"
+            class="h-8 w-8"
+            alt="weather icon"
+          />
+          <div class="flex flex-col">
+            <span class="text-sm">
+              {{ weather.city }}{{ weather.region ? `，${weather.region}` : '' }}
+            </span>
+            <span class="text-foreground/70 text-xs">
+              {{ weather.desc }} {{ weather.temp }}℃ · {{ weather.minTemp }}~{{ weather.maxTemp }}℃ · 湿度 {{ weather.humidity }}% · 风速 {{ weather.windSpeed }} km/h
+            </span>
+          </div>
+        </div>
+        <span v-else class="text-foreground/50 text-sm">加载天气中...</span>
+      </template>
+      <template #extra>
+        <div class="flex flex-col justify-center text-right">
+          <span class="text-foreground/80">{{ dateStr }}</span>
+          <span class="text-lg">{{ weekStr }}</span>
+        </div>
+
+        <div class="mx-8 flex flex-col justify-center text-right md:mx-12">
+          <span class="text-foreground/80">{{ lunarDate.year }}</span>
+          <span class="text-lg">{{ lunarDate.month }}{{ lunarDate.day }}</span>
+        </div>
+
+        <div class="mr-4 flex flex-col justify-center text-right md:mr-10">
+          <span class="text-foreground/80">宜</span>
+          <span class="text-sm">{{ luckyList }}</span>
+        </div>
+
+        <div class="mr-4 flex flex-col justify-center text-right md:mr-10">
+          <span class="text-foreground/80">忌</span>
+          <span class="text-sm">{{ unluckyList }}</span>
+        </div>
       </template>
     </WorkbenchHeader>
 
     <div class="mt-5 flex flex-col gap-5 lg:flex-row">
       <!-- 快捷入口 -->
       <div v-if="quickEntryItems.length > 0" class="w-full lg:w-3/5">
-        <WorkbenchProject
-          :items="quickEntryItems"
-          title="快捷入口"
-          @click="navTo"
-        />
+        <Card title="快捷入口">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div
+              v-for="item in quickEntryItems"
+              :key="item.title"
+              class="group cursor-pointer rounded-lg border border-gray-200 p-4 transition-all hover:border-blue-400 hover:shadow-md dark:border-gray-700 dark:hover:border-blue-500"
+              @click="navTo(item)"
+            >
+              <div class="flex items-start gap-3">
+                <div
+                  :style="{ backgroundColor: item.color }"
+                  class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg"
+                >
+                  <Package
+                    v-if="item.icon === 'lucide:package'"
+                    class="h-5 w-5 text-white"
+                  />
+                  <Rocket
+                    v-else-if="item.icon === 'lucide:rocket'"
+                    class="h-5 w-5 text-white"
+                  />
+                </div>
+                <div class="flex-1">
+                  <h3 class="mb-1 font-medium text-gray-900 dark:text-gray-100">
+                    {{ item.title }}
+                  </h3>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    {{ item.content }}
+                  </p>
+                  <div class="mt-2 text-xs text-gray-400">
+                    {{ item.group }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <!-- 默认业务线设置 -->
@@ -195,7 +288,7 @@ function navTo(nav: WorkbenchProjectItem) {
         <Card title="默认业务线设置">
           <Spin :spinning="loading">
             <div v-if="businessStore.businessLines.length > 0">
-              <div class="mb-2 text-sm text-gray-500">
+              <div class="mb-4 text-sm text-gray-500 dark:text-gray-400">
                 选择您的默认业务线，登录后将自动切换到该业务线
               </div>
               <Select

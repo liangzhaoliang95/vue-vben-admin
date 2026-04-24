@@ -163,7 +163,6 @@ const contentStyle = computed((): CSSProperties => {
 
   return {
     height: `calc(100% - ${headerHeight + collapseHeight}px)`,
-    paddingTop: '8px',
     ...contentWidthStyle.value,
   };
 });
@@ -276,7 +275,7 @@ function handleMouseleave() {
       v-if="!collapse && !isSidebarMixed && showFixedButton"
       v-model:expand-on-hover="expandOnHover"
     />
-    <div v-if="slots.logo" :style="headerStyle">
+    <div v-if="slots.logo" :style="headerStyle" class="flex items-center">
       <slot name="logo"></slot>
     </div>
     <VbenScrollbar :style="contentStyle" shadow shadow-border>

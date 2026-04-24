@@ -150,6 +150,10 @@ export const useAuthStore = defineStore('auth', () => {
   async function fetchUserInfo() {
     let userInfo: null | UserInfo = null;
     userInfo = await getUserInfoApi();
+    // 如果后端不返回 homePath，使用默认值
+    if (userInfo && !userInfo.homePath) {
+      userInfo.homePath = preferences.app.defaultHomePath;
+    }
     userStore.setUserInfo(userInfo);
     return userInfo;
   }

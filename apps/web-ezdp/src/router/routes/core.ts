@@ -63,6 +63,19 @@ const coreRoutes: RouteRecordRaw[] = [
           title: $t('deploy.projectManagement.projectConfig.title'),
         },
       },
+      // 工作台 - 预置路由，所有登录用户均可访问，不依赖角色权限
+      {
+        name: 'Workspace',
+        path: '/workspace',
+        component: () =>
+          import('#/views/dashboard/workspace/index.vue'),
+        meta: {
+          affixTab: true,
+          icon: 'carbon:workspace',
+          order: -1,
+          title: $t('page.dashboard.workspace'),
+        },
+      },
     ],
   },
   {

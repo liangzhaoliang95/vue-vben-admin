@@ -173,8 +173,8 @@ $namespace: vben;
   border-radius: 10px;
 
   :deep(.business-line-select-trigger) {
-    width: 95%;
-    margin: 10px auto;
+    width: 90%;
+    margin: 0px 10px 10px auto;
   }
 }
 

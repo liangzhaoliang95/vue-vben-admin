@@ -66,11 +66,11 @@ const logoSrc = computed(() => {
 </script>
 
 <template>
-  <div :class="theme" class="flex h-full items-center text-lg">
+  <div :class="theme" class="flex h-full w-full items-center text-lg">
     <a
       :class="$attrs.class"
       :href="href"
-      class="flex h-full items-center gap-2 overflow-hidden px-3 text-lg leading-normal transition-all duration-500"
+      class="flex h-full items-center gap-2 px-3 text-lg leading-normal transition-all duration-500"
     >
       <VbenAvatar
         v-if="logoSrc"
@@ -82,7 +82,7 @@ const logoSrc = computed(() => {
       />
       <template v-if="!collapsed">
         <slot name="text">
-          <span class="text-foreground truncate text-nowrap font-semibold">
+          <span class="text-foreground flex items-center truncate text-nowrap font-semibold">
             {{ text }}
           </span>
         </slot>

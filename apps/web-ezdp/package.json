@@ -48,6 +48,7 @@
     "ant-design-vue": "catalog:",
     "dayjs": "catalog:",
     "highlight.js": "^11.11.1",
+    "lunar-javascript": "^1.7.7",
     "marked": "^17.0.1",
     "pinia": "catalog:",
     "vue": "catalog:",

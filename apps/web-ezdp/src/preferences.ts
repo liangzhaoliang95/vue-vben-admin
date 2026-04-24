@@ -14,11 +14,12 @@ export const overridesPreferences = defineOverridesPreferences({
     watermark: false,
     watermarkContent: 'EZDP',
     accessMode: 'backend',
-    defaultHomePath: '/package-deploy-management/project-deploy',
+    defaultHomePath: '/workspace',
   },
   logo: {
     enable: true,
     fit: 'contain',
+    size: 48,
     // 使用 BASE_URL 确保在任何部署路径下都能正常访问
     source: `./logo.png`,
   },
@@ -38,6 +39,9 @@ export const overridesPreferences = defineOverridesPreferences({
   footer: {
     enable: true,
     fixed: true,
+  },
+  header: {
+    height: 72,
   },
   sidebar: {
     width: 220,

@@ -66,7 +66,20 @@ async function generateAccessible(
   }
 
   // 生成菜单
-  const accessibleMenus = generateMenus(accessibleRoutes, options.router);
+  let accessibleMenus = generateMenus(accessibleRoutes, options.router);
+
+  // 从核心路由中提取工作台菜单（预置菜单，所有用户都拥有）
+  const rootRoute = router.getRoutes().find((item) => item.path === '/');
+  if (rootRoute?.children) {
+    const workspaceRoute = rootRoute.children.find(
+      (child) => child.name === 'Workspace',
+    );
+    if (workspaceRoute) {
+      // 将工作台路由转换为菜单格式并添加到菜单列表最前面
+      const workspaceMenus = generateMenus([workspaceRoute as RouteRecordRaw], options.router);
+      accessibleMenus = [...workspaceMenus, ...accessibleMenus];
+    }
+  }
 
   return { accessibleMenus, accessibleRoutes };
 }
