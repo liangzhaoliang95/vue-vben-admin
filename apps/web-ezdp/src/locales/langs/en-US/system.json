@@ -31,7 +31,13 @@
     "emailInvalid": "Invalid email format",
     "emailMaxLength": "Email must be at most 100 characters",
     "avatarMaxLength": "Avatar URL must be at most 500 characters",
-    "externalIdMaxLength": "External ID must be at most 100 characters"
+    "externalIdMaxLength": "External ID must be at most 100 characters",
+    "profileSettings": "Profile Settings",
+    "profileSettingsTitle": "Profile Settings",
+    "newPassword": "New Password",
+    "newPasswordPlaceholder": "Leave blank to keep current password",
+    "updateProfileSuccess": "Profile updated successfully",
+    "updateProfileFailed": "Failed to update profile"
   },
   "businessLine": {
     "title": "Business Line Management",

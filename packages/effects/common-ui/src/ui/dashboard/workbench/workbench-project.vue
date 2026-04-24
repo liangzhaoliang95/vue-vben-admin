@@ -27,7 +27,7 @@ defineEmits(['click']);
 
 <template>
   <Card>
-    <CardHeader class="py-4">
+    <CardHeader class="border-b py-4">
       <CardTitle class="text-lg">{{ title }}</CardTitle>
     </CardHeader>
     <CardContent class="flex flex-wrap p-0">
@@ -41,6 +41,7 @@ defineEmits(['click']);
             'rounded-br-xl': index === items.length - 1,
           }"
           class="border-border group w-full cursor-pointer border-r border-t p-4 transition-all hover:shadow-xl md:w-1/2 lg:w-1/3"
+          @click="$emit('click', item)"
         >
           <div class="flex items-center">
             <VbenIcon

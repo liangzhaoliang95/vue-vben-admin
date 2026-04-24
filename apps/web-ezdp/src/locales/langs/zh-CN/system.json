@@ -31,7 +31,13 @@
     "emailInvalid": "邮箱格式不正确",
     "emailMaxLength": "邮箱最多100个字符",
     "avatarMaxLength": "头像URL最多500个字符",
-    "externalIdMaxLength": "外部ID最多100个字符"
+    "externalIdMaxLength": "外部ID最多100个字符",
+    "profileSettings": "个人设置",
+    "profileSettingsTitle": "个人设置",
+    "newPassword": "新密码",
+    "newPasswordPlaceholder": "留空则不修改密码",
+    "updateProfileSuccess": "个人信息更新成功",
+    "updateProfileFailed": "个人信息更新失败"
   },
   "businessLine": {
     "title": "业务线管理",

@@ -158,6 +158,17 @@ async function setUserDefaultBusinessLine(businessLineId: number) {
   });
 }
 
+/**
+ * 更新个人信息（只能改自己的名称、头像、密码）
+ */
+async function updateProfile(data: {
+  userName?: string;
+  avatar?: string;
+  password?: string;
+}) {
+  return requestClient.put('/user/profile', data);
+}
+
 export {
   createUser,
   deleteUser,
@@ -168,5 +179,6 @@ export {
   saveUserPermissions,
   setUserDefaultBusinessLine,
   syncWecomUsers,
+  updateProfile,
   updateUser,
 };

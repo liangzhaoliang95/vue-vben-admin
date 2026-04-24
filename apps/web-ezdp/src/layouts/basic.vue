@@ -14,7 +14,7 @@ import {
 import { preferences } from '@vben/preferences';
 import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 
-import { Button, Modal } from 'ant-design-vue';
+import { Button, Form, Input, message, Modal } from 'ant-design-vue';
 import { marked } from 'marked';
 
 import {
@@ -23,6 +23,8 @@ import {
   markAllAsRead,
   markAsRead,
 } from '#/api/core/notification';
+import { updateProfile } from '#/api/system/user';
+import { getUserInfoApi } from '#/api/core/user';
 import LogViewer from '#/components/log-viewer/index.vue';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
@@ -59,9 +61,64 @@ const notificationContent = computed(() => {
   }
 });
 
+// 个人设置弹窗
+const showProfileModal = ref(false);
+const profileLoading = ref(false);
+const profileForm = ref({
+  userName: '',
+  avatar: '',
+  password: '',
+});
+
+function handleOpenProfile() {
+  profileForm.value = {
+    userName: userStore.userInfo?.realName || '',
+    avatar: userStore.userInfo?.avatar || '',
+    password: '',
+  };
+  showProfileModal.value = true;
+}
+
+async function handleSaveProfile() {
+  // 前端验证
+  if (profileForm.value.password && profileForm.value.password.length < 6) {
+    message.error($t('system.user.passwordMinLength'));
+    return;
+  }
+
+  profileLoading.value = true;
+  try {
+    const data: { userName?: string; avatar?: string; password?: string } = {};
+    if (profileForm.value.userName) data.userName = profileForm.value.userName;
+    if (profileForm.value.avatar !== undefined) data.avatar = profileForm.value.avatar;
+    if (profileForm.value.password) data.password = profileForm.value.password;
+
+    await updateProfile(data);
+    message.success($t('system.user.updateProfileSuccess'));
+    showProfileModal.value = false;
+
+    // 刷新用户信息
+    try {
+      const userInfo = await getUserInfoApi();
+      userStore.setUserInfo(userInfo);
+    } catch (e) {
+      console.error('刷新用户信息失败:', e);
+    }
+  } catch (error: any) {
+    message.error($t('system.user.updateProfileFailed'));
+  } finally {
+    profileLoading.value = false;
+  }
+}
+
 // 实时日志相关 - 已移至 store 统一管理
 
 const menus = computed(() => [
+  {
+    handler: handleOpenProfile,
+    icon: 'lucide:user-cog',
+    text: $t('system.user.profileSettings'),
+  },
   // 隐藏文档、GitHub、问题&帮助
   // {
   //   handler: () => {
@@ -295,6 +352,37 @@ watch(
       >
         <LoginForm />
       </AuthenticationLoginExpiredModal>
+
+      <!-- 个人设置弹窗 -->
+      <Modal
+        v-model:open="showProfileModal"
+        :title="$t('system.user.profileSettingsTitle')"
+        :width="600"
+        :confirm-loading="profileLoading"
+        @ok="handleSaveProfile"
+        @cancel="showProfileModal = false"
+      >
+        <Form :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }" class="mt-4">
+          <Form.Item :label="$t('system.user.userName')">
+            <Input
+              v-model:value="profileForm.userName"
+              :placeholder="$t('system.user.userNamePlaceholder')"
+            />
+          </Form.Item>
+          <Form.Item :label="$t('system.user.avatar')">
+            <Input
+              v-model:value="profileForm.avatar"
+              :placeholder="$t('system.user.avatarPlaceholder')"
+            />
+          </Form.Item>
+          <Form.Item :label="$t('system.user.newPassword')">
+            <Input.Password
+              v-model:value="profileForm.password"
+              :placeholder="$t('system.user.newPasswordPlaceholder')"
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <!-- 通知详情弹窗 -->
       <Modal
