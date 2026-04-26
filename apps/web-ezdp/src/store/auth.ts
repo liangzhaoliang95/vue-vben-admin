@@ -5,7 +5,12 @@ import { useRouter } from 'vue-router';
 
 import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
-import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
+import {
+  useAccessStore,
+  useBusinessStore,
+  useTabbarStore,
+  useUserStore,
+} from '@vben/stores';
 
 import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
@@ -25,6 +30,7 @@ export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
   const userStore = useUserStore();
   const businessStore = useBusinessStore();
+  const tabbarStore = useTabbarStore();
   const wsStore = useWebSocketStore();
   const router = useRouter();
 
@@ -129,10 +135,15 @@ export const useAuthStore = defineStore('auth', () => {
     // 3. 清除 businessStore（使用 reset 方法，不是 $reset）
     businessStore.reset();
 
-    // 4. 清除 WebSocket 连接
+    // 4. 清除 tabbar（避免切换账号后看到上一个用户的标签页）
+    const affixTabs = tabbarStore.tabs.filter((tab) => tab?.meta?.affixTab === true);
+    tabbarStore.tabs = affixTabs.length > 0 ? affixTabs : [];
+    tabbarStore.updateCacheTabs();
+
+    // 5. 清除 WebSocket 连接
     wsStore.disconnectAll();
 
-    // 5. 清除当前 authStore
+    // 6. 清除当前 authStore
     loginLoading.value = false;
 
     // 直接使用 window.location.replace 强制跳转，确保页面刷新
