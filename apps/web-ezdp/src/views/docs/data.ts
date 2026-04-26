@@ -872,7 +872,7 @@ const deployAgentOverviewContent = `<div class="page-doc">
   <div class="deploy-agent-overview">
     <!-- 头部标题区域 -->
     <div class="overview-header">
-      <h1>DeployAgent API 接口</h1>
+      <h1>Deploy Agent 接入指南</h1>
       <p class="overview-desc">通过标准 HTTP API 实现版本发布，支持 K8s、OSS、OBS、Shell 等多种部署方式</p>
     </div>
 
@@ -1189,7 +1189,15 @@ const getVersionsByBranchApiData = {
       }
     ]
   }, null, 2)
-}}
+},
+  example: JSON.stringify({
+    total: 13,
+    list: [
+      { id: '69e61817b0da272fd15c917a', version: '2.43.12', description: '', status: 'failed', buildTime: 1776687127793 },
+      { id: '69e5f647b0da272fd15c910d', version: '2.43.11', description: '', status: 'success', buildTime: 1776678471678 }
+    ]
+  }, null, 2)
+}
 
 const getVersionDetailApiData = {
   apiName: '获取版本详情',
@@ -1364,11 +1372,438 @@ const submitDeployResultApiData = {
   }, null, 2)
 };
 
+// ============= Server Agent 文档内容 =============
+
+const serverAgentOverviewContent = `<div class="page-doc">
+  <div class="page-hero">
+    <div class="page-hero-icon">🖥️</div>
+    <h1>Server Agent 接入指南</h1>
+    <p>服务器纳管代理，通过 TCP 长连接实现远程终端、状态监控与反向隧道能力</p>
+  </div>
+
+  <div class="page-cards">
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#e8f4fd;color:#1890ff">🖥️</div>
+      <div class="page-card-body">
+        <h3>服务器纳管</h3>
+        <p>自动注册服务器信息，统一管理多台服务器</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#fff0f6;color:#eb2f96">💻</div>
+      <div class="page-card-body">
+        <h3>远程终端</h3>
+        <p>基于 WebSocket 的 Web 终端，无需 SSH 直连</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#f6ffed;color:#52c41a">🔄</div>
+      <div class="page-card-body">
+        <h3>TCP 反向隧道</h3>
+        <p>穿透内网防火墙，支持 NAT 后服务器接入</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#fff7e6;color:#fa8c16">📊</div>
+      <div class="page-card-body">
+        <h3>状态监控</h3>
+        <p>实时上报心跳，监控服务器在线状态</p>
+      </div>
+    </div>
+    <div class="page-card">
+      <div class="page-card-icon" style="background:#f9f0ff;color:#722ed1">🏗️</div>
+      <div class="page-card-body">
+        <h3>多架构支持</h3>
+        <p>支持 Linux/macOS，amd64/arm64 架构</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>通信协议</h2>
+    <p class="page-section-desc">Server Agent 使用 TCP 长连接与服务端通信，连接建立后通过 Token 完成鉴权</p>
+    <div class="ws-protocol-grid">
+      <div class="ws-event-card ws-card-up" style="--delay:0ms">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <span class="ws-direction-label">Client → Server</span>
+        </div>
+        <div class="ws-event-name">TCP 连接</div>
+        <div class="ws-event-desc">Agent 启动时建立 TCP 长连接（端口 82）</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-up" style="--delay:60ms">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <span class="ws-direction-label">Client → Server</span>
+        </div>
+        <div class="ws-event-name">注册认证</div>
+        <div class="ws-event-desc">携带 Token 注册服务器信息，获取 serverId</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-up" style="--delay:120ms">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+          <span class="ws-direction-label">Client → Server</span>
+        </div>
+        <div class="ws-event-name">心跳维持</div>
+        <div class="ws-event-desc">定期发送心跳保持长连接活跃</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+      <div class="ws-event-card ws-card-down" style="--delay:180ms">
+        <div class="ws-card-glow"></div>
+        <div class="ws-card-header">
+          <div class="ws-direction-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </div>
+          <span class="ws-direction-label">Server → Client</span>
+        </div>
+        <div class="ws-event-name">终端代理</div>
+        <div class="ws-event-desc">服务端下发终端命令，Agent 执行并返回输出</div>
+        <div class="ws-card-pulse"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>接入流程</h2>
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>创建环境代理并获取 Token</h4>
+          <p>在 EZDP 管理界面的【服务器管理】→【环境代理】中创建代理，系统自动生成唯一认证 Token</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>下载安装脚本</h4>
+          <p>在目标服务器执行安装脚本，自动下载对应架构的二进制文件并初始化服务配置</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>配置连接参数</h4>
+          <p>编辑 <code>/etc/ezdp-server-agent/config.json</code>，填入 <code>serverAddr</code>、<code>serverName</code> 与 <code>token</code></p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>启动并验证服务</h4>
+          <p>启动 Server Agent 服务，检查服务状态，确认在 EZDP 平台显示为在线</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h4>使用 Web 终端</h4>
+          <p>在 EZDP 平台点击【打开终端】按钮，即可通过浏览器访问服务器终端</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>安装命令</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+      </div>
+      <pre><code># 下载安装脚本
+curl -fsSL https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/install.sh -o install.sh
+chmod +x install.sh
+
+# 安装 Server Agent
+sudo ./install.sh install
+
+# 启动服务
+sudo ./install.sh start
+
+# 设置开机自启
+sudo ./install.sh enable</code></pre>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>配置文件</h2>
+    <p class="page-section-desc">配置文件位于 <code>/etc/ezdp-server-agent/config.json</code>，请在启动前完成配置</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">json</span>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+      </div>
+      <pre><code>{
+  "serverAddr": "your-ezdp-server.com:82",
+  "serverId": "",
+  "serverName": "prod-web-01",
+  "token": "YOUR_TOKEN_HERE",
+  "version": "1.0.0"
+}</code></pre>
+    </div>
+    <div style="margin-top:16px">
+      <table style="width:100%;border-collapse:collapse;border:1px solid var(--vben-border-color)">
+        <thead style="background:var(--vben-background-color-deep)">
+          <tr>
+            <th style="padding:10px;text-align:left;border:1px solid var(--vben-border-color);font-weight:600">字段</th>
+            <th style="padding:10px;text-align:left;border:1px solid var(--vben-border-color);font-weight:600">说明</th>
+            <th style="padding:10px;text-align:left;border:1px solid var(--vben-border-color);font-weight:600">必填</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)"><code>serverAddr</code></td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">EZDP 服务端地址与端口</td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">是</td>
+          </tr>
+          <tr>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)"><code>serverId</code></td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">服务器 ID（首次注册后自动填充，无需手动填写）</td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">否</td>
+          </tr>
+          <tr>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)"><code>serverName</code></td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">服务器名称（用于平台显示，建议使用有意义的名称）</td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">是</td>
+          </tr>
+          <tr>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)"><code>token</code></td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">认证 Token（从 EZDP 管理后台获取，仅显示一次）</td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">是</td>
+          </tr>
+          <tr>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)"><code>version</code></td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">Agent 版本号（安装时自动填充）</td>
+            <td style="padding:10px;border:1px solid var(--vben-border-color)">是</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>服务管理</h2>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash</span>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+      </div>
+      <pre><code># 查看服务状态
+sudo ./install.sh status
+
+# 启动服务
+sudo ./install.sh start
+
+# 停止服务
+sudo ./install.sh stop
+
+# 重启服务
+sudo ./install.sh restart
+
+# 查看日志
+sudo ./install.sh logs
+
+# 卸载服务
+sudo ./install.sh uninstall</code></pre>
+    </div>
+  </div>
+
+</div>`;
+
+const serverAgentAuthenticationContent = `<div class="page-doc">
+  <div class="page-hero">
+    <div class="page-hero-icon">🔐</div>
+    <h1>鉴权与安全</h1>
+    <p>Server Agent 基于 Token 认证，首次接入后通过 serverId 维持身份识别</p>
+  </div>
+
+  <div class="page-section">
+    <h2>Token 获取流程</h2>
+    <p class="page-section-desc">在 EZDP 管理界面创建环境代理时，系统会自动生成唯一的认证 Token</p>
+    <div class="steps-list">
+      <div class="step-item">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>进入服务器管理</h4>
+          <p>登录 EZDP，进入【服务器管理】→【环境代理】页面</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>创建环境代理</h4>
+          <p>点击【新建服务器】，填写代理名称与描述后提交创建</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>复制 Token</h4>
+          <p>Token 仅在创建后显示一次，请立即复制并写入 Agent 配置文件</p>
+        </div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>写入配置文件</h4>
+          <p>将 Token 填入 <code>/etc/ezdp-server-agent/config.json</code> 的 <code>token</code> 字段，并重启服务</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>Token 使用</h2>
+    <p class="page-section-desc">Agent 连接服务端后，在注册阶段通过 <code>token</code> 字段完成鉴权</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">json - config.json</span>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block').querySelector('code').textContent).then(()=>{this.textContent='✓ 已复制';setTimeout(()=>this.textContent='复制',2000)})">复制</button>
+      </div>
+      <pre><code>{
+  "serverAddr": "your-ezdp-server.com:82",
+  "serverId": "",
+  "serverName": "prod-web-01",
+  "token": "your-agent-token-here",
+  "version": "1.0.0"
+}</code></pre>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>验证结果</h2>
+    <div class="auth-result-grid">
+      <div class="auth-result-card auth-success">
+        <div class="ws-card-glow"></div>
+        <div class="auth-result-header">
+          <div class="auth-result-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <h4>验证通过</h4>
+        </div>
+        <div class="auth-result-body">
+          <p>服务端返回注册成功，Agent 进入在线状态</p>
+          <div class="auth-result-fields">
+            <div class="auth-field">
+              <span class="auth-field-key">状态</span>
+              <span class="auth-field-value auth-value-true">online</span>
+            </div>
+            <div class="auth-field">
+              <span class="auth-field-key">serverId</span>
+              <span class="auth-field-value">"507f191e810c19729de860ea"</span>
+            </div>
+            <div class="auth-field">
+              <span class="auth-field-key">message</span>
+              <span class="auth-field-value">"注册成功"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="auth-result-card auth-fail">
+        <div class="ws-card-glow"></div>
+        <div class="auth-result-header">
+          <div class="auth-result-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+          <h4>验证失败</h4>
+        </div>
+        <div class="auth-result-body">
+          <p>Token 无效或已失效，连接被拒绝</p>
+          <div class="auth-result-fields">
+            <div class="auth-field">
+              <span class="auth-field-key">状态</span>
+              <span class="auth-field-value auth-value-false">offline</span>
+            </div>
+            <div class="auth-field">
+              <span class="auth-field-key">message</span>
+              <span class="auth-field-value">"Token 验证失败"</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>安全建议</h2>
+    <div class="security-cards">
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(250,173,20,0.1);color:#faad14">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="security-card-body">
+          <h4>Token 不提交代码仓库</h4>
+          <p>不要将配置文件或 Token 提交到 Git 仓库，避免凭据泄露</p>
+        </div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(24,144,255,0.1);color:#1890ff">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </div>
+        <div class="security-card-body">
+          <h4>定期轮换 Token</h4>
+          <p>建议按周期更新环境代理 Token，降低长期暴露风险</p>
+        </div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(82,196,26,0.1);color:#52c41a">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="security-card-body">
+          <h4>保护配置文件权限</h4>
+          <p>执行 <code>chmod 600 /etc/ezdp-server-agent/config.json</code>，防止其他用户读取 Token</p>
+        </div>
+      </div>
+      <div class="security-card">
+        <div class="security-card-icon" style="background:rgba(114,46,209,0.1);color:#722ed1">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="security-card-body">
+          <h4>限制网络出站访问</h4>
+          <p>通过防火墙限制 Agent 出站目的地址，仅允许访问 EZDP 服务端口（82）</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-section">
+    <h2>serverId 机制</h2>
+    <p class="page-section-desc">首次注册成功后，服务端会分配唯一的 <code>serverId</code>，后续重连使用此 ID 维持身份</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-lang">bash - 查看自动写入的 serverId</span>
+      </div>
+      <pre><code>cat /etc/ezdp-server-agent/config.json
+
+# 首次注册后，serverId 会被自动写入：
+# {
+#   "serverAddr": "your-ezdp-server.com:82",
+#   "serverId": "507f191e810c19729de860ea",  ← 自动填充
+#   "serverName": "prod-web-01",
+#   "token": "your-agent-token-here",
+#   "version": "1.0.0"
+# }</code></pre>
+    </div>
+  </div>
+</div>`;
+
 // ============= 文档树结构 =============
 export const docList: DocItem[] = [
   {
     id: 'deployAgent',
-    title: 'DeployAgent API 接口',
+    title: 'Deploy Agent 接入指南',
     description: '发布代理 HTTP API 接口文档',
     isCategory: true,
     children: [
@@ -1504,6 +1939,26 @@ export const docList: DocItem[] = [
       },
     ],
   },
+  {
+    id: 'serverAgent',
+    title: 'Server Agent 接入指南',
+    description: '服务器纳管代理接入文档',
+    isCategory: true,
+    children: [
+      {
+        id: 'serverAgent-overview',
+        title: '概述',
+        apiType: 'markdown',
+        fileName: 'server-agent/overview.md',
+      },
+      {
+        id: 'serverAgent-authentication',
+        title: '鉴权与安全',
+        apiType: 'markdown',
+        fileName: 'server-agent/authentication.md',
+      },
+    ],
+  },
 ];
 
 // ============= 辅助函数 =============
@@ -1518,6 +1973,8 @@ export async function loadDocContent(fileName: string): Promise<string> {
     'build-agent/authentication.md': authenticationContent,
     'deploy-agent/overview.md': deployAgentOverviewContent,
     'deploy-agent/authentication.md': deployAgentAuthenticationContent,
+    'server-agent/overview.md': serverAgentOverviewContent,
+    'server-agent/authentication.md': serverAgentAuthenticationContent,
   };
 
   const content = contentMap[fileName];

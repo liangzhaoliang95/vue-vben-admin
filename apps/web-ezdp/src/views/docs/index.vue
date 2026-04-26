@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { Page } from '@vben/common-ui';
 import { Spin, Empty, Input, message, Tree, Table } from 'ant-design-vue';
 import { $t } from '#/locales';
@@ -9,6 +10,7 @@ import { SystemConfig } from '#/api/system/config';
 
 defineOptions({ name: 'DocCenter' });
 
+const route = useRoute();
 const docList = ref<DocItem[]>([]);
 const searchKeyword = ref('');
 const contentRef = ref<HTMLElement | null>(null);
@@ -117,6 +119,12 @@ async function loadDoc(docId: string) {
       htmlContent = htmlContent.replace(/https:\/\/simple\.plaso\.cn\/server\/ezdp/g, fullApiUrl);
     }
 
+    // 如果是 ServerAgent 文档，使用系统配置替换连接地址
+    if ((docId === 'serverAgent-overview' || docId === 'serverAgent-authentication') && systemConfig.value) {
+      const serverAgentAddr = systemConfig.value.serverAgentAddr || 'your-ezdp-server.com:82';
+      htmlContent = htmlContent.replace(/your-ezdp-server\.com:82/g, serverAgentAddr);
+    }
+
     tocItems.value = extractToc(htmlContent);
     state.value.content = htmlContent;
 
@@ -165,7 +173,7 @@ function scrollToHeading(id: string) {
   }
 }
 
-function onTreeSelect(selectedKeys: string[]) {
+function onTreeSelect(selectedKeys: (string | number)[]) {
   if (selectedKeys.length > 0) {
     const key = selectedKeys[0]!;
     const doc = findDocItem(docList.value, key);
@@ -277,8 +285,14 @@ onMounted(async () => {
     const docs = await loadDocList();
     docList.value = docs;
     expandedKeys.value = collectCategoryKeys(docs);
-    const firstDoc = findFirstSelectableDoc(docs);
-    if (firstDoc) await loadDoc(firstDoc.id);
+
+    const targetDocId = route.query.doc as string | undefined;
+    if (targetDocId && findDocItem(docs, targetDocId)) {
+      await loadDoc(targetDocId);
+    } else {
+      const firstDoc = findFirstSelectableDoc(docs);
+      if (firstDoc) await loadDoc(firstDoc.id);
+    }
   } catch (error: any) {
     message.error('加载文档列表失败: ' + error.message);
   }
@@ -344,7 +358,7 @@ onMounted(async () => {
           <div v-else-if="!currentDoc && !state.loading" class="doc-empty-state">
             <div class="welcome-box">
               <div class="welcome-icon">📚</div>
-              <h2>Build Agent 接入文档</h2>
+              <h2>Agent 接入文档中心</h2>
               <p>从左侧选择文档开始阅读</p>
             </div>
           </div>

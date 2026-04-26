@@ -3,6 +3,8 @@ import { computed, nextTick, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
+import { IconifyIcon } from '@vben/icons';
+
 import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -124,32 +126,38 @@ const closeCreateModal = () => {
 const handleCreateServer = async () => {
   try {
     await createFormRef.value?.validate();
-    createLoading.value = true;
+  } catch (error: any) {
+    if (error?.errorFields?.length) {
+      // 聚焦第一个错误字段
+      const firstField = error.errorFields[0]?.name?.[0];
+      if (firstField) {
+        await nextTick();
+        const el = document.querySelector<HTMLElement>(
+          `.create-server-modal [name="${firstField}"]`,
+        );
+        el?.focus();
+      }
+    }
+    return;
+  }
 
+  createLoading.value = true;
+  try {
     const result = await ServerManagementApi.createEnvironmentAgent({
       name: createFormData.value.name,
       description: createFormData.value.description,
     });
 
     message.success($t('serverManagement.environmentAgent.createSuccess'));
-
-    // 关闭创建弹窗
     closeCreateModal();
 
-    // 显示Token结果弹窗
     tokenResultData.value = {
       token: result.token,
       serverName: createFormData.value.name,
     };
     tokenResultVisible.value = true;
-
-    // 刷新列表
     gridApi.query();
   } catch (error: any) {
-    if (error?.errorFields) {
-      // 表单验证错误
-      return;
-    }
     message.error(error?.message || $t('common.saveFailed'));
   } finally {
     createLoading.value = false;
@@ -296,6 +304,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
 });
 
+function openDocs() {
+  const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
+  window.open(`${baseUrl}#/docs?doc=serverAgent-overview`, '_blank');
+}
+
 function onCreate() {
   openCreateModal();
 }
@@ -305,6 +318,10 @@ function onCreate() {
   <Page auto-content-height>
     <Grid :table-title="$t('serverManagement.server.title')">
       <template #toolbar-tools>
+        <Button type="default" class="mr-3" @click="openDocs">
+          <IconifyIcon icon="mdi:file-document-outline" class="mr-1 size-4" aria-hidden="true" />
+          {{ $t('page.docs.title') }}
+        </Button>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
           {{ $t('serverManagement.server.createServer') }}
@@ -400,18 +417,19 @@ function onCreate() {
     <Modal
       v-model:open="createVisible"
       :title="$t('serverManagement.server.createServer')"
-      :width="600"
+      :width="580"
       :confirm-loading="createLoading"
+      :ok-text="$t('serverManagement.server.createAndShowToken')"
+      :cancel-text="$t('common.cancel')"
+      wrap-class-name="create-server-modal"
       @ok="handleCreateServer"
       @cancel="closeCreateModal"
     >
       <Form
         ref="createFormRef"
-        :label-col="{ span: 5 }"
         :model="createFormData"
         :rules="createRules"
-        :wrapper-col="{ span: 19 }"
-        layout="horizontal"
+        layout="vertical"
       >
         <FormItem
           :label="$t('serverManagement.environmentAgent.name')"
@@ -419,6 +437,9 @@ function onCreate() {
         >
           <Input
             v-model:value="createFormData.name"
+            name="name"
+            autocomplete="off"
+            :maxlength="50"
             :placeholder="$t('serverManagement.environmentAgent.namePlaceholder')"
           />
         </FormItem>
@@ -429,22 +450,31 @@ function onCreate() {
         >
           <Input.TextArea
             v-model:value="createFormData.description"
+            name="description"
+            autocomplete="off"
+            spellcheck="false"
+            :maxlength="200"
+            show-count
             :placeholder="$t('serverManagement.environmentAgent.descriptionPlaceholder')"
-            :rows="3"
+            :rows="4"
           />
         </FormItem>
       </Form>
 
-      <div class="mt-4 p-3 bg-gray-50 rounded-lg">
-        <div class="text-sm font-medium text-gray-700 mb-2">
-          {{ $t('serverManagement.server.instructionTitle') }}
-        </div>
-        <div class="space-y-2 text-xs text-gray-600">
-          <p>{{ $t('serverManagement.server.instruction1') }}</p>
-          <p>{{ $t('serverManagement.server.instruction2') }}</p>
-          <p>{{ $t('serverManagement.server.instruction3') }}</p>
-        </div>
-      </div>
+      <Alert
+        class="create-server-instruction"
+        :message="$t('serverManagement.server.instructionTitle')"
+        type="info"
+        show-icon
+      >
+        <template #description>
+          <ul class="create-server-instruction-list">
+            <li>{{ $t('serverManagement.server.instruction1') }}</li>
+            <li>{{ $t('serverManagement.server.instruction2') }}</li>
+            <li class="create-server-instruction-warning">{{ $t('serverManagement.server.instruction3') }}</li>
+          </ul>
+        </template>
+      </Alert>
     </Modal>
 
     <!-- Token 结果弹窗 -->
@@ -553,5 +583,63 @@ function onCreate() {
 .terminal-modal .ant-modal-body {
   padding: 0;
   height: 600px;
+}
+
+/* 新建服务器弹窗样式优化 */
+.create-server-modal .ant-modal-header {
+  padding: 20px 24px 12px;
+}
+
+.create-server-modal .ant-modal-body {
+  padding: 12px 24px 8px;
+}
+
+.create-server-modal .ant-modal-footer {
+  padding: 12px 24px 20px;
+}
+
+.create-server-modal .ant-form-item {
+  margin-bottom: 16px;
+}
+
+.create-server-modal .ant-alert-info {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.create-server-modal .ant-alert-info .ant-alert-message {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.create-server-modal .ant-alert-info .ant-alert-description {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.create-server-modal .ant-alert-info .ant-alert-icon {
+  color: #1677ff;
+}
+</style>
+
+<style scoped>
+.create-server-instruction {
+  margin-top: 16px;
+  border-radius: 8px;
+}
+
+.create-server-instruction-list {
+  margin: 0;
+  padding-left: 20px;
+  list-style: disc;
+  line-height: 1.8;
+  font-size: 13px;
+}
+
+.create-server-instruction-list li {
+  margin-bottom: 4px;
+}
+
+.create-server-instruction-warning {
+  font-weight: 500;
+  color: #d46b08;
 }
 </style>

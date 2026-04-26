@@ -8,7 +8,7 @@ import type { DeployAgent } from '#/api/deploy-tools/deploy-agent';
 import { onActivated, ref, watch } from 'vue';
 
 import { Page } from '@vben/common-ui';
-import { Plus } from '@vben/icons';
+import { IconifyIcon, Plus } from '@vben/icons';
 import { useBusinessStore } from '@vben/stores';
 
 import { Button, message, Modal } from 'ant-design-vue';
@@ -27,7 +27,7 @@ import TokenDialog from './modules/token-dialog.vue';
 // 打开文档中心
 function openDocs() {
   const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
-  window.open(`${baseUrl}#/docs`, '_blank');
+  window.open(`${baseUrl}#/docs?doc=deployAgent-overview`, '_blank');
 }
 
 const formRef = ref<InstanceType<typeof Form>>();
@@ -155,8 +155,9 @@ function onRefresh(token?: string) {
     <TokenDialog ref="tokenDialogRef" />
     <Grid :table-title="$t('deploy.tools.deployAgent.title')">
       <template #toolbar-tools>
-        <Button type="link" @click="openDocs" style="margin-right: 12px;">
-          📚 {{ $t('page.docs.title') }}
+        <Button type="default" class="mr-3" @click="openDocs">
+          <IconifyIcon icon="mdi:file-document-outline" class="mr-1 size-4" aria-hidden="true" />
+          {{ $t('page.docs.title') }}
         </Button>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
