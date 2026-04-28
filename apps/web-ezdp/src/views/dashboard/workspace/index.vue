@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { WorkbenchProjectItem } from '@vben/common-ui';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { WorkbenchHeader } from '@vben/common-ui';
@@ -9,10 +9,12 @@ import { preferences } from '@vben/preferences';
 import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 
 import { Card, message, Select, Spin } from 'ant-design-vue';
-import { Package, Rocket } from 'lucide-vue-next';
+import { ArrowRight, Bell, Package, Rocket } from 'lucide-vue-next';
 import { Solar } from 'lunar-javascript';
 
 import { setUserDefaultBusinessLine } from '#/api/system/user';
+import { getPublicAnnouncementList } from '#/api/core/announcement';
+import type { AnnouncementApi } from '#/api/core/announcement';
 
 const userStore = useUserStore();
 const businessStore = useBusinessStore();
@@ -29,6 +31,35 @@ const defaultBusinessLine = computed(() => {
   );
 });
 
+// ---- 公告 ----
+
+const announcements = ref<AnnouncementApi.AnnouncementItem[]>([]);
+const announcementsLoading = ref(false);
+
+async function fetchAnnouncements() {
+  if (!businessStore.currentBusinessLineId) return;
+  announcementsLoading.value = true;
+  try {
+    const res = await getPublicAnnouncementList({
+      businessLineId: businessStore.currentBusinessLineId,
+    });
+    announcements.value = res ?? [];
+  } catch {
+    announcements.value = [];
+  } finally {
+    announcementsLoading.value = false;
+  }
+}
+
+function handleAnnouncementClick(item: AnnouncementApi.AnnouncementItem) {
+  if (!item.linkUrl) return;
+  if (item.linkUrl.startsWith('http')) {
+    window.open(item.linkUrl, '_blank');
+  } else {
+    router.push(item.linkUrl);
+  }
+}
+
 onMounted(() => {
   if (defaultBusinessLine.value) {
     selectedBusinessLineId.value = defaultBusinessLine.value.businessLine.id;
@@ -36,6 +67,17 @@ onMounted(() => {
   fetchWeather();
   fetchHitokoto();
 });
+
+// 监听业务线变化，重新加载公告
+watch(
+  () => businessStore.currentBusinessLineId,
+  (newId) => {
+    if (newId) {
+      fetchAnnouncements();
+    }
+  },
+  { immediate: true }, // 立即执行一次，确保在业务线初始化后加载公告
+);
 
 async function handleSetDefaultBusinessLine(businessLineId: number) {
   if (businessLineId === defaultBusinessLine.value?.businessLine.id) {
@@ -240,6 +282,66 @@ function navTo(nav: WorkbenchProjectItem) {
         </div>
       </template>
     </WorkbenchHeader>
+
+    <!-- 公告栏 -->
+    <div class="mt-5 w-full">
+      <Card>
+        <template #title>
+          <div class="flex items-center gap-2">
+            <Bell class="h-5 w-5 text-blue-500" />
+            <span>公告栏</span>
+          </div>
+        </template>
+
+        <Spin :spinning="announcementsLoading">
+          <div v-if="announcements.length > 0" class="grid grid-cols-1 gap-2 md:grid-cols-2">
+            <div
+              v-for="(item, index) in announcements"
+              :key="item.id"
+              :class="[
+                'group rounded-lg border border-gray-200 bg-gray-50 p-4 transition-all dark:border-gray-700 dark:bg-gray-800/50',
+                item.linkUrl
+                  ? 'cursor-pointer hover:border-blue-400 hover:bg-white hover:shadow-md dark:hover:border-blue-500 dark:hover:bg-gray-800'
+                  : ''
+              ]"
+              @click="handleAnnouncementClick(item)"
+            >
+              <div class="flex items-start gap-3">
+                <!-- 序号徽标 -->
+                <div class="flex-shrink-0 flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                  {{ index + 1 }}
+                </div>
+
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate leading-6">
+                    {{ item.title }}
+                  </h3>
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                    {{ item.content }}
+                  </p>
+                </div>
+
+                <!-- 右侧箭头图标 -->
+                <div
+                  v-if="item.linkUrl"
+                  class="flex-shrink-0 self-center text-gray-300 group-hover:text-blue-500 transition-colors dark:text-gray-600"
+                >
+                  <ArrowRight class="h-4 w-4" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-else
+            class="flex flex-col items-center justify-center rounded-lg bg-gray-50 py-12 dark:bg-gray-800/50"
+          >
+            <Bell class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+            <p class="text-sm text-gray-500 dark:text-gray-400">暂无公告</p>
+          </div>
+        </Spin>
+      </Card>
+    </div>
 
     <div class="mt-5 flex flex-col gap-5 lg:flex-row">
       <!-- 快捷入口 -->

@@ -39,5 +39,24 @@
     "testChannel": "测试渠道",
     "testSuccess": "渠道测试成功",
     "testFailed": "渠道测试失败"
+  },
+  "announcement": {
+    "title": "公告管理",
+    "name": "公告",
+    "titleField": "公告标题",
+    "content": "公告内容",
+    "link": "跳转链接",
+    "sort": "排序",
+    "sortPlaceholder": "请输入排序值（数字越小越靠前）",
+    "enabled": "启用状态",
+    "searchPlaceholder": "请输入公告标题搜索",
+    "titlePlaceholder": "请输入公告标题",
+    "contentPlaceholder": "请输入公告内容",
+    "linkPlaceholder": "请输入跳转链接（选填）",
+    "titleRequired": "公告标题不能为空",
+    "contentRequired": "公告内容不能为空",
+    "dragSortTip": "拖拽行可调整排序",
+    "sortUpdateSuccess": "排序更新成功",
+    "sortUpdateFailed": "排序更新失败"
   }
 }

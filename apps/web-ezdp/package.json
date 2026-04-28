@@ -48,11 +48,16 @@
     "ant-design-vue": "catalog:",
     "dayjs": "catalog:",
     "highlight.js": "^11.11.1",
+    "lucide-vue-next": "catalog:",
     "lunar-javascript": "^1.7.7",
     "marked": "^17.0.1",
     "pinia": "catalog:",
+    "sortablejs": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:",
     "xterm": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/sortablejs": "catalog:"
   }
 }

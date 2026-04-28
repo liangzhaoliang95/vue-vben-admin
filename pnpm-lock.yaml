@@ -103,7 +103,7 @@ catalogs:
       specifier: ^6.14.0
       version: 6.14.0
     '@types/sortablejs':
-      specifier: ^1.15.8
+      specifier: 1.15.9
       version: 1.15.9
     '@typescript-eslint/eslint-plugin':
       specifier: ^8.35.1
@@ -367,7 +367,7 @@ catalogs:
       specifier: ^2.0.0
       version: 2.0.0
     sortablejs:
-      specifier: ^1.15.6
+      specifier: 1.15.6
       version: 1.15.6
     stylelint:
       specifier: ^16.21.0
@@ -664,6 +664,9 @@ importers:
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
+      lucide-vue-next:
+        specifier: 'catalog:'
+        version: 0.507.0(vue@3.5.23(typescript@5.9.3))
       lunar-javascript:
         specifier: ^1.7.7
         version: 1.7.7
@@ -673,6 +676,9 @@ importers:
       pinia:
         specifier: ^3.0.3
         version: 3.0.4(typescript@5.9.3)(vue@3.5.23(typescript@5.9.3))
+      sortablejs:
+        specifier: 'catalog:'
+        version: 1.15.6
       vue:
         specifier: ^3.5.17
         version: 3.5.23(typescript@5.9.3)
@@ -682,6 +688,10 @@ importers:
       xterm:
         specifier: ^5.3.0
         version: 5.3.0
+    devDependencies:
+      '@types/sortablejs':
+        specifier: 'catalog:'
+        version: 1.15.9
 
   internal/lint-configs/commitlint-config:
     dependencies:

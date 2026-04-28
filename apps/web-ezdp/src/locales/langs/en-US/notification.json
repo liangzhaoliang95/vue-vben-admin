@@ -39,5 +39,24 @@
     "testChannel": "Test Channel",
     "testSuccess": "Channel test successful",
     "testFailed": "Channel test failed"
+  },
+  "announcement": {
+    "title": "Announcement Management",
+    "name": "Announcement",
+    "titleField": "Title",
+    "content": "Content",
+    "link": "Link",
+    "sort": "Sort Order",
+    "sortPlaceholder": "Enter sort value (smaller = higher priority)",
+    "enabled": "Status",
+    "searchPlaceholder": "Search by announcement title",
+    "titlePlaceholder": "Enter announcement title",
+    "contentPlaceholder": "Enter announcement content",
+    "linkPlaceholder": "Enter link (optional)",
+    "titleRequired": "Title is required",
+    "contentRequired": "Content is required",
+    "dragSortTip": "Drag rows to reorder",
+    "sortUpdateSuccess": "Sort order updated successfully",
+    "sortUpdateFailed": "Failed to update sort order"
   }
 }
