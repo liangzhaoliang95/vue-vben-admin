@@ -15,6 +15,24 @@ export namespace ProjectConfigApi {
     createdAt: number;
     updatedAt: number;
   }
+
+  export interface GitlabProject {
+    gitlabProjectId: number;
+    name: string;
+    path: string;
+    pathWithNamespace: string;
+    namespace: string;
+    nsKind: string;
+    sshUrlToRepo: string;
+    httpUrlToRepo: string;
+    webUrl: string;
+    exists: boolean;
+  }
+
+  export interface FetchGitlabProjectsParams {
+    baseUrl: string;
+    token: string;
+  }
 }
 
 /**
@@ -78,9 +96,20 @@ async function getProjectConfigDetail(id: number | string) {
   );
 }
 
+/**
+ * 获取 GitLab 项目列表
+ */
+async function fetchGitlabProjects(data: ProjectConfigApi.FetchGitlabProjectsParams) {
+  return requestClient.post<ProjectConfigApi.GitlabProject[]>(
+    '/projectManagement/projectConfig/fetchGitlabProjects',
+    data,
+  );
+}
+
 export {
   createProjectConfig,
   deleteProjectConfig,
+  fetchGitlabProjects,
   getProjectConfigDetail,
   getProjectConfigList,
   updateProjectConfig,

@@ -5,7 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { ProjectConfigApi } from '#/api/project-management/project-config';
 
-import { onActivated, watch } from 'vue';
+import { onActivated, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
@@ -23,10 +23,13 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+import ImportModal from './modules/import-modal.vue';
 
 const router = useRouter();
 
 const businessStore = useBusinessStore();
+
+const importModalRef = ref();
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -156,6 +159,14 @@ function onCreate() {
   formDrawerApi.setData({}).open();
 }
 
+function onImport() {
+  importModalRef.value?.open();
+}
+
+function onImportSuccess() {
+  gridApi.query();
+}
+
 async function onBuildConfigClick(row: ProjectConfigApi.ProjectConfig) {
   // 跳转到配置详情页面，默认显示打包配置 tab
   // pageKey 用于让详情页和列表页共享同一个 Tab
@@ -196,8 +207,12 @@ async function onDeployConfigClick(row: ProjectConfigApi.ProjectConfig) {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
+    <ImportModal ref="importModalRef" @success="onImportSuccess" />
     <Grid :table-title="$t('deploy.projectManagement.projectConfig.title')">
       <template #toolbar-tools>
+        <Button style="margin-right: 8px" @click="onImport">
+          {{ $t('deploy.projectManagement.projectConfig.import.button') }}
+        </Button>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
           {{
