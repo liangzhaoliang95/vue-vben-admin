@@ -219,7 +219,7 @@
         "platformNotSupported": "暂未支持",
         "githubNotSupported": "GitHub 暂未支持，敬请期待",
         "baseUrl": "平台地址",
-        "baseUrlPlaceholder": "例如：https://gitlab.example.com",
+        "baseUrlPlaceholder": "例如：https://gitlab.plaso.cn/api/v4",
         "token": "个人访问令牌",
         "tokenPlaceholder": "请输入GitLab Personal Access Token",
         "fetchProjects": "获取项目",
