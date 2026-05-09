@@ -249,6 +249,31 @@
         "personalProjects": "Personal Projects"
       }
     },
+    "gitRepoConfig": {
+      "title": "Git Repository Config",
+      "name": "Repository Name",
+      "namePlaceholder": "Please enter repository name",
+      "nameRequired": "Repository name cannot be empty",
+      "type": "Type",
+      "baseUrl": "API Endpoint",
+      "baseUrlPlaceholder": "e.g.: https://gitlab.example.com/api/v4",
+      "baseUrlRequired": "API endpoint cannot be empty",
+      "apiToken": "API Token",
+      "apiTokenPlaceholder": "Please enter GitLab Personal Access Token",
+      "apiTokenRequired": "API Token cannot be empty",
+      "committerName": "Git Committer Name",
+      "committerNamePlaceholder": "Please enter git committer name",
+      "committerNameRequired": "Git committer name cannot be empty",
+      "committerEmail": "Git Committer Email",
+      "committerEmailPlaceholder": "Please enter git committer email",
+      "committerEmailRequired": "Git committer email cannot be empty",
+      "committerEmailInvalid": "Please enter a valid email address",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "testSuccess": "Connection successful",
+      "testFailed": "Connection failed",
+      "duplicateBaseUrl": "This endpoint already has a configuration in the current business line"
+    },
     "deployEnvironment": {
       "title": "Deployment Environment Configuration",
       "name": "Environment Name",

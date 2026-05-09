@@ -249,6 +249,31 @@
         "personalProjects": "个人项目"
       }
     },
+    "gitRepoConfig": {
+      "title": "Git仓库配置",
+      "name": "仓库名称",
+      "namePlaceholder": "请输入仓库名称",
+      "nameRequired": "仓库名称不能为空",
+      "type": "类型",
+      "baseUrl": "API接入点",
+      "baseUrlPlaceholder": "例如：https://gitlab.example.com/api/v4",
+      "baseUrlRequired": "API接入点不能为空",
+      "apiToken": "API Token",
+      "apiTokenPlaceholder": "请输入GitLab Personal Access Token",
+      "apiTokenRequired": "API Token不能为空",
+      "committerName": "Git提交人名称",
+      "committerNamePlaceholder": "请输入Git提交人名称",
+      "committerNameRequired": "Git提交人名称不能为空",
+      "committerEmail": "Git提交人邮箱",
+      "committerEmailPlaceholder": "请输入Git提交人邮箱",
+      "committerEmailRequired": "Git提交人邮箱不能为空",
+      "committerEmailInvalid": "请输入有效的邮箱地址",
+      "testConnection": "测试连接",
+      "testing": "测试中...",
+      "testSuccess": "连接成功",
+      "testFailed": "连接失败",
+      "duplicateBaseUrl": "该接入点在当前业务线下已存在配置"
+    },
     "deployEnvironment": {
       "title": "发布环境配置",
       "name": "环境名称",
