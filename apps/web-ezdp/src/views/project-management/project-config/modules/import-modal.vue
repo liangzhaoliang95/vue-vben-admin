@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { ProjectConfigApi } from '#/api/project-management/project-config';
+import type { GitRepoConfigApi } from '#/api/project-management/git-repo-config';
 
 import { computed, ref } from 'vue';
 
@@ -28,6 +29,10 @@ import {
   createProjectConfig,
   fetchGitlabProjects,
 } from '#/api/project-management/project-config';
+import {
+  getGitRepoConfigDetail,
+  getGitRepoConfigList,
+} from '#/api/project-management/git-repo-config';
 import { $t } from '#/locales';
 
 const emit = defineEmits<{
@@ -60,6 +65,10 @@ const gitlabConfig = ref({
   baseUrl: '',
   token: '',
 });
+
+const gitRepoConfigs = ref<GitRepoConfigApi.GitRepoConfig[]>([]);
+const selectedRepoConfigId = ref<string>('');
+const loadingConfigs = ref(false);
 
 const gitlabProjects = ref<ImportProjectRow[]>([]);
 const selectedRowKeys = ref<number[]>([]);
@@ -139,6 +148,8 @@ function resetState() {
   currentStep.value = 0;
   selectedPlatform.value = '';
   gitlabConfig.value = { baseUrl: '', token: '' };
+  gitRepoConfigs.value = [];
+  selectedRepoConfigId.value = '';
   gitlabProjects.value = [];
   selectedRowKeys.value = [];
   searchKeyword.value = '';
@@ -167,6 +178,44 @@ function handleSelectPlatform(platform: 'gitlab' | 'github') {
   }
   selectedPlatform.value = platform;
   currentStep.value = 1;
+  loadGitRepoConfigs();
+}
+
+async function loadGitRepoConfigs() {
+  loadingConfigs.value = true;
+  try {
+    const isSuperAdmin = businessStore.currentRole?.isSuper === true;
+    const params: Record<string, any> = {
+      pageIndex: 1,
+      pageSize: 100,
+    };
+    if (isSuperAdmin && businessStore.currentBusinessLineId) {
+      params.businessLineId = businessStore.currentBusinessLineId;
+    }
+    const result = await getGitRepoConfigList(params);
+    gitRepoConfigs.value = result.items || [];
+  } catch {
+    gitRepoConfigs.value = [];
+  } finally {
+    loadingConfigs.value = false;
+  }
+}
+
+async function handleRepoConfigChange(configId: string) {
+  if (!configId || configId === '__manual__') {
+    gitlabConfig.value = { baseUrl: '', token: '' };
+    return;
+  }
+
+  try {
+    const detail = await getGitRepoConfigDetail(configId);
+    gitlabConfig.value = {
+      baseUrl: detail.baseUrl,
+      token: detail.apiToken,
+    };
+  } catch {
+    message.warning($t('deploy.projectManagement.projectConfig.import.noRepoConfig'));
+  }
 }
 
 async function handleFetchProjects() {
@@ -434,12 +483,38 @@ defineExpose({ open });
         {{ $t('deploy.projectManagement.projectConfig.import.step1Desc') }}
       </div>
       <Form layout="vertical">
-        <FormItem :label="$t('deploy.projectManagement.projectConfig.import.baseUrl')">
-          <Input v-model:value="gitlabConfig.baseUrl" :placeholder="$t('deploy.projectManagement.projectConfig.import.baseUrlPlaceholder')" />
+        <FormItem :label="$t('deploy.projectManagement.projectConfig.import.selectRepoConfig')">
+          <Select
+            v-model:value="selectedRepoConfigId"
+            :placeholder="$t('deploy.projectManagement.projectConfig.import.selectRepoConfigPlaceholder')"
+            :loading="loadingConfigs"
+            style="width: 100%"
+            @change="handleRepoConfigChange"
+          >
+            <Select.Option value="__manual__">
+              {{ $t('deploy.projectManagement.projectConfig.import.manualInput') }}
+            </Select.Option>
+            <Select.Option
+              v-for="config in gitRepoConfigs"
+              :key="config.id"
+              :value="config.id"
+              :label="`${config.name} (${config.baseUrl})`"
+            >
+              <div style="display: flex; justify-content: space-between; align-items: center">
+                <span>{{ config.name }}</span>
+                <span style="color: hsl(var(--foreground) / 0.45); font-size: 12px">{{ config.baseUrl }}</span>
+              </div>
+            </Select.Option>
+          </Select>
         </FormItem>
-        <FormItem :label="$t('deploy.projectManagement.projectConfig.import.token')">
-          <InputPassword v-model:value="gitlabConfig.token" :placeholder="$t('deploy.projectManagement.projectConfig.import.tokenPlaceholder')" />
-        </FormItem>
+        <template v-if="!gitRepoConfigs.length || selectedRepoConfigId === '__manual__'">
+          <FormItem :label="$t('deploy.projectManagement.projectConfig.import.baseUrl')">
+            <Input v-model:value="gitlabConfig.baseUrl" :placeholder="$t('deploy.projectManagement.projectConfig.import.baseUrlPlaceholder')" />
+          </FormItem>
+          <FormItem :label="$t('deploy.projectManagement.projectConfig.import.token')">
+            <InputPassword v-model:value="gitlabConfig.token" :placeholder="$t('deploy.projectManagement.projectConfig.import.tokenPlaceholder')" />
+          </FormItem>
+        </template>
       </Form>
       <div style="display: flex; justify-content: space-between; gap: 8px">
         <Button @click="currentStep = 0">{{ $t('deploy.projectManagement.projectConfig.import.previous') }}</Button>

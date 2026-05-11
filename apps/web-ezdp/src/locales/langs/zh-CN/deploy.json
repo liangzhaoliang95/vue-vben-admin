@@ -246,7 +246,11 @@
         "nameColumn": "项目名称",
         "pathColumn": "项目路径",
         "searchPlaceholder": "搜索项目名称或地址",
-        "personalProjects": "个人项目"
+        "personalProjects": "个人项目",
+        "selectRepoConfig": "选择仓库配置",
+        "selectRepoConfigPlaceholder": "请选择已配置的 GitLab 仓库",
+        "manualInput": "手动输入",
+        "noRepoConfig": "当前业务线暂无仓库配置，请手动输入"
       }
     },
     "gitRepoConfig": {
@@ -272,7 +276,8 @@
       "testing": "测试中...",
       "testSuccess": "连接成功",
       "testFailed": "连接失败",
-      "duplicateBaseUrl": "该接入点在当前业务线下已存在配置"
+      "duplicateBaseUrl": "该接入点在当前业务线下已存在配置",
+      "searchPlaceholder": "请输入仓库名称或地址搜索"
     },
     "deployEnvironment": {
       "title": "发布环境配置",

@@ -246,7 +246,11 @@
         "nameColumn": "Project Name",
         "pathColumn": "Project Path",
         "searchPlaceholder": "Search by project name or URL",
-        "personalProjects": "Personal Projects"
+        "personalProjects": "Personal Projects",
+        "selectRepoConfig": "Select Repository Config",
+        "selectRepoConfigPlaceholder": "Select a configured GitLab repository",
+        "manualInput": "Manual Input",
+        "noRepoConfig": "No repository config for current business line, please enter manually"
       }
     },
     "gitRepoConfig": {
@@ -272,7 +276,8 @@
       "testing": "Testing...",
       "testSuccess": "Connection successful",
       "testFailed": "Connection failed",
-      "duplicateBaseUrl": "This endpoint already has a configuration in the current business line"
+      "duplicateBaseUrl": "This endpoint already has a configuration in the current business line",
+      "searchPlaceholder": "Search by repository name or URL"
     },
     "deployEnvironment": {
       "title": "Deployment Environment Configuration",

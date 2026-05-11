@@ -136,7 +136,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       fieldName: 'keyword',
       label: $t('common.keyword'),
       componentProps: {
-        placeholder: $t('common.searchPlaceholder'),
+        placeholder: $t('deploy.projectManagement.gitRepoConfig.searchPlaceholder'),
       },
     },
   ];
