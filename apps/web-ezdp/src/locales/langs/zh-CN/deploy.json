@@ -149,6 +149,7 @@
       "namePlaceholder": "只能输入英文字母、数字、下划线和连字符",
       "nameRequired": "项目名称不能为空",
       "nameEnglishOnly": "项目名称只能包含英文字母、数字、下划线和连字符",
+      "projectUrlSshOnly": "仓库地址必须使用 SSH 格式（git@...），不支持 HTTPS",
       "type": {
         "label": "项目类型",
         "select": "请选择项目类型",

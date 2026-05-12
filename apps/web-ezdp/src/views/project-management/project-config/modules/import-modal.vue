@@ -340,7 +340,7 @@ async function handleStartImport() {
       const params = {
         name: project.name,
         projectId: project.gitlabProjectId,
-        projectUrl: project.httpUrlToRepo || project.sshUrlToRepo,
+        projectUrl: project.sshUrlToRepo,
         type: project.type as 'backend' | 'frontend' | 'submodule',
         ...(isSuperAdmin && businessStore.currentBusinessLineId
           ? { businessLineId: businessStore.currentBusinessLineId }

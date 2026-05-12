@@ -149,6 +149,7 @@
       "namePlaceholder": "Only English letters, numbers, underscores and hyphens are allowed",
       "nameRequired": "Project name cannot be empty",
       "nameEnglishOnly": "Project name can only contain English letters, numbers, underscores and hyphens",
+      "projectUrlSshOnly": "Repository URL must use SSH format (git@...), HTTPS is not supported",
       "type": {
         "label": "Project Type",
         "select": "Please select project type",
