@@ -263,6 +263,7 @@ onMounted(() => {
       </FormItem>
 
       <FormItem
+        v-show="false"
         :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildCheckMode')"
         name="buildCheckMode"
       >
