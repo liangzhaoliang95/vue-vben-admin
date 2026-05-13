@@ -9,6 +9,8 @@ export namespace BuildConfigApi {
     buildArgs?: string;
     imageName: string;
     dockerSecretId?: string;
+    ossName?: string;
+    buildCheckMode: number; // 1=检查needBuild，2=比对version
     createdAt: number;
     updatedAt: number;
   }

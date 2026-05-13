@@ -186,6 +186,10 @@
         "ossNamePlaceholder": "前端项目构建资源上传目录，例如: my-frontend-app",
         "buildArgs": "构建参数",
         "buildArgsPlaceholder": "JSON格式，例如: {\"ENV\": \"production\", \"VERSION\": \"1.0.0\"}",
+        "buildCheckMode": "构建检查模式",
+        "buildCheckModePlaceholder": "请选择构建检查模式",
+        "buildCheckModeNeedBuild": "强检查（needBuild=true）",
+        "buildCheckModeVersionDiff": "版本号比对（version 不同则构建）",
         "saveConfig": "保存配置",
         "fillRequired": "请填写必填项"
       },

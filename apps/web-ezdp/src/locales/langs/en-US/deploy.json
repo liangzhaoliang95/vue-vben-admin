@@ -186,6 +186,10 @@
         "ossNamePlaceholder": "Frontend project build resource upload directory, for example: my-frontend-app",
         "buildArgs": "Build Arguments",
         "buildArgsPlaceholder": "JSON format, for example: {\"ENV\": \"production\", \"VERSION\": \"1.0.0\"}",
+        "buildCheckMode": "Build Check Mode",
+        "buildCheckModePlaceholder": "Please select build check mode",
+        "buildCheckModeNeedBuild": "Strict check (needBuild=true)",
+        "buildCheckModeVersionDiff": "Version diff (build if version differs)",
         "saveConfig": "Save Configuration",
         "fillRequired": "Please fill in the required fields"
       },

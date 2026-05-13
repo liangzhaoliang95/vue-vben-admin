@@ -28,6 +28,7 @@ const formState = reactive({
   imageName: '', // 镜像名称
   dockerSecretId: '', // Docker 仓库配置ID
   ossName: '', // OSS 名称（前端项目构建资源上传目录）
+  buildCheckMode: 1, // 构建检查模式（默认1）
 });
 
 const loading = ref(false);
@@ -37,6 +38,18 @@ const dockerSecretList = ref<Array<{ id: string; name: string }>>([]);
 const buildArgsPlaceholder = computed(
   () => $t('deploy.projectManagement.projectConfig.buildConfig.buildArgsPlaceholder'),
 );
+
+// 构建检查模式选项
+const buildCheckModeOptions = computed(() => [
+  {
+    value: 1,
+    label: $t('deploy.projectManagement.projectConfig.buildConfig.buildCheckModeNeedBuild'),
+  },
+  {
+    value: 2,
+    label: $t('deploy.projectManagement.projectConfig.buildConfig.buildCheckModeVersionDiff'),
+  },
+]);
 
 // 表单验证规则(根据项目类型动态生成)
 const formRules = computed(() => {
@@ -107,6 +120,7 @@ async function handleSave() {
       imageName: formState.imageName || undefined,
       dockerSecretId: formState.dockerSecretId || undefined,
       ossName: formState.ossName || undefined,
+      buildCheckMode: formState.buildCheckMode,
     });
     message.success($t('ui.successMessage.save'));
   } catch (error) {
@@ -134,6 +148,7 @@ async function loadConfig() {
       formState.imageName = config.imageName || '';
       formState.dockerSecretId = config.dockerSecretId || '';
       formState.ossName = config.ossName || '';
+      formState.buildCheckMode = config.buildCheckMode || 1;
     }
   } catch (error) {
     console.error('加载配置失败:', error);
@@ -244,6 +259,17 @@ onMounted(() => {
           v-model:value="formState.buildArgs"
           :rows="4"
           :placeholder="buildArgsPlaceholder"
+        />
+      </FormItem>
+
+      <FormItem
+        :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildCheckMode')"
+        name="buildCheckMode"
+      >
+        <Select
+          v-model:value="formState.buildCheckMode"
+          :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.buildCheckModePlaceholder')"
+          :options="buildCheckModeOptions"
         />
       </FormItem>
 
