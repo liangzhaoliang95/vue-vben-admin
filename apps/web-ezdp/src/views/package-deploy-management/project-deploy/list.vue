@@ -782,12 +782,12 @@ function handleWebSocketMessage(message: any) {
       message.success('构建已完成，版本列表已更新');
     }
 
-    // 处理部署完成事件（刷新部署列表）
+    // 处理部署完成事件（刷新版本列表）
     if (
       eventType === 'deploy_completed' &&
       isComponentActive.value
     ) {
-      loadDeployTasks();
+      loadVersionList();
       message.success(`部署已完成: ${message.data.version || ''}`);
     }
   }

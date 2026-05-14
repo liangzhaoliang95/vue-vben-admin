@@ -97,7 +97,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
   const initialReconnectDelay = 3000; // 初始重连延迟 3秒
   const maxReconnectDelay = 30_000; // 最大重连延迟 30秒
   const reconnectDelayMultiplier = 2; // 重连延迟倍数
-  const heartbeatInterval = 30_000; // 心跳间隔 30秒
+  const heartbeatInterval = 10_000; // 心跳间隔 10秒
   const heartbeatTimeout = 60_000; // 心跳超时时间 60秒
   const keepAliveDelay = 5 * 60 * 1000; // 5分钟，没有订阅者时保持连接的时间
 
@@ -562,30 +562,21 @@ export const useWebSocketStore = defineStore('websocket', () => {
       // 确保连接对象已保存
       connection.value = conn;
 
-      // 延迟一小段时间后发送心跳，确保连接完全建立
-      setTimeout(() => {
-        if (conn.ws && conn.ws.readyState === WebSocket.OPEN) {
-          // 立即发送心跳确认连接可用
-          sendHeartbeat(conn);
-          console.warn(`[WebSocket] 连接已发送初始心跳`);
+      // 立即发送初始心跳并启动定时器
+      sendHeartbeat(conn);
+      startHeartbeat(conn);
+      console.warn(`[WebSocket] 连接已发送初始心跳`);
 
-          // 启动心跳定时器
-          startHeartbeat(conn);
-
-          // 重连后自动恢复业务线订阅
-          if (currentBusinessLineId.value !== null) {
-            const businessLineId = currentBusinessLineId.value;
-            console.warn(
-              `[WebSocket] 重连成功，恢复业务线订阅: ${businessLineId}`,
-            );
-            // 发送订阅消息
-            const subscribeMsg = ['subscribe', 0, { businessLineId }];
-            const msgStr = JSON.stringify(subscribeMsg);
-            conn.ws.send(msgStr);
-            console.warn('[WebSocket] 已重新发送业务线订阅消息:', subscribeMsg);
-          }
-        }
-      }, 100);
+      // 重连后自动恢复业务线订阅
+      if (currentBusinessLineId.value !== null) {
+        const businessLineId = currentBusinessLineId.value;
+        console.warn(
+          `[WebSocket] 重连成功，恢复业务线订阅: ${businessLineId}`,
+        );
+        const subscribeMsg = ['subscribe', 0, { businessLineId }];
+        conn.ws.send(JSON.stringify(subscribeMsg));
+        console.warn('[WebSocket] 已重新发送业务线订阅消息:', subscribeMsg);
+      }
 
       if (resolvePromise) {
         resolvePromise();
