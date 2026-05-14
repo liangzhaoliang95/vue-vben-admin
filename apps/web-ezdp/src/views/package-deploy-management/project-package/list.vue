@@ -447,6 +447,22 @@ function getSortedProjects(projects: any[]) {
     if (orderA !== orderB) {
       return orderA - orderB;
     }
+
+    // 同类型内按版本号降序（语义化版本比较）
+    const versionCompare = (v1: string, v2: string) => {
+      const parts1 = (v1 || '').split('.').map(Number);
+      const parts2 = (v2 || '').split('.').map(Number);
+      const len = Math.max(parts1.length, parts2.length);
+      for (let i = 0; i < len; i++) {
+        const n1 = parts1[i] ?? 0;
+        const n2 = parts2[i] ?? 0;
+        if (n1 !== n2) return n2 - n1;
+      }
+      return 0;
+    };
+    const versionDiff = versionCompare(a.version, b.version);
+    if (versionDiff !== 0) return versionDiff;
+
     return (a.projectName || '').localeCompare(b.projectName || '');
   });
 }
