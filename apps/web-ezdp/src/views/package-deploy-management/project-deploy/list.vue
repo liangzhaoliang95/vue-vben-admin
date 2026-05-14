@@ -1159,8 +1159,8 @@ onDeactivated(() => {
 .project-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 12px;
+  gap: 6px;
+  padding: 6px 12px;
 }
 
 .project-item {
@@ -1169,7 +1169,7 @@ onDeactivated(() => {
   grid-template-columns: 200px 90px 150px 110px 1fr 80px;
   column-gap: 16px;
   align-items: center;
-  padding: 16px 20px;
+  padding: 4px 20px;
   cursor: default;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));

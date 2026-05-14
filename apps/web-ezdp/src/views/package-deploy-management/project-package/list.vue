@@ -732,6 +732,13 @@ onDeactivated(() => {
                 <span class="project-name">{{
                   project.projectName || '-'
                 }}</span>
+                <span
+                  v-if="project.duration && project.duration > 0"
+                  class="duration-text"
+                >
+                  ⏱️ {{ formatDuration(project.duration) }}
+                </span>
+                <span v-else class="duration-text" />
                 <Tag color="blue" class="project-type-tag">
                   {{ getProjectTypeIcon(project.projectType || '') }}
                   {{ getProjectTypeName(project.projectType || '') }}
@@ -751,12 +758,6 @@ onDeactivated(() => {
                       .text
                   }}
                 </Tag>
-                <span
-                  v-if="project.duration && project.duration > 0"
-                  class="duration-text"
-                >
-                  ⏱️ {{ formatDuration(project.duration) }}
-                </span>
               </div>
             </div>
           </CollapsePanel>
@@ -901,17 +902,17 @@ onDeactivated(() => {
 .project-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 12px;
+  gap: 6px;
+  padding: 6px 12px;
 }
 
 .project-item {
   position: relative;
   display: grid;
-  grid-template-columns: 200px 90px minmax(0, 160px) 90px;
+  grid-template-columns: 200px 60px 90px minmax(0, 160px) 90px;
   column-gap: 16px;
   align-items: center;
-  padding: 16px 20px;
+  padding: 4px 20px;
   cursor: default;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
