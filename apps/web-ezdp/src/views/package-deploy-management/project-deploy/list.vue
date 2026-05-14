@@ -362,6 +362,38 @@ async function handleRefresh() {
   }
 }
 
+// 全量获取（showAll=true，沿继承链追溯所有祖先分支的项目版本）
+async function handleShowAll() {
+  if (!selectedBranchId.value) {
+    message.warning('请先选择分支');
+    return;
+  }
+  loading.value = true;
+  try {
+    const queryParams: any = {
+      pageIndex: 1,
+      pageSize: 1000,
+      branchId: selectedBranchId.value,
+      showAll: true,
+    };
+
+    if (isSuperAdmin.value && selectedBusinessLineId.value) {
+      queryParams.businessLineId = selectedBusinessLineId.value;
+    }
+
+    const res = await getBuildTaskList(queryParams);
+    versionList.value = res.items || [];
+
+    await loadCurrentEnvironmentVersion();
+    message.success('全量获取成功');
+  } catch (error) {
+    console.error('全量获取失败:', error);
+    message.error('全量获取失败');
+  } finally {
+    loading.value = false;
+  }
+}
+
 // 排序部署版本列表
 function sortDeployedVersions(versions: any[]) {
   if (!versions || !Array.isArray(versions)) {
@@ -850,6 +882,9 @@ onDeactivated(() => {
             📋 {{ $t('deploy.projectManagement.projectRelease.deployedVersions') }}
           </Button>
           <Button @click="handleRefresh">刷新</Button>
+          <Button @click="handleShowAll">
+            {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
+          </Button>
         </div>
       </div>
     </Card>

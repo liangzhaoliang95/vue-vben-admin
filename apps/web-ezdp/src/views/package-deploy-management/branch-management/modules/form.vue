@@ -9,6 +9,7 @@ import { Button, message } from 'ant-design-vue';
 import { useVbenForm } from '#/adapter/form';
 import {
   createBranchManagement,
+  getBranchManagementList,
   updateBranchManagement,
 } from '#/api/package-deploy-management/branch-management';
 import { $t } from '#/locales';
@@ -24,6 +25,23 @@ const isSuperAdmin = businessStore.currentRole?.isSuper === true;
 
 const id = ref<string>();
 const loading = ref(false);
+// 是否是新建模式（编辑时不显示继承分支选择器）
+const isCreate = ref(true);
+
+// 获取当前业务线的分支列表（用于继承分支选择器）
+async function fetchBranchOptions(params?: any) {
+  const businessLineId =
+    businessStore.currentBusinessLine?.businessLine.id ??
+    businessStore.currentBusinessLineId;
+  const res = await getBranchManagementList({
+    page: 1,
+    pageSize: 1000,
+    onlyEnabled: true,
+    businessLineId,
+    ...params,
+  });
+  return res.items || [];
+}
 
 const formSchema = computed(() => [
   {
@@ -36,6 +54,24 @@ const formSchema = computed(() => [
     fieldName: 'name',
     label: $t('deploy.packageDeployManagement.branchManagement.name'),
     rules: 'required',
+  },
+  {
+    component: 'ApiSelect',
+    componentProps: {
+      api: fetchBranchOptions,
+      labelField: 'name',
+      valueField: 'id',
+      placeholder: $t(
+        'deploy.packageDeployManagement.branchManagement.parentBranchPlaceholder',
+      ),
+      allowClear: true,
+    },
+    fieldName: 'parentBranchId',
+    help: $t(
+      'deploy.packageDeployManagement.branchManagement.parentBranchHelp',
+    ),
+    ifShow: () => isCreate.value,
+    label: $t('deploy.packageDeployManagement.branchManagement.parentBranch'),
   },
   {
     component: 'InputNumber',
@@ -92,6 +128,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
       if (data && data.id) {
         // 编辑时，设置表单数据
+        isCreate.value = false;
         id.value = data.id;
         formApi.setValues({
           name: data.name,
@@ -102,6 +139,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
         });
       } else {
         // 新建时，设置业务线默认值（使用当前业务线ID）
+        isCreate.value = true;
         id.value = undefined;
         const currentBusinessLine = businessStore.currentBusinessLine;
         const defaultBusinessLineId = currentBusinessLine?.businessLine.id;
@@ -138,6 +176,11 @@ async function handleConfirm() {
     versionTemplate: values.versionTemplate?.trim() || '',
     description: values.description,
   };
+
+  // 新建时才传 parentBranchId
+  if (isCreate.value && values.parentBranchId) {
+    submitData.parentBranchId = values.parentBranchId;
+  }
 
   // sortOrder字段（如果提供了则使用，否则后端会自动设置）
   if (values.sortOrder !== undefined && values.sortOrder !== null) {

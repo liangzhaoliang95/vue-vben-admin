@@ -254,6 +254,36 @@ async function handleRefresh() {
   }
 }
 
+// 全量获取（showAll=true，包含所有分支的最新项目版本）
+async function handleShowAll() {
+  if (!selectedBranchId.value) {
+    message.warning('请先选择分支');
+    return;
+  }
+  loading.value = true;
+  try {
+    const queryParams: any = {
+      pageIndex: 1,
+      pageSize: 1000,
+      branchId: selectedBranchId.value,
+      showAll: true,
+    };
+
+    if (isSuperAdmin.value && selectedBusinessLineId.value) {
+      queryParams.businessLineId = selectedBusinessLineId.value;
+    }
+
+    const res = await getBuildTaskList(queryParams);
+    versionList.value = res.items || [];
+    message.success('全量获取成功');
+  } catch (error) {
+    console.error('[项目打包] 全量获取失败:', error);
+    message.error('全量获取失败');
+  } finally {
+    loading.value = false;
+  }
+}
+
 // 确认对话框
 function confirm(content: string, title: string) {
   return new Promise((resolve, reject) => {
@@ -628,6 +658,9 @@ onDeactivated(() => {
         <!-- 操作按钮组 -->
         <div class="flex flex-shrink-0 items-center gap-3">
           <Button @click="handleRefresh">刷新</Button>
+          <Button @click="handleShowAll">
+            {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
+          </Button>
           <Button type="primary" @click="handleBuild">开始构建</Button>
           <Button danger type="primary" @click="handleForceBuild">
             ⚡ 强制构建

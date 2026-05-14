@@ -213,7 +213,7 @@ export class WebSocketClient {
     // 每30秒发送一次心跳
     this.heartbeatTimer = window.setInterval(() => {
       this.sendHeartbeat();
-    }, 30_000);
+    }, 10_000); // 10 seconds
   }
 
   /**

@@ -36,6 +36,7 @@ export namespace ProjectPackageApi {
     projectConfigId?: string;
     branchId?: string;
     businessLineId?: number;
+    showAll?: boolean;
   }
 
   export interface BuildTaskListResult {
