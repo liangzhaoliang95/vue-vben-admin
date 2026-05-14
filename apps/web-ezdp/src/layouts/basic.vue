@@ -12,6 +12,7 @@ import {
   UserDropdown,
 } from '@vben/layouts';
 import { preferences } from '@vben/preferences';
+import { updatePreferences } from '@vben/preferences';
 import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 
 import { BarChart2 } from 'lucide-vue-next';
@@ -26,6 +27,7 @@ import {
 } from '#/api/core/notification';
 import { updateProfile } from '#/api/system/user';
 import { getUserInfoApi } from '#/api/core/user';
+import { SystemConfig } from '#/api/system/config';
 import LogViewer from '#/components/log-viewer/index.vue';
 import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
@@ -276,6 +278,16 @@ function closeLogViewer() {
 // 组件挂载时加载通知并订阅业务线日志
 onMounted(async () => {
   loadNotifications();
+
+  // 获取系统配置，更新版本号到页脚
+  try {
+    const config = await SystemConfig.getConfig();
+    if (config.appVersion) {
+      updatePreferences({ copyright: { appVersion: config.appVersion } });
+    }
+  } catch {
+    // 获取版本号失败不影响主流程
+  }
 
   // 订阅当前业务线的 WebSocket 日志
   const businessLineId = businessStore.currentBusinessLineId;

@@ -5,6 +5,7 @@ interface Props {
   date?: string;
   icp?: string;
   icpLink?: string;
+  appVersion?: string;
 }
 
 defineOptions({
@@ -14,9 +15,10 @@ defineOptions({
 withDefaults(defineProps<Props>(), {
   companyName: 'Vben Admin',
   companySiteLink: '',
-  date: '2024',
+  date: '2026',
   icp: '',
   icpLink: '',
+  appVersion: '',
 });
 </script>
 
@@ -44,5 +46,8 @@ withDefaults(defineProps<Props>(), {
     >
       {{ companyName }}
     </a>
+
+    <!-- Version -->
+    <span v-if="appVersion" class="ml-2 opacity-60">v{{ appVersion }}</span>
   </div>
 </template>
