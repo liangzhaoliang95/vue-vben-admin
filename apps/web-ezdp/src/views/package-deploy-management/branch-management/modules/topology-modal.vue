@@ -26,8 +26,9 @@ const canvasRef = ref<HTMLCanvasElement | null>(null);
 
 const NODE_W = 160;
 const NODE_H = 48;
-const H_GAP = 40;
-const V_GAP = 60;
+// 水平布局：H_GAP 为层级间距（左右），V_GAP 为同层节点间距（上下）
+const H_GAP = 80;
+const V_GAP = 24;
 const PADDING = 40;
 
 // 视口变换状态
@@ -113,27 +114,29 @@ function buildTree(): TreeNode[] {
   return roots;
 }
 
-function calcSubtreeWidth(node: TreeNode): number {
+function calcSubtreeHeight(node: TreeNode): number {
   if (node.children.length === 0) {
-    node.subtreeWidth = NODE_W;
-    return NODE_W;
+    node.subtreeWidth = NODE_H;
+    return NODE_H;
   }
   let total = 0;
   for (let i = 0; i < node.children.length; i++) {
-    total += calcSubtreeWidth(node.children[i]!);
-    if (i < node.children.length - 1) total += H_GAP;
+    total += calcSubtreeHeight(node.children[i]!);
+    if (i < node.children.length - 1) total += V_GAP;
   }
-  node.subtreeWidth = Math.max(total, NODE_W);
+  node.subtreeWidth = Math.max(total, NODE_H);
   return node.subtreeWidth;
 }
 
-function assignPositions(node: TreeNode, startX: number, depth: number) {
+// 水平布局：depth 决定 x（列），子树在 y 方向展开
+function assignPositions(node: TreeNode, startY: number, depth: number) {
   node.depth = depth;
-  node.x = startX + (node.subtreeWidth - NODE_W) / 2;
-  let childX = startX;
+  node.x = PADDING + depth * (NODE_W + H_GAP);
+  node.y = startY + (node.subtreeWidth - NODE_H) / 2;
+  let childY = startY;
   for (const child of node.children) {
-    assignPositions(child, childX, depth + 1);
-    childX += child.subtreeWidth + H_GAP;
+    assignPositions(child, childY, depth + 1);
+    childY += child.subtreeWidth + V_GAP;
   }
 }
 
@@ -221,26 +224,25 @@ function pointToEdgeDist(
 ): number {
   const child = edge.child;
   const parent = edge.parent;
-  const cx = child.x + NODE_W / 2;
-  const cy = child.y + NODE_H;
-  const px0 = parent.x + NODE_W / 2;
-  const py0 = parent.y;
-  const midY = (cy + py0) / 2;
+  // 水平布局：从父节点右侧中心 → 子节点左侧中心
+  const x0 = parent.x + NODE_W;
+  const y0 = parent.y + NODE_H / 2;
+  const x1 = child.x;
+  const y1 = child.y + NODE_H / 2;
+  const midX = (x0 + x1) / 2;
 
-  // 采样贝塞尔曲线上的点，找最近距离
   let minDist = Number.POSITIVE_INFINITY;
   for (let t = 0; t <= 1; t += 0.05) {
-    const t2 = t;
     const bx =
-      (1 - t2) ** 3 * cx +
-      3 * (1 - t2) ** 2 * t2 * cx +
-      3 * (1 - t2) * t2 ** 2 * px0 +
-      t2 ** 3 * px0;
+      (1 - t) ** 3 * x0 +
+      3 * (1 - t) ** 2 * t * midX +
+      3 * (1 - t) * t ** 2 * midX +
+      t ** 3 * x1;
     const by =
-      (1 - t2) ** 3 * cy +
-      3 * (1 - t2) ** 2 * t2 * midY +
-      3 * (1 - t2) * t2 ** 2 * midY +
-      t2 ** 3 * py0;
+      (1 - t) ** 3 * y0 +
+      3 * (1 - t) ** 2 * t * y0 +
+      3 * (1 - t) * t ** 2 * y1 +
+      t ** 3 * y1;
     const dist = Math.hypot(px - bx, py - by);
     if (dist < minDist) minDist = dist;
   }
@@ -395,24 +397,17 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
   const roots = buildTree();
   if (roots.length === 0) return;
 
-  for (const r of roots) calcSubtreeWidth(r);
+  for (const r of roots) calcSubtreeHeight(r);
 
-  let startX = PADDING;
+  let startY = PADDING;
   for (let i = 0; i < roots.length; i++) {
-    assignPositions(roots[i]!, startX, 0);
-    startX += roots[i]!.subtreeWidth + H_GAP * 2;
+    assignPositions(roots[i]!, startY, 0);
+    startY += roots[i]!.subtreeWidth + V_GAP * 2;
   }
 
   const allNodes: TreeNode[] = [];
   for (const r of roots) collectNodes(r, allNodes);
   cachedNodes = allNodes;
-
-  const globalMaxDepth = Math.max(...allNodes.map((n) => n.depth));
-
-  for (const n of allNodes) {
-    const flippedDepth = globalMaxDepth - n.depth;
-    n.y = PADDING + flippedDepth * (NODE_H + V_GAP);
-  }
 
   // 收集所有边
   const allEdges: { parent: TreeNode; child: TreeNode }[] = [];
@@ -422,11 +417,12 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
   // 先画连线
   function drawEdges(node: TreeNode) {
     for (const child of node.children) {
-      const cx = child.x + NODE_W / 2;
-      const cy = child.y + NODE_H;
-      const px = node.x + NODE_W / 2;
-      const py = node.y;
-      const midY = (cy + py) / 2;
+      // 水平布局：父节点右侧中心 → 子节点左侧中心
+      const x0 = node.x + NODE_W;
+      const y0 = node.y + NODE_H / 2;
+      const x1 = child.x;
+      const y1 = child.y + NODE_H / 2;
+      const midX = (x0 + x1) / 2;
 
       const isHighlighted =
         dragState.active &&
@@ -435,8 +431,8 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
         dragState.dropTarget.childNode.branch.id === child.branch.id;
 
       ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.bezierCurveTo(cx, midY, px, midY, px, py);
+      ctx.moveTo(x0, y0);
+      ctx.bezierCurveTo(midX, y0, midX, y1, x1, y1);
 
       if (isHighlighted) {
         ctx.strokeStyle = '#f59e0b';
@@ -450,20 +446,20 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 箭头指向父节点（向下）
+      // 箭头指向子节点（向右），绘制在子节点左侧
       const arrowSize = 7;
       ctx.beginPath();
-      ctx.moveTo(px, py);
-      ctx.lineTo(px - arrowSize * 0.5, py + arrowSize);
-      ctx.lineTo(px + arrowSize * 0.5, py + arrowSize);
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x1 - arrowSize, y1 - arrowSize * 0.5);
+      ctx.lineTo(x1 - arrowSize, y1 + arrowSize * 0.5);
       ctx.closePath();
       ctx.fillStyle = isHighlighted ? '#f59e0b' : dark ? '#4a6fa5' : '#93c5fd';
       ctx.fill();
 
       // 高亮边上显示"插入"提示
       if (isHighlighted) {
-        const labelX = (cx + px) / 2;
-        const labelY = (cy + py) / 2;
+        const labelX = (x0 + x1) / 2;
+        const labelY = (y0 + y1) / 2;
         const label = $t('deploy.packageDeployManagement.branchManagement.topologyDragInsert');
         ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         const textW = ctx.measureText(label).width;
@@ -632,23 +628,24 @@ function initCanvas() {
   const roots = buildTree();
   if (roots.length === 0) return;
 
-  for (const r of roots) calcSubtreeWidth(r);
+  for (const r of roots) calcSubtreeHeight(r);
 
-  let totalWidth = PADDING * 2;
+  let totalHeight = PADDING * 2;
   for (let i = 0; i < roots.length; i++) {
-    totalWidth += roots[i]!.subtreeWidth;
-    if (i < roots.length - 1) totalWidth += H_GAP * 2;
+    totalHeight += roots[i]!.subtreeWidth;
+    if (i < roots.length - 1) totalHeight += V_GAP * 2;
   }
 
-  let startX = PADDING;
+  let startY = PADDING;
   for (let i = 0; i < roots.length; i++) {
-    assignPositions(roots[i]!, startX, 0);
-    startX += roots[i]!.subtreeWidth + H_GAP * 2;
+    assignPositions(roots[i]!, startY, 0);
+    startY += roots[i]!.subtreeWidth + V_GAP * 2;
   }
+
   const allNodes: TreeNode[] = [];
   for (const r of roots) collectNodes(r, allNodes);
   const maxDepth = Math.max(...allNodes.map((n) => n.depth));
-  const totalHeight = PADDING * 2 + (maxDepth + 1) * (NODE_H + V_GAP) - V_GAP;
+  const totalWidth = PADDING * 2 + (maxDepth + 1) * (NODE_W + H_GAP) - H_GAP;
 
   contentW = totalWidth;
 

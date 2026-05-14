@@ -210,7 +210,7 @@ const createRules = {
 // 安装命令计算属性
 const installCommands = computed(() => ({
   download: `# 下载安装脚本
-curl -fsSL https://oss.geekz.cn:81/devops/ezdp/install-server-agent.sh -o install.sh
+curl -fsSL https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/install.sh -o install.sh
 chmod +x install.sh
 
 # 安装
