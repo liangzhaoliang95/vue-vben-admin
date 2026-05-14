@@ -968,45 +968,121 @@ onDeactivated(() => {
               </div>
             </template>
 
-            <!-- 项目列表 -->
-            <div class="project-list">
-              <div
-                v-for="project in getSortedProjects(version.children)"
-                :key="project.id"
-                class="project-item"
-                :class="[`project-type-${project.projectType || 'default'}`]"
-              >
-                <span class="project-name">{{
-                  project.projectName || '-'
-                }}</span>
-                <Tag color="blue" class="project-type-tag">
-                  {{ getProjectTypeIcon(project.projectType || '') }}
-                  {{ getProjectTypeName(project.projectType || '') }}
-                </Tag>
-                <Tag color="red" class="version-tag">
-                  {{ project.version || '-' }}
-                </Tag>
-                <Tag
-                  :color="
-                    getStatusConfig((project && project.status) || 'pending')
-                      .color
-                  "
-                  class="status-tag"
-                >
-                  {{
-                    getStatusConfig((project && project.status) || 'pending')
-                      .text
-                  }}
-                </Tag>
-                <div></div>
-                <Button
-                  type="primary"
-                  size="small"
-                  :disabled="project.status !== 'success'"
-                  @click.stop="handleDeployProject(project)"
-                >
-                  {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
-                </Button>
+            <!-- 项目列表两列布局 -->
+            <div class="project-list-columns">
+              <!-- 服务端列 -->
+              <div class="project-column">
+                <div class="project-column-body">
+                  <template
+                    v-for="project in getSortedProjects(version.children)"
+                    :key="project.id"
+                  >
+                    <div
+                      v-if="project.projectType !== 'frontend'"
+                      class="project-item"
+                      :class="[`project-type-${project.projectType || 'default'}`]"
+                    >
+                      <span class="project-name">{{
+                        project.projectName || '-'
+                      }}</span>
+                      <Tag color="blue" class="project-type-tag">
+                        {{ getProjectTypeIcon(project.projectType || '') }}
+                        {{ getProjectTypeName(project.projectType || '') }}
+                      </Tag>
+                      <Tag color="red" class="version-tag">
+                        {{ project.version || '-' }}
+                      </Tag>
+                      <Tag
+                        :color="
+                          getStatusConfig((project && project.status) || 'pending')
+                            .color
+                        "
+                        class="status-tag"
+                      >
+                        {{
+                          getStatusConfig((project && project.status) || 'pending')
+                            .text
+                        }}
+                      </Tag>
+                      <div></div>
+                      <Button
+                        type="primary"
+                        size="small"
+                        :disabled="project.status !== 'success'"
+                        @click.stop="handleDeployProject(project)"
+                      >
+                        {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
+                      </Button>
+                    </div>
+                  </template>
+                  <div
+                    v-if="
+                      getSortedProjects(version.children).filter(
+                        (p) => p.projectType !== 'frontend',
+                      ).length === 0
+                    "
+                    class="project-column-empty"
+                  >
+                    暂无
+                  </div>
+                </div>
+              </div>
+              <!-- 前端列 -->
+              <div class="project-column">
+                <div class="project-column-body">
+                  <template
+                    v-for="project in getSortedProjects(version.children)"
+                    :key="project.id"
+                  >
+                    <div
+                      v-if="project.projectType === 'frontend'"
+                      class="project-item"
+                      :class="[`project-type-${project.projectType || 'default'}`]"
+                    >
+                      <span class="project-name">{{
+                        project.projectName || '-'
+                      }}</span>
+                      <Tag color="blue" class="project-type-tag">
+                        {{ getProjectTypeIcon(project.projectType || '') }}
+                        {{ getProjectTypeName(project.projectType || '') }}
+                      </Tag>
+                      <Tag color="red" class="version-tag">
+                        {{ project.version || '-' }}
+                      </Tag>
+                      <Tag
+                        :color="
+                          getStatusConfig((project && project.status) || 'pending')
+                            .color
+                        "
+                        class="status-tag"
+                      >
+                        {{
+                          getStatusConfig((project && project.status) || 'pending')
+                            .text
+                        }}
+                      </Tag>
+                      <div></div>
+                      <Button
+                        type="primary"
+                        size="small"
+                        :disabled="project.status !== 'success'"
+                        @click.stop="handleDeployProject(project)"
+                      >
+                        {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
+                      </Button>
+                    </div>
+                  </template>
+                  <div
+                    v-if="
+                      getSortedProjects(version.children).filter(
+                        (p) => p.projectType === 'frontend',
+                      ).length === 0
+                    "
+                    class="project-column-empty"
+                  >
+                    暂无
+                  </div>
+                </div>
               </div>
             </div>
           </CollapsePanel>
@@ -1052,124 +1128,20 @@ onDeactivated(() => {
 </template>
 
 <style scoped>
-.filter-label {
-  font-weight: 500;
-  color: hsl(var(--muted-foreground));
-  white-space: nowrap;
+@import '../project-list-shared.css';
+
+/* project-deploy 独有：项目列表列宽（含发布按钮列） */
+.project-item {
+  grid-template-columns: minmax(0, 1fr) 60px 80px minmax(0, 100px) 1fr 80px;
+  column-gap: 16px;
 }
 
-/* 版本折叠面板样式 */
-.version-collapse {
-  background: transparent;
-}
-
-:deep(.ant-collapse) {
-  background: transparent;
-  border: none;
-}
-
-:deep(.ant-collapse > .ant-collapse-item) {
-  margin-bottom: 16px;
-  overflow: hidden;
-  background: hsl(var(--card));
-  border: none;
-  border: 1px solid hsl(var(--border));
-  border-radius: var(--radius) !important;
-  box-shadow: 0 1px 2px hsl(0deg 0% 0% / 3%);
-}
-
-:deep(.ant-collapse > .ant-collapse-item:last-child) {
-  margin-bottom: 0;
-}
-
-:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header) {
-  display: flex !important;
-  align-items: center !important;
-  padding: 16px 20px;
-  font-weight: 600;
-  color: hsl(var(--foreground));
-  background: hsl(var(--muted));
-  border-bottom: 1px solid hsl(var(--border));
-  border-radius: var(--radius) var(--radius) 0 0 !important;
-}
-
-:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header:hover) {
-  background: hsl(var(--accent));
-}
-
-:deep(.ant-collapse > .ant-collapse-item > .ant-collapse-content) {
-  background: hsl(var(--accent-lighter));
-  border-top: none;
-}
-
-:deep(
-  .ant-collapse
-    > .ant-collapse-item
-    > .ant-collapse-content
-    > .ant-collapse-content-box
-) {
-  padding: 0;
-}
-
-:deep(
-  .ant-collapse
-    > .ant-collapse-item
-    > .ant-collapse-header
-    .ant-collapse-expand-icon
-) {
-  display: inline-flex !important;
-  align-items: center !important;
-  align-self: center !important;
-  justify-content: center !important;
-  color: hsl(var(--muted-foreground)) !important;
-}
-
-:deep(
-  .ant-collapse > .ant-collapse-item > .ant-collapse-header .ant-collapse-arrow
-) {
-  display: inline-flex !important;
-  align-items: center !important;
-  align-self: center !important;
-}
-
-:deep(
-  .ant-collapse
-    > .ant-collapse-item
-    > .ant-collapse-header
-    .ant-collapse-header-text
-) {
-  display: flex !important;
-  align-items: center !important;
-  width: 100% !important;
-}
-
-:deep(
-  .ant-collapse
-    > .ant-collapse-item.ant-collapse-item-active
-    > .ant-collapse-header
-) {
-  border-radius: var(--radius) var(--radius) 0 0 !important;
-}
-
-.version-title {
-  padding: 8px 16px;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-  color: hsl(var(--primary-foreground));
-  background: hsl(var(--primary));
-  border-radius: calc(var(--radius) - 2px);
-}
-
-.version-time {
-  font-size: 14px;
-  color: hsl(var(--muted-foreground));
-  white-space: nowrap;
-}
-
-.version-status-tag {
-  flex-shrink: 0;
-  font-weight: 500;
+/* 发布按钮样式 */
+.project-item :deep(.ant-btn-sm) {
+  justify-self: end;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 13px;
 }
 
 .current-version-tag {
@@ -1188,158 +1160,6 @@ onDeactivated(() => {
   50% {
     opacity: 0.7;
   }
-}
-
-/* 项目列表样式 */
-.project-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 6px 12px;
-}
-
-.project-item {
-  position: relative;
-  display: grid;
-  grid-template-columns: 200px 90px 150px 110px 1fr 80px;
-  column-gap: 16px;
-  align-items: center;
-  padding: 4px 20px;
-  cursor: default;
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-left: 4px solid hsl(var(--border));
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgb(0 0 0 / 5%);
-  transition: all 0.2s ease;
-}
-
-/* 服务端项目 */
-.project-item.project-type-backend {
-  background: linear-gradient(
-    to right,
-    rgb(24 144 255 / 4%),
-    hsl(var(--card)) 180px
-  );
-  border-left-color: #1890ff;
-}
-
-.project-item.project-type-backend:hover {
-  background: linear-gradient(
-    to right,
-    rgb(24 144 255 / 8%),
-    hsl(var(--card)) 180px
-  );
-  border-color: rgb(24 144 255 / 30%);
-  box-shadow: 0 4px 12px rgb(24 144 255 / 20%);
-  transform: translateX(4px);
-}
-
-/* 前端项目 */
-.project-item.project-type-frontend {
-  background: linear-gradient(
-    to right,
-    rgb(235 47 150 / 4%),
-    hsl(var(--card)) 180px
-  );
-  border-left-color: #eb2f96;
-}
-
-.project-item.project-type-frontend:hover {
-  background: linear-gradient(
-    to right,
-    rgb(235 47 150 / 8%),
-    hsl(var(--card)) 180px
-  );
-  border-color: rgb(235 47 150 / 30%);
-  box-shadow: 0 4px 12px rgb(235 47 150 / 20%);
-  transform: translateX(4px);
-}
-
-/* 子模块项目 */
-.project-item.project-type-submodule {
-  background: linear-gradient(
-    to right,
-    rgb(114 46 209 / 4%),
-    hsl(var(--card)) 180px
-  );
-  border-left-color: #722ed1;
-}
-
-.project-item.project-type-submodule:hover {
-  background: linear-gradient(
-    to right,
-    rgb(114 46 209 / 8%),
-    hsl(var(--card)) 180px
-  );
-  border-color: rgb(114 46 209 / 30%);
-  box-shadow: 0 4px 12px rgb(114 46 209 / 20%);
-  transform: translateX(4px);
-}
-
-/* 默认项目样式 */
-.project-item:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
-  transform: translateX(4px);
-}
-
-.project-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 15px;
-  font-weight: 600;
-  color: hsl(var(--foreground));
-  white-space: nowrap;
-}
-
-.project-type-tag {
-  justify-self: start;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.version-tag {
-  justify-self: start;
-  font-family: Consolas, Monaco, 'Courier New', monospace;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-tag {
-  justify-self: start;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-/* 统一调整所有 Tag 标签大小和居中 */
-.project-item :deep(.ant-tag) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 60px;
-  padding: 4px 12px;
-  font-size: 14px;
-  line-height: 20px;
-  text-align: center;
-}
-
-/* 发布按钮样式 */
-.project-item :deep(.ant-btn-sm) {
-  justify-self: end;
-  height: 28px;
-  padding: 0 12px;
-  font-size: 13px;
-}
-
-/* 表格行悬浮效果 */
-:deep(.vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.08) !important;
-  transition: background-color 0.2s ease;
-}
-
-/* 深色模式下的悬浮效果 */
-:deep(.dark .vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.15) !important;
 }
 
 /* 版本模态框表格样式 */
