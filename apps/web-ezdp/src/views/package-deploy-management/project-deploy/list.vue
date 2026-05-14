@@ -1004,7 +1004,6 @@ onDeactivated(() => {
                             .text
                         }}
                       </Tag>
-                      <div></div>
                       <Button
                         type="primary"
                         size="small"
@@ -1061,7 +1060,6 @@ onDeactivated(() => {
                             .text
                         }}
                       </Tag>
-                      <div></div>
                       <Button
                         type="primary"
                         size="small"
@@ -1130,9 +1128,9 @@ onDeactivated(() => {
 <style scoped>
 @import '../project-list-shared.css';
 
-/* project-deploy 独有：项目列表列宽（含发布按钮列） */
+/* project-deploy 独有：项目列表列宽 */
 .project-item {
-  grid-template-columns: minmax(0, 1fr) 60px 80px minmax(0, 100px) 1fr 80px;
+  grid-template-columns: 1fr 80px 120px 80px 70px;
   column-gap: 16px;
 }
 
