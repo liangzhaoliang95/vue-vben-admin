@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import type { VbenFormSchema } from '@vben/common-ui';
-import type { BasicOption } from '@vben/types';
 
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { AuthenticationLogin, z } from '@vben/common-ui';
@@ -15,20 +14,20 @@ defineOptions({ name: 'Login' });
 const router = useRouter();
 const authStore = useAuthStore();
 
-const MOCK_USER_OPTIONS: BasicOption[] = [
-  {
-    label: 'Super',
-    value: 'vben',
-  },
-  {
-    label: 'Admin',
-    value: 'admin',
-  },
-  {
-    label: 'User',
-    value: 'jack',
-  },
-];
+// 判断是否为内网访问（IP 地址或 localhost）
+function isIntranetAccess(): boolean {
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+  // 匹配私有 IP 段：10.x.x.x / 172.16-31.x.x / 192.168.x.x
+  return /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+|\d+\.\d+\.\d+\.\d+)$/.test(hostname);
+}
+
+onMounted(() => {
+  // 域名（公网）访问时直接跳转企微扫码，不显示账号密码登录
+  if (!isIntranetAccess()) {
+    router.replace('/auth/work-wechat-qrcode-login');
+  }
+});
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
@@ -36,22 +35,6 @@ const formSchema = computed((): VbenFormSchema[] => {
       component: 'VbenInput',
       componentProps: {
         placeholder: $t('authentication.usernameTip'),
-      },
-      dependencies: {
-        trigger(values, form) {
-          if (values.selectAccount) {
-            const findUser = MOCK_USER_OPTIONS.find(
-              (item) => item.value === values.selectAccount,
-            );
-            if (findUser) {
-              form.setValues({
-                password: '123456',
-                username: findUser.value,
-              });
-            }
-          }
-        },
-        triggerFields: ['selectAccount'],
       },
       fieldName: 'loginName',
       label: $t('authentication.username'),

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import { $t } from '@vben/locales';
@@ -167,6 +167,13 @@ function handleBackToLogin() {
   router.push('/auth/login');
 }
 
+// 判断是否为内网访问（IP 地址或 localhost），内网才允许返回账号登录
+const canBackToLogin = computed(() => {
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+  return /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+|\d+\.\d+\.\d+\.\d+)$/.test(hostname);
+});
+
 // 重新生成二维码
 async function handleRetryQrcode() {
   // 重置状态
@@ -285,6 +292,7 @@ onMounted(async () => {
               重新生成二维码
             </button>
             <button
+              v-if="canBackToLogin"
               class="border-input bg-background hover:bg-accent hover:text-accent-foreground rounded border px-4 py-2 text-sm"
               type="button"
               @click="handleBackToLogin"
@@ -303,8 +311,8 @@ onMounted(async () => {
       ></div>
     </div>
 
-    <!-- 返回账号登录 -->
-    <div class="mt-6 text-center text-sm">
+    <!-- 返回账号登录（仅内网访问时显示） -->
+    <div v-if="canBackToLogin" class="mt-6 text-center text-sm">
       <span class="text-muted-foreground">
         {{ $t('authentication.alreadyHaveAccount') }}
       </span>
