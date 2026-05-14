@@ -182,7 +182,7 @@ function onTopologyPreview() {
       :table-title="$t('deploy.packageDeployManagement.branchManagement.title')"
     >
       <template #toolbar-tools>
-        <Button @click="onTopologyPreview">
+        <Button style="margin-right: 8px" @click="onTopologyPreview">
           {{ $t('deploy.packageDeployManagement.branchManagement.topologyPreview') }}
         </Button>
         <Button type="primary" @click="onCreate">
