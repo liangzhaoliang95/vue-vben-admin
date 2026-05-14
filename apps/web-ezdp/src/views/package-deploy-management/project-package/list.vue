@@ -385,6 +385,19 @@ function getProjectTypeIcon(type: string) {
   return iconMap[type] || '📁';
 }
 
+// 格式化构建耗时为 hh:mm:ss
+function formatDuration(ms: number) {
+  if (!ms || ms <= 0) return '';
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) {
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
 // 排序项目列表
 function getSortedProjects(projects: any[]) {
   if (!projects || !Array.isArray(projects)) {
@@ -742,11 +755,7 @@ onDeactivated(() => {
                   v-if="project.duration && project.duration > 0"
                   class="duration-text"
                 >
-                  <Tooltip
-                    :title="$t('deploy.packageDeployManagement.projectPackage.duration')"
-                  >
-                    ⏱️ {{ (project.duration / 1000).toFixed(1) }}s
-                  </Tooltip>
+                  ⏱️ {{ formatDuration(project.duration) }}
                 </span>
               </div>
             </div>
