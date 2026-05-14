@@ -15,6 +15,7 @@ export namespace SystemBusinessLineApi {
     status: 0 | 1;
     sortOrder: number;
     isDefault: number;
+    enableLocalBuild: number;
     createdAt: number;
     updatedAt: number;
   }

@@ -53,6 +53,20 @@ export function useFormSchema(): VbenFormSchema[] {
       componentProps: {
         buttonStyle: 'solid',
         options: [
+          { label: $t('common.no'), value: 0 },
+          { label: $t('common.yes'), value: 1 },
+        ],
+        optionType: 'button',
+      },
+      defaultValue: 0,
+      fieldName: 'enableLocalBuild',
+      label: $t('system.businessLine.enableLocalBuild'),
+    },
+    {
+      component: 'RadioGroup',
+      componentProps: {
+        buttonStyle: 'solid',
+        options: [
           { label: $t('common.enabled'), value: 1 },
           { label: $t('common.disabled'), value: 0 },
         ],

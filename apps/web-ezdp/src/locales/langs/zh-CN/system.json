@@ -51,7 +51,8 @@
     "isDefault": "是否默认",
     "setDefault": "设为默认",
     "operation": "操作",
-    "keyword": "搜索关键词"
+    "keyword": "搜索关键词",
+    "enableLocalBuild": "是否启用本地构建"
   },
   "role": {
     "title": "角色管理",

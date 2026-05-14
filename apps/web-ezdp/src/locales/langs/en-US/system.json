@@ -51,7 +51,8 @@
     "isDefault": "Is Default",
     "setDefault": "Set as Default",
     "operation": "Operation",
-    "keyword": "Keyword"
+    "keyword": "Keyword",
+    "enableLocalBuild": "Enable Local Build"
   },
   "role": {
     "title": "Role Management",
