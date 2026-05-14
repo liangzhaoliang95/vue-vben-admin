@@ -1375,19 +1375,21 @@ const submitDeployResultApiData = {
 const getProjectListDetailByBranchAndVersionApiData = {
   apiName: '根据分支名和版本号获取项目列表详情',
   apiPath: 'POST /nc/deployAgent/getProjectListDetailByBranchAndVersion',
-  description: '直接传入分支名和版本号，获取该版本包含的所有项目部署配置（无需先查分支 ID 和版本 ID）',
+  description: '直接传入分支名和版本号，获取该版本包含的所有项目部署配置（无需先查分支 ID 和版本 ID）。支持 showAll 参数，开启后沿分支继承链聚合父分支的项目版本，适用于多分支继承场景。',
   request: {
     name: 'GetProjectListDetailByBranchAndVersionRequest',
     description: '请求参数',
     fields: [
       { name: 'token', type: 'string', required: true, description: '代理 Token' },
       { name: 'branchName', type: 'string', required: true, description: '分支名称，如 2.43' },
-      { name: 'version', type: 'string', required: true, description: '版本号，如 2.43.12' }
+      { name: 'version', type: 'string', required: false, description: '版本号，如 2.43.12；留空则取该分支最新版本' },
+      { name: 'showAll', type: 'boolean', required: false, description: '是否追溯分支继承链，默认 false。true = 沿继承链（最多 20 层）聚合所有祖先分支的项目，取版本号 ≤ 当前版本的最高版本；false = 仅查当前分支' }
     ],
     example: JSON.stringify({
       token: 'your-agent-token-here',
       branchName: '2.45',
-      version: '2.45.35'
+      version: '2.45.35',
+      showAll: true
     }, null, 2)
   },
   response: {
