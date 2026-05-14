@@ -4,7 +4,7 @@ import { computed, nextTick, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { useBusinessStore } from '@vben/stores';
 
-import { Button, message } from 'ant-design-vue';
+import { Button, message, Select } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import {
@@ -25,91 +25,71 @@ const isSuperAdmin = businessStore.currentRole?.isSuper === true;
 
 const id = ref<string>();
 const loading = ref(false);
-// 是否是新建模式（编辑时不显示继承分支选择器）
-const isCreate = ref(true);
+const parentBranchId = ref<string | undefined>(undefined);
+const branchOptions = ref<{ label: string; value: string }[]>([]);
 
-// 获取当前业务线的分支列表（用于继承分支选择器）
-async function fetchBranchOptions(params?: any) {
+async function loadBranchOptions() {
   const businessLineId =
     businessStore.currentBusinessLine?.businessLine.id ??
     businessStore.currentBusinessLineId;
   const res = await getBranchManagementList({
     page: 1,
     pageSize: 1000,
-    onlyEnabled: true,
     businessLineId,
-    ...params,
   });
-  return res.items || [];
+  branchOptions.value = (res.items || []).map((item: any) => ({
+    label: item.name,
+    value: item.id,
+  }));
 }
 
-const formSchema = computed(() => [
-  {
-    component: 'Input',
-    componentProps: {
-      placeholder: $t(
-        'deploy.packageDeployManagement.branchManagement.namePlaceholder',
-      ),
-    },
-    fieldName: 'name',
-    label: $t('deploy.packageDeployManagement.branchManagement.name'),
-    rules: 'required',
-  },
-  {
-    component: 'ApiSelect',
-    componentProps: {
-      api: fetchBranchOptions,
-      labelField: 'name',
-      valueField: 'id',
-      placeholder: $t(
-        'deploy.packageDeployManagement.branchManagement.parentBranchPlaceholder',
-      ),
-      allowClear: true,
-    },
-    fieldName: 'parentBranchId',
-    help: $t(
-      'deploy.packageDeployManagement.branchManagement.parentBranchHelp',
-    ),
-    ifShow: () => isCreate.value,
-    label: $t('deploy.packageDeployManagement.branchManagement.parentBranch'),
-  },
-  {
-    component: 'InputNumber',
-    componentProps: {
-      placeholder: $t(
-        'deploy.packageDeployManagement.branchManagement.sortOrderPlaceholder',
-      ),
-      min: 0,
-      style: { width: '100%' },
-    },
-    fieldName: 'sortOrder',
-    label: $t('deploy.packageDeployManagement.branchManagement.sortOrder'),
-  },
-  {
-    component: 'Input',
-    componentProps: {
-      placeholder: '可选：如 5.66.4{{number:3}}',
-    },
-    fieldName: 'versionTemplate',
-    help: '仅支持 {{number:N}}，如 {{number:3}} -> 001',
-    label: '版本号模板',
-  },
-  {
-    component: 'Textarea',
-    componentProps: {
-      placeholder: $t(
-        'deploy.packageDeployManagement.branchManagement.descriptionPlaceholder',
-      ),
-      rows: 3,
-    },
-    fieldName: 'description',
-    label: $t('deploy.packageDeployManagement.branchManagement.description'),
-    rules: 'required',
-  },
-]);
-
 const [Form, formApi] = useVbenForm({
-  schema: formSchema.value,
+  schema: [
+    {
+      component: 'Input',
+      componentProps: {
+        placeholder: $t(
+          'deploy.packageDeployManagement.branchManagement.namePlaceholder',
+        ),
+      },
+      fieldName: 'name',
+      label: $t('deploy.packageDeployManagement.branchManagement.name'),
+      rules: 'required',
+    },
+    {
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: $t(
+          'deploy.packageDeployManagement.branchManagement.sortOrderPlaceholder',
+        ),
+        min: 0,
+        style: { width: '100%' },
+      },
+      fieldName: 'sortOrder',
+      label: $t('deploy.packageDeployManagement.branchManagement.sortOrder'),
+    },
+    {
+      component: 'Input',
+      componentProps: {
+        placeholder: '可选：如 5.66.4{{number:3}}',
+      },
+      fieldName: 'versionTemplate',
+      help: '仅支持 {{number:N}}，如 {{number:3}} -> 001',
+      label: '版本号模板',
+    },
+    {
+      component: 'Textarea',
+      componentProps: {
+        placeholder: $t(
+          'deploy.packageDeployManagement.branchManagement.descriptionPlaceholder',
+        ),
+        rows: 3,
+      },
+      fieldName: 'description',
+      label: $t('deploy.packageDeployManagement.branchManagement.description'),
+      rules: 'required',
+    },
+  ],
   showDefaultActions: false,
 });
 
@@ -122,14 +102,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (isOpen) {
       const data = drawerApi.getData<any>();
       formApi.resetForm();
+      parentBranchId.value = undefined;
 
-      // Wait for Vue to flush DOM updates (form fields mounted)
       await nextTick();
+      await loadBranchOptions();
 
       if (data && data.id) {
-        // 编辑时，设置表单数据
-        isCreate.value = false;
         id.value = data.id;
+        parentBranchId.value = data.parentBranchId || undefined;
         formApi.setValues({
           name: data.name,
           versionTemplate: data.versionTemplate || '',
@@ -138,15 +118,11 @@ const [Drawer, drawerApi] = useVbenDrawer({
           businessLineId: data.businessLineId,
         });
       } else {
-        // 新建时，设置业务线默认值（使用当前业务线ID）
-        isCreate.value = true;
         id.value = undefined;
-        const currentBusinessLine = businessStore.currentBusinessLine;
-        const defaultBusinessLineId = currentBusinessLine?.businessLine.id;
+        const defaultBusinessLineId =
+          businessStore.currentBusinessLine?.businessLine.id;
         if (defaultBusinessLineId && isSuperAdmin) {
-          formApi.setValues({
-            businessLineId: defaultBusinessLineId,
-          });
+          formApi.setValues({ businessLineId: defaultBusinessLineId });
         }
       }
     }
@@ -170,24 +146,17 @@ async function handleConfirm() {
 
   loading.value = true;
 
-  // 构建提交数据
   const submitData: any = {
     name: values.name,
     versionTemplate: values.versionTemplate?.trim() || '',
     description: values.description,
+    parentBranchId: parentBranchId.value || null,
   };
 
-  // 新建时才传 parentBranchId
-  if (isCreate.value && values.parentBranchId) {
-    submitData.parentBranchId = values.parentBranchId;
-  }
-
-  // sortOrder字段（如果提供了则使用，否则后端会自动设置）
   if (values.sortOrder !== undefined && values.sortOrder !== null) {
     submitData.sortOrder = values.sortOrder;
   }
 
-  // 业务线ID（如果表单中有，则使用；否则后端会从token自动获取）
   if (values.businessLineId) {
     submitData.businessLineId = values.businessLineId;
   }
@@ -213,6 +182,25 @@ async function handleConfirm() {
 <template>
   <Drawer :title="title">
     <Form />
+    <div class="mb-5 flex items-start gap-2 px-2">
+      <label class="w-[100px] shrink-0 pt-1 text-right text-sm">
+        {{ $t('deploy.packageDeployManagement.branchManagement.parentBranch') }}
+      </label>
+      <div class="flex-1">
+        <Select
+          v-model:value="parentBranchId"
+          :options="branchOptions"
+          :placeholder="$t('deploy.packageDeployManagement.branchManagement.parentBranchPlaceholder')"
+          :allow-clear="true"
+          :show-search="true"
+          :filter-option="(input: string, option: any) => option.label.toLowerCase().includes(input.toLowerCase())"
+          class="w-full"
+        />
+        <div class="mt-1 text-xs text-gray-400">
+          {{ $t('deploy.packageDeployManagement.branchManagement.parentBranchHelp') }}
+        </div>
+      </div>
+    </div>
     <template #footer>
       <div class="flex justify-end gap-2">
         <Button @click="drawerApi.close()">{{ $t('common.cancel') }}</Button>

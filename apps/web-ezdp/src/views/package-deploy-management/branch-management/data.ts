@@ -1,5 +1,7 @@
 import type { VbenFormSchema } from '@vben/common-ui';
 
+import type { Ref } from 'vue';
+
 import type { OnActionClickFn, VxeGridProps } from '#/adapter/vxe-table';
 
 import { useBusinessStore } from '@vben/stores';
@@ -26,10 +28,12 @@ export function useGridFormSchema(): VbenFormSchema[] {
 
 /**
  * 表格列配置
+ * @param parentBranchMap id -> name 映射，用于显示父分支名称
  */
 export function useColumns(
   onActionClick: OnActionClickFn<any>,
   onToggleEnabled: (row: any) => void,
+  parentBranchMap: Ref<Record<string, string>>,
 ): VxeGridProps['columns'] {
   const businessStore = useBusinessStore();
 
@@ -55,6 +59,15 @@ export function useColumns(
       field: 'name',
       title: $t('deploy.packageDeployManagement.branchManagement.name'),
       minWidth: 200,
+    },
+    {
+      field: 'parentBranchId',
+      title: $t('deploy.packageDeployManagement.branchManagement.parentBranch'),
+      minWidth: 160,
+      formatter: ({ cellValue }) => {
+        if (!cellValue) return '-';
+        return parentBranchMap.value[cellValue] || cellValue;
+      },
     },
     {
       field: 'description',

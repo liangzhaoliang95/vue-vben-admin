@@ -5,7 +5,7 @@ import type {
 } from '#/adapter/vxe-table';
 import type { BranchManagementApi } from '#/api/package-deploy-management/branch-management';
 
-import { onActivated, watch } from 'vue';
+import { onActivated, onMounted, ref, watch } from 'vue';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
@@ -30,13 +30,32 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
 const businessStore = useBusinessStore();
 
+// 全量分支 id -> name 映射，供父分支列显示用
+const parentBranchMap = ref<Record<string, string>>({});
+
+async function loadParentBranchMap() {
+  const isSuperAdmin = businessStore.currentRole?.isSuper === true;
+  const params: any = { page: 1, pageSize: 1000 };
+  if (!isSuperAdmin) {
+    params.businessLineId =
+      businessStore.currentBusinessLine?.businessLine.id ??
+      businessStore.currentBusinessLineId;
+  }
+  const res = await getBranchManagementList(params);
+  const map: Record<string, string> = {};
+  for (const item of res.items || []) {
+    map[item.id] = item.name;
+  }
+  parentBranchMap.value = map;
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   formOptions: {
     schema: useGridFormSchema(),
     submitOnChange: true,
   },
   gridOptions: {
-    columns: useColumns(onActionClick, onToggleEnabled),
+    columns: useColumns(onActionClick, onToggleEnabled, parentBranchMap),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -74,7 +93,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 // 路由激活时刷新数据
+onMounted(() => {
+  loadParentBranchMap();
+});
+
 onActivated(() => {
+  loadParentBranchMap();
   gridApi.query();
 });
 
@@ -82,6 +106,7 @@ onActivated(() => {
 watch(
   () => businessStore.currentBusinessLineId,
   () => {
+    loadParentBranchMap();
     gridApi.query();
   },
 );
@@ -130,6 +155,7 @@ async function onToggleEnabled(row: BranchManagementApi.BranchManagement) {
 }
 
 function onRefresh() {
+  loadParentBranchMap();
   gridApi.query();
 }
 
