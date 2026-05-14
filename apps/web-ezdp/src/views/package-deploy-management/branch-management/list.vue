@@ -22,6 +22,7 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+import TopologyModal from './modules/topology-modal.vue';
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -32,6 +33,10 @@ const businessStore = useBusinessStore();
 
 // 全量分支 id -> name 映射，供父分支列显示用
 const parentBranchMap = ref<Record<string, string>>({});
+
+// 拓扑预览
+const topologyOpen = ref(false);
+const allBranches = ref<BranchManagementApi.BranchManagement[]>([]);
 
 async function loadParentBranchMap() {
   const isSuperAdmin = businessStore.currentRole?.isSuper === true;
@@ -47,6 +52,7 @@ async function loadParentBranchMap() {
     map[item.id] = item.name;
   }
   parentBranchMap.value = map;
+  allBranches.value = res.items || [];
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -162,15 +168,23 @@ function onRefresh() {
 function onCreate() {
   formDrawerApi.setData({}).open();
 }
+
+function onTopologyPreview() {
+  topologyOpen.value = true;
+}
 </script>
 
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
+    <TopologyModal v-model:open="topologyOpen" :branches="allBranches" />
     <Grid
       :table-title="$t('deploy.packageDeployManagement.branchManagement.title')"
     >
       <template #toolbar-tools>
+        <Button @click="onTopologyPreview">
+          {{ $t('deploy.packageDeployManagement.branchManagement.topologyPreview') }}
+        </Button>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
           {{

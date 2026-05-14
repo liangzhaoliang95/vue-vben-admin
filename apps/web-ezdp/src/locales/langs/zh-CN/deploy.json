@@ -451,7 +451,14 @@
         "bugfix": "修复分支",
         "release": "发布分支",
         "hotfix": "热修复分支"
-      }
+      },
+      "topologyPreview": "拓扑预览",
+      "topologyTitle": "分支继承拓扑图",
+      "topologyRootBranch": "根分支",
+      "topologyChildBranch": "子分支",
+      "topologyDisabledBranch": "已禁用",
+      "topologyLeafBranch": "末端分支（无子分支）",
+      "topologyTip": "滚轮缩放 · 右键拖动"
     },
     "environmentConfig": {
       "title": "环境配置",

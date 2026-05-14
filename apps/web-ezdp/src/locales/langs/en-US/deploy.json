@@ -451,7 +451,14 @@
         "bugfix": "Bugfix Branch",
         "release": "Release Branch",
         "hotfix": "Hotfix Branch"
-      }
+      },
+      "topologyPreview": "Topology Preview",
+      "topologyTitle": "Branch Inheritance Topology",
+      "topologyRootBranch": "Root Branch",
+      "topologyChildBranch": "Child Branch",
+      "topologyDisabledBranch": "Disabled",
+      "topologyLeafBranch": "Leaf Branch (no children)",
+      "topologyTip": "Scroll to zoom · Right-drag to pan"
     },
     "environmentConfig": {
       "title": "Environment Configuration",
