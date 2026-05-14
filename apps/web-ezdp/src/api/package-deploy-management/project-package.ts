@@ -12,8 +12,9 @@ export namespace ProjectPackageApi {
     status: 'cancelled' | 'failed' | 'pending' | 'running' | 'success';
     imageName: string;
     imageTag: string;
-    startedAt?: number;
-    finishedAt?: number;
+    startTime?: number;
+    endTime?: number;
+    duration?: number; // 构建耗时（毫秒）
     errorMessage: string;
     createdAt: number;
     updatedAt: number;

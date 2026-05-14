@@ -372,6 +372,8 @@
         "failed": "Failed",
         "skipped": "Skipped"
       },
+      "duration": "Duration",
+      "durationSeconds": "{0}s",
       "versionStatus": {
         "building": "Building",
         "success": "Success",

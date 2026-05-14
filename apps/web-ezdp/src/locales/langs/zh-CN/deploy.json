@@ -372,6 +372,8 @@
         "failed": "失败",
         "skipped": "已跳过"
       },
+      "duration": "耗时",
+      "durationSeconds": "{0}秒",
       "versionStatus": {
         "building": "构建中",
         "success": "成功",

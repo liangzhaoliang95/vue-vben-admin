@@ -738,6 +738,16 @@ onDeactivated(() => {
                       .text
                   }}
                 </Tag>
+                <span
+                  v-if="project.duration && project.duration > 0"
+                  class="duration-text"
+                >
+                  <Tooltip
+                    :title="$t('deploy.packageDeployManagement.projectPackage.duration')"
+                  >
+                    ⏱️ {{ (project.duration / 1000).toFixed(1) }}s
+                  </Tooltip>
+                </span>
               </div>
             </div>
           </CollapsePanel>
@@ -1015,6 +1025,13 @@ onDeactivated(() => {
   font-size: 14px;
   line-height: 20px;
   text-align: center;
+}
+
+.project-item .duration-text {
+  font-size: 13px;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  cursor: default;
 }
 
 .project-item .version-tag {
