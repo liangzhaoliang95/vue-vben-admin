@@ -3,8 +3,9 @@ import type { BranchManagementApi } from '#/api/package-deploy-management/branch
 
 import { nextTick, onUnmounted, ref, watch } from 'vue';
 
-import { Modal } from 'ant-design-vue';
+import { Modal, message } from 'ant-design-vue';
 
+import { updateBranchManagement } from '#/api/package-deploy-management/branch-management';
 import { $t } from '#/locales';
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:open', value: boolean): void;
+  (e: 'refresh'): void;
 }
 
 const props = defineProps<Props>();
@@ -41,16 +43,40 @@ let dragStartOffsetY = 0;
 // canvas 逻辑尺寸（内容区域大小，不含 dpr）
 let contentW = 0;
 
+// 拖拽状态
+interface DragState {
+  active: boolean;
+  node: TreeNode | null;
+  ghostX: number;
+  ghostY: number;
+  dropTarget: DropTarget | null;
+}
+
+type DropTarget =
+  | { type: 'edge'; parentNode: TreeNode; childNode: TreeNode }
+  | { type: 'node'; targetNode: TreeNode }
+  | { type: 'root' };
+
+const dragState: DragState = {
+  active: false,
+  node: null,
+  ghostX: 0,
+  ghostY: 0,
+  dropTarget: null,
+};
+
 interface TreeNode {
   branch: BranchManagementApi.BranchManagement;
   children: TreeNode[];
-  // 子节点（被继承者）在上，父节点（被继承的）在下
-  // depth=0 表示叶子节点（没有子分支的分支），depth 越大越靠下
   x: number;
   y: number;
   subtreeWidth: number;
   depth: number;
 }
+
+// 缓存当前布局的所有节点和边，供命中检测使用
+let cachedNodes: TreeNode[] = [];
+let cachedEdges: { parent: TreeNode; child: TreeNode }[] = [];
 
 function buildTree(): TreeNode[] {
   const map = new Map<string, TreeNode>();
@@ -65,7 +91,6 @@ function buildTree(): TreeNode[] {
     });
   }
 
-  // children 表示"以该节点为父分支的子分支"（继承者）
   const roots: TreeNode[] = [];
   for (const b of props.branches) {
     const node = map.get(b.id)!;
@@ -88,8 +113,6 @@ function buildTree(): TreeNode[] {
   return roots;
 }
 
-// 计算每棵树的最大深度（用于翻转 y 坐标）
-
 function calcSubtreeWidth(node: TreeNode): number {
   if (node.children.length === 0) {
     node.subtreeWidth = NODE_W;
@@ -104,7 +127,6 @@ function calcSubtreeWidth(node: TreeNode): number {
   return node.subtreeWidth;
 }
 
-// 正向分配位置（根在 depth=0），之后再翻转 y
 function assignPositions(node: TreeNode, startX: number, depth: number) {
   node.depth = depth;
   node.x = startX + (node.subtreeWidth - NODE_W) / 2;
@@ -118,6 +140,16 @@ function assignPositions(node: TreeNode, startX: number, depth: number) {
 function collectNodes(node: TreeNode, out: TreeNode[]) {
   out.push(node);
   for (const c of node.children) collectNodes(c, out);
+}
+
+function collectEdges(
+  node: TreeNode,
+  out: { parent: TreeNode; child: TreeNode }[],
+) {
+  for (const child of node.children) {
+    out.push({ parent: node, child });
+    collectEdges(child, out);
+  }
 }
 
 function isDark(): boolean {
@@ -158,6 +190,184 @@ function truncateText(
   return result + '…';
 }
 
+/** 将屏幕坐标转换为画布内容坐标 */
+function screenToCanvas(clientX: number, clientY: number) {
+  const canvas = canvasRef.value;
+  if (!canvas) return { cx: 0, cy: 0 };
+  const rect = canvas.getBoundingClientRect();
+  const mx = clientX - rect.left;
+  const my = clientY - rect.top;
+  return {
+    cx: (mx - offsetX) / scale,
+    cy: (my - offsetY) / scale,
+  };
+}
+
+/** 检测点是否在某个节点内 */
+function hitTestNode(cx: number, cy: number): TreeNode | null {
+  for (const node of cachedNodes) {
+    if (cx >= node.x && cx <= node.x + NODE_W && cy >= node.y && cy <= node.y + NODE_H) {
+      return node;
+    }
+  }
+  return null;
+}
+
+/** 计算点到贝塞尔曲线的近似距离 */
+function pointToEdgeDist(
+  px: number,
+  py: number,
+  edge: { parent: TreeNode; child: TreeNode },
+): number {
+  const child = edge.child;
+  const parent = edge.parent;
+  const cx = child.x + NODE_W / 2;
+  const cy = child.y + NODE_H;
+  const px0 = parent.x + NODE_W / 2;
+  const py0 = parent.y;
+  const midY = (cy + py0) / 2;
+
+  // 采样贝塞尔曲线上的点，找最近距离
+  let minDist = Number.POSITIVE_INFINITY;
+  for (let t = 0; t <= 1; t += 0.05) {
+    const t2 = t;
+    const bx =
+      (1 - t2) ** 3 * cx +
+      3 * (1 - t2) ** 2 * t2 * cx +
+      3 * (1 - t2) * t2 ** 2 * px0 +
+      t2 ** 3 * px0;
+    const by =
+      (1 - t2) ** 3 * cy +
+      3 * (1 - t2) ** 2 * t2 * midY +
+      3 * (1 - t2) * t2 ** 2 * midY +
+      t2 ** 3 * py0;
+    const dist = Math.hypot(px - bx, py - by);
+    if (dist < minDist) minDist = dist;
+  }
+  return minDist;
+}
+
+/** 检测最近的边 */
+function hitTestEdge(
+  cx: number,
+  cy: number,
+): { parent: TreeNode; child: TreeNode } | null {
+  const threshold = 15;
+  let bestEdge: { parent: TreeNode; child: TreeNode } | null = null;
+  let bestDist = Number.POSITIVE_INFINITY;
+
+  for (const edge of cachedEdges) {
+    // 跳过与拖拽节点相关的边
+    if (dragState.node) {
+      if (edge.parent.branch.id === dragState.node.branch.id || edge.child.branch.id === dragState.node.branch.id) {
+        continue;
+      }
+    }
+    const dist = pointToEdgeDist(cx, cy, edge);
+    if (dist < threshold && dist < bestDist) {
+      bestDist = dist;
+      bestEdge = edge;
+    }
+  }
+  return bestEdge;
+}
+
+/** 检测拖拽释放目标 */
+function detectDropTarget(cx: number, cy: number): DropTarget | null {
+  if (!dragState.node) return null;
+
+  // 1. 检测是否悬停在某个节点上（变为该节点的子分支）
+  const hitNode = hitTestNode(cx, cy);
+  if (hitNode && hitNode.branch.id !== dragState.node.branch.id) {
+    return { type: 'node', targetNode: hitNode };
+  }
+
+  // 2. 检测是否悬停在某条边上（插入到边中间）
+  const hitEdge = hitTestEdge(cx, cy);
+  if (hitEdge) {
+    return { type: 'edge', parentNode: hitEdge.parent, childNode: hitEdge.child };
+  }
+
+  // 3. 空白区域 → 变为根节点
+  return { type: 'root' };
+}
+
+/** 执行拖拽释放后的继承关系更新 */
+async function executeDrop(target: DropTarget) {
+  const dragNode = dragState.node;
+  if (!dragNode) return;
+
+  const dragId = dragNode.branch.id;
+  let newParentBranchId = '';
+  let needUpdateChild: { childId: string; newParentId: string } | null = null;
+
+  if (target.type === 'edge') {
+    // 插入到边中间：dragNode 的 parent → edge.parentNode，edge.child 的 parent → dragNode
+    newParentBranchId = target.parentNode.branch.id;
+    needUpdateChild = {
+      childId: target.childNode.branch.id,
+      newParentId: dragId,
+    };
+  } else if (target.type === 'node') {
+    // 变为某节点的子分支
+    newParentBranchId = target.targetNode.branch.id;
+  } else {
+    // 变为根节点
+    newParentBranchId = '';
+  }
+
+  // 不能将自己设为自己的子分支（虽然上面已排除自身，但多加一层保护）
+  if (newParentBranchId === dragId) {
+    message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+    return;
+  }
+
+  // 检查是否形成了循环：新父级是否是拖拽节点的后代
+  if (newParentBranchId) {
+    if (isDescendant(dragId, newParentBranchId)) {
+      message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+      return;
+    }
+  }
+
+  try {
+    // 更新拖拽节点的 parentBranchId
+    await updateBranchManagement(dragId, { parentBranchId: newParentBranchId });
+
+    // 如果需要，更新连线上 child 的 parentBranchId
+    if (needUpdateChild) {
+      await updateBranchManagement(needUpdateChild.childId, {
+        parentBranchId: needUpdateChild.newParentId,
+      });
+    }
+
+    message.success($t('deploy.packageDeployManagement.branchManagement.topologyDragSuccess'));
+    emits('refresh');
+  } catch {
+    message.error($t('deploy.packageDeployManagement.branchManagement.topologyDragFailed'));
+  }
+}
+
+/** 检查 targetId 是否是 ancestorId 的后代（在当前 branches 数据中） */
+function isDescendant(ancestorId: string, targetId: string): boolean {
+  const map = new Map<string, string>();
+  for (const b of props.branches) {
+    if (b.parentBranchId) {
+      map.set(b.id, b.parentBranchId);
+    }
+  }
+
+  let current = targetId;
+  const visited = new Set<string>();
+  while (current) {
+    if (current === ancestorId) return true;
+    if (visited.has(current)) break;
+    visited.add(current);
+    current = map.get(current) ?? '';
+  }
+  return false;
+}
+
 function redraw() {
   const canvas = canvasRef.value;
   if (!canvas || contentW === 0) return;
@@ -193,35 +403,52 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
     startX += roots[i]!.subtreeWidth + H_GAP * 2;
   }
 
-  // 计算每棵树的最大深度，用于翻转 y（叶子在上，根在下）
   const allNodes: TreeNode[] = [];
   for (const r of roots) collectNodes(r, allNodes);
+  cachedNodes = allNodes;
 
   const globalMaxDepth = Math.max(...allNodes.map((n) => n.depth));
 
-  // 翻转 y：depth=0（根）在最下面，depth=maxDepth（叶子）在最上面
   for (const n of allNodes) {
     const flippedDepth = globalMaxDepth - n.depth;
     n.y = PADDING + flippedDepth * (NODE_H + V_GAP);
   }
 
+  // 收集所有边
+  const allEdges: { parent: TreeNode; child: TreeNode }[] = [];
+  for (const r of roots) collectEdges(r, allEdges);
+  cachedEdges = allEdges;
+
   // 先画连线
   function drawEdges(node: TreeNode) {
     for (const child of node.children) {
-      // child 是继承者（在上方），node 是被继承者（在下方）
-      // 连线从 child 底部 -> node 顶部
       const cx = child.x + NODE_W / 2;
-      const cy = child.y + NODE_H; // child 底部
+      const cy = child.y + NODE_H;
       const px = node.x + NODE_W / 2;
-      const py = node.y; // node 顶部
+      const py = node.y;
       const midY = (cy + py) / 2;
+
+      const isHighlighted =
+        dragState.active &&
+        dragState.dropTarget?.type === 'edge' &&
+        dragState.dropTarget.parentNode.branch.id === node.branch.id &&
+        dragState.dropTarget.childNode.branch.id === child.branch.id;
 
       ctx.beginPath();
       ctx.moveTo(cx, cy);
       ctx.bezierCurveTo(cx, midY, px, midY, px, py);
-      ctx.strokeStyle = dark ? '#4a6fa5' : '#93c5fd';
-      ctx.lineWidth = 2;
+
+      if (isHighlighted) {
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 4;
+        ctx.setLineDash([8, 4]);
+      } else {
+        ctx.strokeStyle = dark ? '#4a6fa5' : '#93c5fd';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+      }
       ctx.stroke();
+      ctx.setLineDash([]);
 
       // 箭头指向父节点（向下）
       const arrowSize = 7;
@@ -230,8 +457,27 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
       ctx.lineTo(px - arrowSize * 0.5, py + arrowSize);
       ctx.lineTo(px + arrowSize * 0.5, py + arrowSize);
       ctx.closePath();
-      ctx.fillStyle = dark ? '#4a6fa5' : '#93c5fd';
+      ctx.fillStyle = isHighlighted ? '#f59e0b' : dark ? '#4a6fa5' : '#93c5fd';
       ctx.fill();
+
+      // 高亮边上显示"插入"提示
+      if (isHighlighted) {
+        const labelX = (cx + px) / 2;
+        const labelY = (cy + py) / 2;
+        const label = $t('deploy.packageDeployManagement.branchManagement.topologyDragInsert');
+        ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        const textW = ctx.measureText(label).width;
+        const pad = 6;
+
+        roundRect(ctx, labelX - textW / 2 - pad, labelY - 10 - pad, textW + pad * 2, 20 + pad, 4);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, labelX, labelY);
+      }
 
       drawEdges(child);
     }
@@ -239,23 +485,38 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
 
   for (const r of roots) drawEdges(r);
 
-  // 再画节点（覆盖在连线上）
+  // 如果拖拽中，目标节点高亮
+  let highlightNodeId: string | null = null;
+  if (dragState.active && dragState.dropTarget?.type === 'node') {
+    highlightNodeId = dragState.dropTarget.targetNode.branch.id;
+  }
+
+  // 画节点
   function drawNode(node: TreeNode) {
+    // 拖拽中的节点半透明
+    const isDragSource =
+      dragState.active && dragState.node?.branch.id === node.branch.id;
+    if (isDragSource) {
+      ctx.globalAlpha = 0.35;
+    }
+
     const { x, y, branch, depth } = node;
-    const isRoot = depth === 0; // 根节点（最底层，被所有人继承）
-    const isLeaf = node.children.length === 0; // 叶子节点（最顶层）
+    const isRoot = depth === 0;
+    const isLeaf = node.children.length === 0;
     const isDisabled = !branch.enabled;
+    const isHighlight = node.branch.id === highlightNodeId;
 
     const grad = ctx.createLinearGradient(x, y, x, y + NODE_H);
-    if (isDisabled) {
+    if (isHighlight) {
+      grad.addColorStop(0, '#f59e0b');
+      grad.addColorStop(1, '#d97706');
+    } else if (isDisabled) {
       grad.addColorStop(0, dark ? '#3a3a3a' : '#e5e7eb');
       grad.addColorStop(1, dark ? '#2a2a2a' : '#d1d5db');
     } else if (isRoot) {
-      // 根节点：最深蓝
       grad.addColorStop(0, dark ? '#1e3a8a' : '#1d4ed8');
       grad.addColorStop(1, dark ? '#1e40af' : '#1e40af');
     } else if (isLeaf) {
-      // 叶子节点：最浅蓝
       grad.addColorStop(0, dark ? '#0e7490' : '#0ea5e9');
       grad.addColorStop(1, dark ? '#0c6a80' : '#0284c7');
     } else {
@@ -267,23 +528,100 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    ctx.strokeStyle = isRoot
-      ? dark ? '#60a5fa' : '#93c5fd'
-      : dark ? '#3b82f6' : '#bfdbfe';
-    ctx.lineWidth = isRoot ? 2 : 1.5;
+    if (isHighlight) {
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([4, 3]);
+    } else {
+      ctx.strokeStyle = isRoot
+        ? dark ? '#60a5fa' : '#93c5fd'
+        : dark ? '#3b82f6' : '#bfdbfe';
+      ctx.lineWidth = isRoot ? 2 : 1.5;
+      ctx.setLineDash([]);
+    }
     ctx.stroke();
+    ctx.setLineDash([]);
 
     ctx.fillStyle = isDisabled ? (dark ? '#6b7280' : '#9ca3af') : '#ffffff';
-    ctx.font = `${isRoot ? 'bold ' : ''}13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+    ctx.font = `${isRoot || isHighlight ? 'bold ' : ''}13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const label = truncateText(ctx, branch.name, NODE_W - 20);
     ctx.fillText(label, x + NODE_W / 2, y + NODE_H / 2);
 
+    if (isDragSource) {
+      ctx.globalAlpha = 1;
+    }
+
     for (const child of node.children) drawNode(child);
   }
 
   for (const r of roots) drawNode(r);
+
+  // 画拖拽幽灵节点
+  if (dragState.active && dragState.node) {
+    const gx = dragState.ghostX - NODE_W / 2;
+    const gy = dragState.ghostY - NODE_H / 2;
+    ctx.globalAlpha = 0.85;
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 4;
+
+    const grad = ctx.createLinearGradient(gx, gy, gx, gy + NODE_H);
+    grad.addColorStop(0, '#f59e0b');
+    grad.addColorStop(1, '#d97706');
+
+    roundRect(ctx, gx, gy, NODE_W, NODE_H, 8);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 重置阴影
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = truncateText(ctx, dragState.node.branch.name, NODE_W - 20);
+    ctx.fillText(label, gx + NODE_W / 2, gy + NODE_H / 2);
+
+    ctx.globalAlpha = 1;
+
+    // 在幽灵节点下方显示放置提示
+    if (dragState.dropTarget) {
+      let tip = '';
+      if (dragState.dropTarget.type === 'root') {
+        tip = $t('deploy.packageDeployManagement.branchManagement.topologyDragToRoot');
+      } else if (dragState.dropTarget.type === 'node') {
+        tip = $t('deploy.packageDeployManagement.branchManagement.topologyDragToChild', {
+          name: dragState.dropTarget.targetNode.branch.name,
+        });
+      }
+      if (tip) {
+        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        const tipW = ctx.measureText(tip).width;
+        const tipX = gx + NODE_W / 2;
+        const tipY = gy + NODE_H + 8;
+
+        roundRect(ctx, tipX - tipW / 2 - 6, tipY - 2, tipW + 12, 20, 4);
+        ctx.fillStyle = dark ? 'rgba(30,30,30,0.9)' : 'rgba(0,0,0,0.75)';
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(tip, tipX, tipY);
+      }
+    }
+  }
 }
 
 function initCanvas() {
@@ -302,7 +640,6 @@ function initCanvas() {
     if (i < roots.length - 1) totalWidth += H_GAP * 2;
   }
 
-  // 计算总高度
   let startX = PADDING;
   for (let i = 0; i < roots.length; i++) {
     assignPositions(roots[i]!, startX, 0);
@@ -315,7 +652,6 @@ function initCanvas() {
 
   contentW = totalWidth;
 
-  // canvas 固定为容器大小
   const dpr = window.devicePixelRatio || 1;
   const viewW = container.clientWidth;
   const viewH = container.clientHeight;
@@ -324,12 +660,10 @@ function initCanvas() {
   canvas.style.width = `${viewW}px`;
   canvas.style.height = `${viewH}px`;
 
-  // 初始缩放：让内容适应视口
   const scaleX = viewW / totalWidth;
   const scaleY = viewH / totalHeight;
   scale = Math.min(scaleX, scaleY, 1) * 0.9;
 
-  // 居中
   offsetX = (viewW - totalWidth * scale) / 2;
   offsetY = (viewH - totalHeight * scale) / 2;
 
@@ -349,7 +683,6 @@ function onWheel(e: WheelEvent) {
   const delta = e.deltaY > 0 ? 0.9 : 1.1;
   const newScale = Math.min(Math.max(scale * delta, 0.1), 5);
 
-  // 以鼠标位置为缩放中心
   offsetX = mouseX - (mouseX - offsetX) * (newScale / scale);
   offsetY = mouseY - (mouseY - offsetY) * (newScale / scale);
   scale = newScale;
@@ -357,27 +690,88 @@ function onWheel(e: WheelEvent) {
   redraw();
 }
 
-// 右键拖动
+// 鼠标按下：左键 = 开始拖拽节点，右键 = 平移画布
 function onMouseDown(e: MouseEvent) {
-  if (e.button !== 2) return;
-  e.preventDefault();
-  isDragging = true;
-  dragStartX = e.clientX;
-  dragStartY = e.clientY;
-  dragStartOffsetX = offsetX;
-  dragStartOffsetY = offsetY;
+  if (e.button === 2) {
+    // 右键拖动画布
+    e.preventDefault();
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragStartOffsetX = offsetX;
+    dragStartOffsetY = offsetY;
+    return;
+  }
+
+  if (e.button === 0) {
+    // 左键：检测是否点击了节点
+    const { cx, cy } = screenToCanvas(e.clientX, e.clientY);
+    const hitNode = hitTestNode(cx, cy);
+    if (hitNode) {
+      e.preventDefault();
+      dragState.active = true;
+      dragState.node = hitNode;
+      dragState.ghostX = cx;
+      dragState.ghostY = cy;
+      dragState.dropTarget = null;
+      const canvas = canvasRef.value;
+      if (canvas) {
+        canvas.style.cursor = 'grabbing';
+      }
+      redraw();
+    }
+  }
 }
 
 function onMouseMove(e: MouseEvent) {
-  if (!isDragging) return;
-  offsetX = dragStartOffsetX + (e.clientX - dragStartX);
-  offsetY = dragStartOffsetY + (e.clientY - dragStartY);
-  redraw();
+  // 右键平移画布
+  if (isDragging) {
+    offsetX = dragStartOffsetX + (e.clientX - dragStartX);
+    offsetY = dragStartOffsetY + (e.clientY - dragStartY);
+    redraw();
+    return;
+  }
+
+  // 左键拖拽节点
+  if (dragState.active) {
+    const { cx, cy } = screenToCanvas(e.clientX, e.clientY);
+    dragState.ghostX = cx;
+    dragState.ghostY = cy;
+    dragState.dropTarget = detectDropTarget(cx, cy);
+    redraw();
+    return;
+  }
+
+  // 悬停时改变光标样式
+  const { cx, cy } = screenToCanvas(e.clientX, e.clientY);
+  const hitNode = hitTestNode(cx, cy);
+  const canvas = canvasRef.value;
+  if (canvas) {
+    canvas.style.cursor = hitNode ? 'grab' : 'default';
+  }
 }
 
 function onMouseUp(e: MouseEvent) {
-  if (e.button !== 2) return;
-  isDragging = false;
+  if (e.button === 2) {
+    isDragging = false;
+    return;
+  }
+
+  if (e.button === 0 && dragState.active) {
+    // 执行放置
+    if (dragState.dropTarget) {
+      executeDrop(dragState.dropTarget);
+    }
+    // 重置拖拽状态
+    dragState.active = false;
+    dragState.node = null;
+    dragState.dropTarget = null;
+    const canvas = canvasRef.value;
+    if (canvas) {
+      canvas.style.cursor = 'default';
+    }
+    redraw();
+  }
 }
 
 function onContextMenu(e: MouseEvent) {
@@ -416,6 +810,10 @@ watch(
       bindEvents();
     } else {
       unbindEvents();
+      // 重置拖拽状态
+      dragState.active = false;
+      dragState.node = null;
+      dragState.dropTarget = null;
     }
   },
 );

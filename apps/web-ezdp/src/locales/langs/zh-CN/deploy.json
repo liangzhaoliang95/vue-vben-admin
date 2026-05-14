@@ -458,7 +458,13 @@
       "topologyChildBranch": "子分支",
       "topologyDisabledBranch": "已禁用",
       "topologyLeafBranch": "末端分支（无子分支）",
-      "topologyTip": "滚轮缩放 · 右键拖动"
+      "topologyTip": "滚轮缩放 · 右键拖动 · 左键拖拽节点调整继承关系",
+      "topologyDragInsert": "插入此处",
+      "topologyDragToRoot": "设为根分支",
+      "topologyDragToChild": "设为 {name} 的子分支",
+      "topologyDragSuccess": "继承关系已更新",
+      "topologyDragFailed": "更新继承关系失败",
+      "topologyDragCannotSelf": "不能拖拽到自身"
     },
     "environmentConfig": {
       "title": "环境配置",

@@ -177,7 +177,7 @@ function onTopologyPreview() {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <TopologyModal v-model:open="topologyOpen" :branches="allBranches" />
+    <TopologyModal v-model:open="topologyOpen" :branches="allBranches" @refresh="onRefresh" />
     <Grid
       :table-title="$t('deploy.packageDeployManagement.branchManagement.title')"
     >
