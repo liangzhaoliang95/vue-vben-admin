@@ -167,12 +167,26 @@ function handleBackToLogin() {
   router.push('/auth/login');
 }
 
+const SESSION_KEY = 'ezdp_pwd_login_unlocked';
+
 // 判断是否为内网访问（IP 地址或 localhost），内网才允许返回账号登录
 const canBackToLogin = computed(() => {
+  if (sessionStorage.getItem(SESSION_KEY) === '1') return true;
   const hostname = window.location.hostname;
   if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
   return /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+|\d+\.\d+\.\d+\.\d+)$/.test(hostname);
 });
+
+// 挂载到 window，供控制台调用：ezdp.enableLogin()
+function mountConsoleHelper() {
+  (window as any).ezdp = {
+    enableLogin() {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      console.log('[ezdp] 账号密码登录已解锁，正在跳转...');
+      router.push('/auth/login');
+    },
+  };
+}
 
 // 重新生成二维码
 async function handleRetryQrcode() {
@@ -214,6 +228,7 @@ onBeforeUnmount(() => {
 });
 
 onMounted(async () => {
+  mountConsoleHelper();
   // 先检查是否有code参数
   await checkLoginCode();
 
