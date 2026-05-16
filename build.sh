@@ -17,3 +17,4 @@ echo "版本: ${current} → ${new_version}"
 docker build -t docker.plaso.cn/ezdp-frontend:${new_version} .
 docker push docker.plaso.cn/ezdp-frontend:${new_version}
 
+mc cp version.json "lxz/devops/ezdp/frontend/version.json"
