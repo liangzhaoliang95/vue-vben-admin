@@ -1,11 +1,13 @@
 <script lang="ts" setup>
-import { computed, nextTick, ref } from 'vue';
+import { computed, h, nextTick, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert } from 'ant-design-vue';
+import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert, Progress, Table, Upload, Spin, Descriptions, DescriptionsItem } from 'ant-design-vue';
+import type { Rule } from 'ant-design-vue/es/form';
+import type { UploadProps } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { ServerManagementApi } from '#/api/server-management';
@@ -197,7 +199,7 @@ const formatTimestamp = (timestamp: number) => {
 };
 
 // 新建表单验证规则
-const createRules = {
+const createRules: Record<string, Rule[]> = {
   name: [
     {
       message: $t('serverManagement.environmentAgent.nameRequired'),
@@ -267,14 +269,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
         field: 'lastSeenAt',
         title: $t('serverManagement.server.lastSeen'),
         minWidth: 180,
-        formatter: ({ cellValue }) => {
+        formatter: ({ cellValue }: { cellValue: number }) => {
           return formatTimestamp(cellValue);
         },
       },
       {
         field: 'actions',
         title: $t('common.action'),
-        width: 280,
+        width: 380,
         fixed: 'right',
         slots: {
           default: 'actions',
@@ -312,6 +314,182 @@ function openDocs() {
 function onCreate() {
   openCreateModal();
 }
+
+// ---- 状态监控 ----
+const statsVisible = ref(false);
+const statsServerId = ref('');
+const statsServerName = ref('');
+const statsData = ref<ServerManagementApi.ServerStats | null>(null);
+const statsLoading = ref(false);
+
+const openStats = async (row: any) => {
+  statsServerId.value = row.serverId;
+  statsServerName.value = row.serverName;
+  statsData.value = null;
+  statsVisible.value = true;
+  await refreshStats();
+};
+
+const refreshStats = async () => {
+  statsLoading.value = true;
+  try {
+    const res = await ServerManagementApi.getServerStats({ serverId: statsServerId.value });
+    statsData.value = res.stats;
+  } catch {
+    message.error('获取状态失败');
+  } finally {
+    statsLoading.value = false;
+  }
+};
+
+const formatBytes = (bytes: number) => {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+};
+
+const formatUptime = (seconds: number) => {
+  if (!seconds) return '-';
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return d > 0 ? `${d}天 ${h}小时` : h > 0 ? `${h}小时 ${m}分钟` : `${m}分钟`;
+};
+
+// ---- 文件管理 ----
+const fileVisible = ref(false);
+const fileServerId = ref('');
+const fileServerName = ref('');
+const uploadRemotePath = ref('');
+const uploadFileList = ref<any[]>([]);
+const uploadLoading = ref(false);
+const downloadRemotePath = ref('');
+const downloadLoading = ref(false);
+
+const openFileManager = (row: any) => {
+  fileServerId.value = row.serverId;
+  fileServerName.value = row.serverName;
+  uploadRemotePath.value = '';
+  uploadFileList.value = [];
+  downloadRemotePath.value = '';
+  fileVisible.value = true;
+};
+
+const handleUpload: UploadProps['customRequest'] = async (options) => {
+  if (!uploadRemotePath.value) {
+    message.warning('请先填写远端目标路径');
+    return;
+  }
+  uploadLoading.value = true;
+  try {
+    await ServerManagementApi.uploadFile(
+      fileServerId.value,
+      uploadRemotePath.value,
+      options.file as File,
+    );
+    message.success('文件上传成功');
+    uploadFileList.value = [];
+  } catch (e: any) {
+    message.error(e?.message || '上传失败');
+  } finally {
+    uploadLoading.value = false;
+  }
+};
+
+const handleDownload = async () => {
+  if (!downloadRemotePath.value) {
+    message.warning('请填写远端文件路径');
+    return;
+  }
+  downloadLoading.value = true;
+  try {
+    const blob = await ServerManagementApi.downloadFile({
+      serverId: fileServerId.value,
+      remotePath: downloadRemotePath.value,
+    });
+    const url = URL.createObjectURL(blob as Blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = downloadRemotePath.value.split('/').pop() || 'download';
+    a.click();
+    URL.revokeObjectURL(url);
+    message.success('文件下载成功');
+  } catch (e: any) {
+    message.error(e?.message || '下载失败');
+  } finally {
+    downloadLoading.value = false;
+  }
+};
+
+// ---- 端口代理 ----
+const proxyVisible = ref(false);
+const proxyServerId = ref('');
+const proxyServerName = ref('');
+const proxyList = ref<ServerManagementApi.ProxyInfo[]>([]);
+const proxyLoading = ref(false);
+const proxyForm = ref({ localPort: '', remoteAddr: '' });
+const proxyCreateLoading = ref(false);
+
+const openProxy = async (row: any) => {
+  proxyServerId.value = row.serverId;
+  proxyServerName.value = row.serverName;
+  proxyForm.value = { localPort: '', remoteAddr: '' };
+  proxyVisible.value = true;
+  await refreshProxyList();
+};
+
+const refreshProxyList = async () => {
+  proxyLoading.value = true;
+  try {
+    const res = await ServerManagementApi.getProxyList({ serverId: proxyServerId.value });
+    proxyList.value = res.proxies || [];
+  } catch {
+    message.error('获取代理列表失败');
+  } finally {
+    proxyLoading.value = false;
+  }
+};
+
+const handleCreateProxy = async () => {
+  if (!proxyForm.value.localPort || !proxyForm.value.remoteAddr) {
+    message.warning('请填写本地端口和远端地址');
+    return;
+  }
+  proxyCreateLoading.value = true;
+  try {
+    await ServerManagementApi.createProxy({
+      serverId: proxyServerId.value,
+      localPort: proxyForm.value.localPort,
+      remoteAddr: proxyForm.value.remoteAddr,
+    });
+    message.success('代理创建成功');
+    proxyForm.value = { localPort: '', remoteAddr: '' };
+    await refreshProxyList();
+  } catch (e: any) {
+    message.error(e?.message || '创建失败');
+  } finally {
+    proxyCreateLoading.value = false;
+  }
+};
+
+const handleCloseProxy = async (proxyId: string) => {
+  try {
+    await ServerManagementApi.closeProxy({ proxyId });
+    message.success('代理已关闭');
+    await refreshProxyList();
+  } catch {
+    message.error('关闭失败');
+  }
+};
+
+const proxyColumns = [
+  { title: '本地端口', dataIndex: 'localPort', key: 'localPort' },
+  { title: '远端地址', dataIndex: 'remoteAddr', key: 'remoteAddr' },
+  { title: '连接数', dataIndex: 'connCount', key: 'connCount' },
+  { title: '操作', key: 'action' },
+];
 </script>
 
 <template>
@@ -354,7 +532,7 @@ function onCreate() {
 
       <!-- 操作按钮 -->
       <template #actions="{ row }">
-        <Space>
+        <Space :size="4" wrap>
           <Button
             type="primary"
             size="small"
@@ -362,6 +540,27 @@ function onCreate() {
             @click="openTerminal(row)"
           >
             {{ $t('serverManagement.server.openTerminal') }}
+          </Button>
+          <Button
+            size="small"
+            :disabled="row.status !== 'online'"
+            @click="openStats(row)"
+          >
+            监控
+          </Button>
+          <Button
+            size="small"
+            :disabled="row.status !== 'online'"
+            @click="openFileManager(row)"
+          >
+            文件
+          </Button>
+          <Button
+            size="small"
+            :disabled="row.status !== 'online'"
+            @click="openProxy(row)"
+          >
+            代理
           </Button>
           <Button
             size="small"
@@ -574,6 +773,135 @@ function onCreate() {
             {{ $t('serverManagement.server.closeAndReturn') }}
           </Button>
         </div>
+      </div>
+    </Modal>
+
+    <!-- 状态监控弹窗 -->
+    <Modal
+      v-model:open="statsVisible"
+      :title="`监控 - ${statsServerName}`"
+      :width="700"
+      :footer="null"
+      :destroy-on-close="true"
+    >
+      <div class="mb-3 flex justify-end">
+        <Button :loading="statsLoading" @click="refreshStats">刷新</Button>
+      </div>
+      <Spin :spinning="statsLoading">
+        <div v-if="statsData" class="space-y-4">
+          <Descriptions bordered :column="2" size="small">
+            <DescriptionsItem label="运行时间">{{ formatUptime(statsData.uptime) }}</DescriptionsItem>
+            <DescriptionsItem label="进程数">{{ statsData.processCount }}</DescriptionsItem>
+            <DescriptionsItem label="系统负载 (1/5/15min)">
+              {{ statsData.loadAvg?.load1?.toFixed(2) }} / {{ statsData.loadAvg?.load5?.toFixed(2) }} / {{ statsData.loadAvg?.load15?.toFixed(2) }}
+            </DescriptionsItem>
+            <DescriptionsItem label="网络收/发">
+              ↓ {{ formatBytes(statsData.network?.bytesRecv) }} / ↑ {{ formatBytes(statsData.network?.bytesSent) }}
+            </DescriptionsItem>
+          </Descriptions>
+
+          <div>
+            <div class="text-sm font-medium mb-1">CPU 使用率 ({{ statsData.cpu?.coreCount }} 核)</div>
+            <Progress :percent="Math.round(statsData.cpu?.usagePercent || 0)" :stroke-color="statsData.cpu?.usagePercent > 80 ? '#ff4d4f' : '#1677ff'" />
+          </div>
+
+          <div>
+            <div class="text-sm font-medium mb-1">
+              内存使用率 — {{ formatBytes(statsData.memory?.used) }} / {{ formatBytes(statsData.memory?.total) }}
+            </div>
+            <Progress :percent="Math.round(statsData.memory?.usedPercent || 0)" :stroke-color="statsData.memory?.usedPercent > 80 ? '#ff4d4f' : '#52c41a'" />
+          </div>
+
+          <div v-if="statsData.disk?.length">
+            <div class="text-sm font-medium mb-2">磁盘</div>
+            <div v-for="d in statsData.disk" :key="d.path" class="mb-2">
+              <div class="text-xs text-gray-500 mb-1">{{ d.path }} — {{ formatBytes(d.used) }} / {{ formatBytes(d.total) }}</div>
+              <Progress :percent="Math.round(d.usedPercent || 0)" size="small" :stroke-color="d.usedPercent > 85 ? '#ff4d4f' : '#faad14'" />
+            </div>
+          </div>
+        </div>
+        <div v-else-if="!statsLoading" class="text-center text-gray-400 py-8">暂无状态数据</div>
+      </Spin>
+    </Modal>
+
+    <!-- 文件管理弹窗 -->
+    <Modal
+      v-model:open="fileVisible"
+      :title="`文件管理 - ${fileServerName}`"
+      :width="560"
+      :footer="null"
+      :destroy-on-close="true"
+    >
+      <div class="space-y-6">
+        <Card title="上传文件到服务器" size="small">
+          <Form layout="vertical">
+            <FormItem label="远端目标路径" required>
+              <Input v-model:value="uploadRemotePath" placeholder="如 /tmp/myfile.tar.gz" />
+            </FormItem>
+            <FormItem label="选择文件">
+              <Upload
+                v-model:file-list="uploadFileList"
+                :custom-request="handleUpload"
+                :max-count="1"
+                :disabled="!uploadRemotePath"
+              >
+                <Button :loading="uploadLoading" :disabled="!uploadRemotePath">
+                  点击选择并上传
+                </Button>
+              </Upload>
+            </FormItem>
+          </Form>
+        </Card>
+
+        <Card title="从服务器下载文件" size="small">
+          <Form layout="vertical">
+            <FormItem label="远端文件路径" required>
+              <Input v-model:value="downloadRemotePath" placeholder="如 /var/log/app.log" />
+            </FormItem>
+            <Button type="primary" :loading="downloadLoading" :disabled="!downloadRemotePath" @click="handleDownload">
+              下载文件
+            </Button>
+          </Form>
+        </Card>
+      </div>
+    </Modal>
+
+    <!-- 端口代理弹窗 -->
+    <Modal
+      v-model:open="proxyVisible"
+      :title="`端口代理 - ${proxyServerName}`"
+      :width="640"
+      :footer="null"
+      :destroy-on-close="true"
+    >
+      <div class="space-y-4">
+        <Card title="创建新代理" size="small">
+          <Space>
+            <Input v-model:value="proxyForm.localPort" placeholder="本地端口 如 13306" style="width: 160px" />
+            <span class="text-gray-400">→</span>
+            <Input v-model:value="proxyForm.remoteAddr" placeholder="远端地址 如 localhost:3306" style="width: 200px" />
+            <Button type="primary" :loading="proxyCreateLoading" @click="handleCreateProxy">创建</Button>
+          </Space>
+          <div class="text-xs text-gray-400 mt-2">服务端监听本地端口，流量通过 Agent 转发到远端目标</div>
+        </Card>
+
+        <Card title="当前代理列表" size="small" :extra="h('a', { onClick: refreshProxyList }, '刷新')">
+          <Spin :spinning="proxyLoading">
+            <Table
+              :data-source="proxyList"
+              :columns="proxyColumns"
+              :pagination="false"
+              size="small"
+              row-key="proxyId"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'action'">
+                  <Button danger size="small" @click="handleCloseProxy(record.proxyId)">关闭</Button>
+                </template>
+              </template>
+            </Table>
+          </Spin>
+        </Card>
       </div>
     </Modal>
   </Page>
