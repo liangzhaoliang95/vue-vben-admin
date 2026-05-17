@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { computed, h, nextTick, onMounted, ref } from 'vue';
+import { computed, h, nextTick, onMounted, ref, watch } from 'vue';
+import { onClickOutside } from '@vueuse/core';
 import { Page } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
@@ -15,6 +16,7 @@ import { $t } from '#/locales';
 import { copyToClipboard } from '#/utils/clipboard';
 import WebTerminal from '#/components/web-terminal/index.vue';
 import MonitorModal from './modules/monitor-modal.vue';
+import MiniGauge from './modules/mini-gauge.vue';
 
 defineOptions({
   name: 'ServerList',
@@ -27,11 +29,131 @@ const viewMode = ref<'grid' | 'list'>('grid');
 const serverList = ref<ServerManagementApi.Server[]>([]);
 const serverListLoading = ref(false);
 
+// 各服务器的实时 stats，key 为 serverId
+const serverStatsMap = ref<Record<string, ServerManagementApi.ServerStats>>({});
+
+// ---- 过滤 & 排序 ----
+type StatusFilter = 'all' | 'online' | 'offline';
+type OsFilter = 'all' | 'linux' | 'darwin' | 'windows' | 'other';
+type SortKey = 'default' | 'name' | 'cpu' | 'mem' | 'status';
+type SortOrder = 'asc' | 'desc';
+
+const filterStatus = ref<StatusFilter>('all');
+const filterOs = ref<OsFilter>('all');
+const sortKey = ref<SortKey>('default');
+const sortOrder = ref<SortOrder>('asc');
+const sortDropdownOpen = ref(false);
+
+const osFilterOptions: { label: string; value: OsFilter; icon: string }[] = [
+  { label: '全部', value: 'all', icon: 'mdi:server' },
+  { label: 'Linux', value: 'linux', icon: 'simple-icons:linux' },
+  { label: 'macOS', value: 'darwin', icon: 'simple-icons:apple' },
+  { label: 'Windows', value: 'windows', icon: 'simple-icons:windows' },
+  { label: '其他', value: 'other', icon: 'mdi:help-circle-outline' },
+];
+
+const sortOptions: { label: string; value: SortKey }[] = [
+  { label: '默认', value: 'default' },
+  { label: '名称', value: 'name' },
+  { label: 'CPU', value: 'cpu' },
+  { label: '内存', value: 'mem' },
+  { label: '状态', value: 'status' },
+];
+
+const getOsCategory = (os: string): OsFilter => {
+  const lower = (os || '').toLowerCase();
+  if (lower.includes('darwin') || lower.includes('mac')) return 'darwin';
+  if (lower.includes('windows')) return 'windows';
+  if (lower.includes('linux') || lower.includes('ubuntu') || lower.includes('debian') ||
+      lower.includes('centos') || lower.includes('fedora') || lower.includes('arch') ||
+      lower.includes('alpine')) return 'linux';
+  return 'other';
+};
+
+const applySort = (list: ServerManagementApi.Server[]) => {
+  if (sortKey.value === 'default') {
+    return [...list].sort((a, b) => {
+      const ao = a.status === 'online' ? 1 : 0;
+      const bo = b.status === 'online' ? 1 : 0;
+      return bo - ao;
+    });
+  }
+  return [...list].sort((a, b) => {
+    if (sortKey.value === 'name') {
+      const cmp = a.serverName.localeCompare(b.serverName);
+      return sortOrder.value === 'asc' ? cmp : -cmp;
+    }
+    let va = 0;
+    let vb = 0;
+    if (sortKey.value === 'status') {
+      va = a.status === 'online' ? 1 : 0;
+      vb = b.status === 'online' ? 1 : 0;
+    } else if (sortKey.value === 'cpu') {
+      va = serverStatsMap.value[a.serverId]?.cpu.usagePercent ?? -1;
+      vb = serverStatsMap.value[b.serverId]?.cpu.usagePercent ?? -1;
+    } else if (sortKey.value === 'mem') {
+      va = serverStatsMap.value[a.serverId]?.memory.usedPercent ?? -1;
+      vb = serverStatsMap.value[b.serverId]?.memory.usedPercent ?? -1;
+    }
+    return sortOrder.value === 'asc' ? vb - va : va - vb;
+  });
+};
+
+const filteredAndSortedServers = computed(() => {
+  let list = serverList.value;
+  if (filterStatus.value !== 'all') {
+    list = list.filter((s) => s.status === filterStatus.value);
+  }
+  if (filterOs.value !== 'all') {
+    list = list.filter((s) => getOsCategory(s.os) === filterOs.value);
+  }
+  return applySort(list);
+});
+
+const toggleSortOrder = () => {
+  sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+};
+
+const setSortKey = (key: SortKey) => {
+  if (sortKey.value === key) {
+    toggleSortOrder();
+  } else {
+    sortKey.value = key;
+    sortOrder.value = 'asc';
+  }
+  sortDropdownOpen.value = false;
+};
+
+// 点击排序下拉框外部时关闭
+const sortDropdownRef = ref<HTMLElement | null>(null);
+onClickOutside(sortDropdownRef, () => {
+  sortDropdownOpen.value = false;
+});
+
+// 列表模式下，筛选/排序变化时重新查询
+watch([filterStatus, filterOs, sortKey, sortOrder], () => {
+  if (viewMode.value === 'list') {
+    gridApi.query();
+  }
+});
+
 const loadServerList = async () => {
   serverListLoading.value = true;
   try {
     const res = await ServerManagementApi.getServerList();
     serverList.value = res.servers || [];
+    // 并发拉取所有在线服务器的实时 stats
+    const onlineServers = serverList.value.filter((s) => s.status === 'online');
+    const results = await Promise.allSettled(
+      onlineServers.map((s) => ServerManagementApi.getServerStats({ serverId: s.serverId })),
+    );
+    const map: Record<string, ServerManagementApi.ServerStats> = {};
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled' && r.value?.stats) {
+        map[onlineServers[i]!.serverId] = r.value.stats;
+      }
+    });
+    serverStatsMap.value = map;
   } catch {
     message.error($t('common.operationFailed'));
   } finally {
@@ -374,12 +496,21 @@ const [Grid, gridApi] = useVbenVxeGrid({
       ajax: {
         query: async () => {
           const res = await ServerManagementApi.getServerList();
-          const servers = res.servers || [];
+          let servers = res.servers || [];
+
+          // 状态过滤
+          if (filterStatus.value !== 'all') {
+            servers = servers.filter((s) => s.status === filterStatus.value);
+          }
+          // OS 过滤
+          if (filterOs.value !== 'all') {
+            servers = servers.filter((s) => getOsCategory(s.os) === filterOs.value);
+          }
+          // 排序
+          servers = applySort(servers);
 
           return {
-            page: {
-              total: servers.length,
-            },
+            page: { total: servers.length },
             items: servers,
           };
         },
@@ -692,7 +823,7 @@ const proxyColumns = [
 <template>
   <Page auto-content-height>
     <!-- 顶部工具栏（Grid 视图时独立渲染，List 视图时由 Grid 组件渲染） -->
-    <div v-if="viewMode === 'grid'" class="server-page-header flex items-center justify-between mb-4">
+    <div v-if="viewMode === 'grid'" class="server-page-header flex items-center justify-between mb-3">
       <h2 class="text-base font-semibold m-0">{{ $t('serverManagement.server.title') }}</h2>
       <Space>
         <Button type="default" @click="openDocs">
@@ -722,7 +853,88 @@ const proxyColumns = [
             <IconifyIcon icon="mdi:view-list" class="size-4" />
           </button>
         </div>
+        <Button type="default" @click="loadServerList">
+          <IconifyIcon icon="mdi:refresh" class="size-4" :class="{ 'animate-spin': serverListLoading }" />
+        </Button>
       </Space>
+    </div>
+
+    <!-- 筛选栏（Grid / List 视图共用） -->
+    <div class="server-filter-bar mb-4">
+      <!-- 状态筛选 -->
+      <div class="filter-group">
+        <button
+          v-for="opt in [
+            { label: '全部', value: 'all' },
+            { label: '在线', value: 'online' },
+            { label: '离线', value: 'offline' },
+          ]"
+          :key="opt.value"
+          class="filter-chip"
+          :class="{ active: filterStatus === opt.value }"
+          @click="filterStatus = (opt.value as StatusFilter)"
+        >
+          <span
+            v-if="opt.value !== 'all'"
+            class="filter-chip__dot"
+            :class="opt.value === 'online' ? 'dot-online' : 'dot-offline'"
+          />
+          {{ opt.label }}
+          <span class="filter-chip__count">
+            {{
+              opt.value === 'all'
+                ? serverList.length
+                : serverList.filter((s) => s.status === opt.value).length
+            }}
+          </span>
+        </button>
+      </div>
+
+      <!-- OS 筛选 -->
+      <div class="filter-group">
+        <button
+          v-for="opt in osFilterOptions"
+          :key="opt.value"
+          class="filter-chip"
+          :class="{ active: filterOs === opt.value }"
+          @click="filterOs = opt.value"
+        >
+          <IconifyIcon :icon="opt.icon" class="size-3.5" />
+          {{ opt.label }}
+        </button>
+      </div>
+
+      <!-- 排序 -->
+      <div class="filter-sort-wrap">
+        <div ref="sortDropdownRef" class="sort-dropdown-anchor">
+          <button class="sort-btn" @click="sortDropdownOpen = !sortDropdownOpen">
+            <IconifyIcon icon="mdi:sort" class="size-4" />
+            排序：{{ sortOptions.find((o) => o.value === sortKey)?.label }}
+            <IconifyIcon
+              :icon="sortOrder === 'asc' ? 'mdi:arrow-up' : 'mdi:arrow-down'"
+              class="size-3.5 ml-0.5"
+            />
+          </button>
+          <div v-if="sortDropdownOpen" class="sort-dropdown">
+            <div class="sort-dropdown__title">排序方式</div>
+            <button
+              v-for="opt in sortOptions"
+              :key="opt.value"
+              class="sort-dropdown__item"
+              :class="{ active: sortKey === opt.value }"
+              @click="setSortKey(opt.value)"
+            >
+              <IconifyIcon
+                v-if="sortKey === opt.value"
+                :icon="sortOrder === 'asc' ? 'mdi:arrow-up' : 'mdi:arrow-down'"
+                class="size-3.5 mr-1"
+              />
+              <span v-else class="size-3.5 mr-1 inline-block" />
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Grid 卡片视图 -->
@@ -732,9 +944,13 @@ const proxyColumns = [
           <IconifyIcon icon="mdi:server-off" class="size-16 mb-4 opacity-30" />
           <p class="text-sm">暂无服务器，点击「新建服务器」添加</p>
         </div>
+        <div v-else-if="filteredAndSortedServers.length === 0" class="empty-state flex flex-col items-center justify-center py-16 text-gray-400">
+          <IconifyIcon icon="mdi:filter-off-outline" class="size-12 mb-3 opacity-30" />
+          <p class="text-sm">没有符合条件的服务器</p>
+        </div>
         <div v-else class="server-grid">
           <div
-            v-for="server in serverList"
+            v-for="server in filteredAndSortedServers"
             :key="server.id"
             class="server-card"
             :class="{ 'server-card--online': server.status === 'online', 'server-card--offline': server.status !== 'online' }"
@@ -745,7 +961,11 @@ const proxyColumns = [
                 <IconifyIcon
                   :icon="getOsIcon(server.os)"
                   class="size-10"
-                  :style="{ color: getOsIconColor(server.os) }"
+                  :style="{
+                    color: server.status === 'online' ? getOsIconColor(server.os) : '#4b5563',
+                    filter: server.status === 'online' ? `drop-shadow(0 0 6px ${getOsIconColor(server.os)}80)` : 'none',
+                    transition: 'color 0.3s, filter 0.3s',
+                  }"
                 />
               </div>
               <div class="server-card__title-area flex-1 min-w-0">
@@ -769,27 +989,46 @@ const proxyColumns = [
               </Tag>
             </div>
 
-            <!-- 卡片信息区 -->
-            <div class="server-card__info">
-              <div class="server-card__info-row">
-                <IconifyIcon icon="mdi:ip-network" class="size-3.5 shrink-0 text-gray-400" />
-                <span class="truncate">
-                  <span v-if="server.publicIp || server.ip">{{ server.publicIp || server.ip }}</span>
-                  <span v-if="server.privateIps" class="text-gray-400 ml-1 text-xs">{{ server.privateIps }}</span>
-                  <span v-if="!server.publicIp && !server.ip && !server.privateIps" class="text-gray-400">-</span>
-                </span>
+            <!-- 卡片信息区 + 迷你图 -->
+            <div class="server-card__body">
+              <!-- 左侧信息 -->
+              <div class="server-card__info">
+                <div class="server-card__info-row">
+                  <IconifyIcon icon="mdi:ip-network" class="size-3.5 shrink-0 text-gray-400" />
+                  <span class="truncate">
+                    <span v-if="server.publicIp || server.ip">{{ server.publicIp || server.ip }}</span>
+                    <span v-if="server.privateIps" class="text-gray-400 ml-1 text-xs">{{ server.privateIps }}</span>
+                    <span v-if="!server.publicIp && !server.ip && !server.privateIps" class="text-gray-400">-</span>
+                  </span>
+                </div>
+                <div v-if="server.ipLocation" class="server-card__info-row">
+                  <IconifyIcon icon="mdi:map-marker-outline" class="size-3.5 shrink-0 text-gray-400" />
+                  <span class="truncate">{{ server.ipLocation }}</span>
+                </div>
+                <div class="server-card__info-row">
+                  <IconifyIcon icon="mdi:chip" class="size-3.5 shrink-0 text-gray-400" />
+                  <span class="font-mono text-xs truncate">{{ [server.os, server.arch].filter(Boolean).join('/') || '-' }}</span>
+                </div>
+                <div class="server-card__info-row">
+                  <IconifyIcon icon="mdi:monitor-dashboard" class="size-3.5 shrink-0 text-gray-400" />
+                  <span class="truncate">{{ server.osVersion || server.os || '-' }}</span>
+                </div>
+                <div class="server-card__info-row">
+                  <IconifyIcon icon="mdi:clock-outline" class="size-3.5 shrink-0 text-gray-400" />
+                  <span class="truncate text-xs">{{ formatTimestamp(server.lastSeenAt) }}</span>
+                </div>
               </div>
-              <div class="server-card__info-row">
-                <IconifyIcon icon="mdi:chip" class="size-3.5 shrink-0 text-gray-400" />
-                <span class="font-mono text-xs truncate">{{ [server.os, server.arch].filter(Boolean).join('/') || '-' }}</span>
-              </div>
-              <div class="server-card__info-row">
-                <IconifyIcon icon="mdi:monitor-dashboard" class="size-3.5 shrink-0 text-gray-400" />
-                <span class="truncate">{{ server.osVersion || server.os || '-' }}</span>
-              </div>
-              <div class="server-card__info-row">
-                <IconifyIcon icon="mdi:clock-outline" class="size-3.5 shrink-0 text-gray-400" />
-                <span class="truncate text-xs">{{ formatTimestamp(server.lastSeenAt) }}</span>
+
+              <!-- 右侧迷你图（仅在线且有 stats 时显示） -->
+              <div v-if="server.status === 'online' && serverStatsMap[server.serverId]" class="server-card__mini-stats">
+                <MiniGauge
+                  label="CPU"
+                  :value="serverStatsMap[server.serverId]!.cpu.usagePercent"
+                />
+                <MiniGauge
+                  label="MEM"
+                  :value="serverStatsMap[server.serverId]!.memory.usedPercent"
+                />
               </div>
             </div>
 
@@ -799,7 +1038,7 @@ const proxyColumns = [
                 type="primary"
                 size="small"
                 :disabled="server.status !== 'online'"
-                class="flex-1"
+                style="flex: 1; min-width: 0;"
                 @click="openTerminal(server)"
               >
                 <IconifyIcon icon="mdi:console" class="size-3.5 mr-1" />
@@ -1545,13 +1784,32 @@ const proxyColumns = [
   margin-top: 2px;
 }
 
+.server-card__body {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  height: 148px;
+  overflow: hidden;
+}
+
 .server-card__info {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.server-card__mini-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  flex-shrink: 0;
 }
 
 .server-card__info-row {
@@ -1566,12 +1824,150 @@ const proxyColumns = [
 .server-card__actions {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.server-card__actions :deep(.ant-btn):not(:first-child) {
+  flex-shrink: 0;
 }
 
 /* 页面头部 */
 .server-page-header {
   padding: 0 2px;
+}
+
+/* 筛选栏 */
+.server-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.filter-chip:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.filter-chip.active {
+  background: rgba(22, 119, 255, 0.18);
+  color: #4096ff;
+}
+
+.filter-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot-online { background: #52c41a; }
+.dot-offline { background: rgba(255, 255, 255, 0.25); }
+
+.filter-chip__count {
+  font-size: 11px;
+  opacity: 0.6;
+  min-width: 14px;
+  text-align: center;
+}
+
+/* 排序 */
+.filter-sort-wrap {
+  margin-left: auto;
+}
+
+.sort-dropdown-anchor {
+  position: relative;
+}
+
+.sort-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.sort-btn:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sort-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 140px;
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 6px;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.sort-dropdown__title {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  padding: 4px 8px 6px;
+  letter-spacing: 0.05em;
+}
+
+.sort-dropdown__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+
+.sort-dropdown__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sort-dropdown__item.active {
+  color: #4096ff;
 }
 
 .create-server-instruction-warning {

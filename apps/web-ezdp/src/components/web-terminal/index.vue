@@ -62,7 +62,7 @@ const initTerminal = () => {
   terminal = new Terminal({
     cursorBlink: true,
     fontSize: 14,
-    fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+    fontFamily: '"JetBrainsMono Nerd Font", "JetBrains Mono", Menlo, Monaco, "Courier New", monospace',
     theme: {
       background: '#1e1e1e',
       foreground: '#d4d4d4',
@@ -379,5 +379,15 @@ watch(() => props.serverId, () => {
 
 :deep(.xterm-viewport) {
   overflow-y: auto;
+}
+</style>
+
+<style>
+@font-face {
+  font-family: 'JetBrainsMono Nerd Font';
+  src: url('/fonts/JetBrainsMonoNerdFont-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 </style>
