@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, h, nextTick, ref } from 'vue';
+import { computed, h, nextTick, onMounted, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
@@ -19,6 +19,58 @@ import MonitorModal from './modules/monitor-modal.vue';
 defineOptions({
   name: 'ServerList',
 });
+
+// 视图模式：grid | list
+const viewMode = ref<'grid' | 'list'>('grid');
+
+// Grid 视图的服务器列表数据
+const serverList = ref<ServerManagementApi.Server[]>([]);
+const serverListLoading = ref(false);
+
+const loadServerList = async () => {
+  serverListLoading.value = true;
+  try {
+    const res = await ServerManagementApi.getServerList();
+    serverList.value = res.servers || [];
+  } catch {
+    message.error($t('common.operationFailed'));
+  } finally {
+    serverListLoading.value = false;
+  }
+};
+
+// 根据 OS 返回对应的 Iconify 图标名
+const getOsIcon = (os: string): string => {
+  const lower = (os || '').toLowerCase();
+  if (lower.includes('darwin') || lower.includes('macos') || lower.includes('mac os')) {
+    return 'simple-icons:apple';
+  }
+  if (lower.includes('ubuntu')) return 'simple-icons:ubuntu';
+  if (lower.includes('debian')) return 'simple-icons:debian';
+  if (lower.includes('centos')) return 'simple-icons:centos';
+  if (lower.includes('fedora')) return 'simple-icons:fedora';
+  if (lower.includes('arch')) return 'simple-icons:archlinux';
+  if (lower.includes('alpine')) return 'simple-icons:alpinelinux';
+  if (lower.includes('linux')) return 'simple-icons:linux';
+  if (lower.includes('windows')) return 'simple-icons:windows';
+  if (lower.includes('freebsd') || lower.includes('bsd')) return 'simple-icons:freebsd';
+  return 'mdi:server';
+};
+
+// 根据 OS 返回图标颜色
+const getOsIconColor = (os: string): string => {
+  const lower = (os || '').toLowerCase();
+  if (lower.includes('darwin') || lower.includes('macos')) return '#a0a0a0';
+  if (lower.includes('ubuntu')) return '#e95420';
+  if (lower.includes('debian')) return '#a80030';
+  if (lower.includes('centos')) return '#932279';
+  if (lower.includes('fedora')) return '#294172';
+  if (lower.includes('arch')) return '#1793d1';
+  if (lower.includes('alpine')) return '#0d597f';
+  if (lower.includes('windows')) return '#0078d4';
+  if (lower.includes('freebsd')) return '#ab2b28';
+  return '#6b7280';
+};
 
 // 终端弹窗状态
 const terminalVisible = ref(false);
@@ -82,13 +134,22 @@ const openEdit = (row: any) => {
   editVisible.value = true;
 };
 
+// 刷新数据（兼容两种视图）
+const refreshData = () => {
+  if (viewMode.value === 'list') {
+    gridApi.query();
+  } else {
+    loadServerList();
+  }
+};
+
 // 保存编辑
 const saveEdit = async () => {
   try {
     await ServerManagementApi.updateServer(editForm.value);
     message.success($t('common.updateSuccess'));
     editVisible.value = false;
-    gridApi.query();
+    refreshData();
   } catch (error) {
     message.error($t('common.operationFailed'));
   }
@@ -103,7 +164,7 @@ const deleteServer = (row: any) => {
       try {
         await ServerManagementApi.deleteServer({ id: row.id });
         message.success($t('common.deleteSuccess'));
-        gridApi.query();
+        refreshData();
       } catch (error) {
         message.error($t('common.operationFailed'));
       }
@@ -163,7 +224,7 @@ const handleCreateServer = async () => {
       serverName: createFormData.value.name,
     };
     tokenResultVisible.value = true;
-    gridApi.query();
+    refreshData();
   } catch (error: any) {
     message.error(error?.message || $t('common.saveFailed'));
   } finally {
@@ -338,6 +399,20 @@ function openDocs() {
 function onCreate() {
   openCreateModal();
 }
+
+// 切换视图模式
+const switchViewMode = (mode: 'grid' | 'list') => {
+  viewMode.value = mode;
+  if (mode === 'grid') {
+    loadServerList();
+  } else {
+    gridApi.query();
+  }
+};
+
+onMounted(() => {
+  loadServerList();
+});
 
 // ---- 状态监控 ----
 const statsVisible = ref(false);
@@ -616,7 +691,155 @@ const proxyColumns = [
 
 <template>
   <Page auto-content-height>
-    <Grid :table-title="$t('serverManagement.server.title')">
+    <!-- 顶部工具栏（Grid 视图时独立渲染，List 视图时由 Grid 组件渲染） -->
+    <div v-if="viewMode === 'grid'" class="server-page-header flex items-center justify-between mb-4">
+      <h2 class="text-base font-semibold m-0">{{ $t('serverManagement.server.title') }}</h2>
+      <Space>
+        <Button type="default" @click="openDocs">
+          <IconifyIcon icon="mdi:file-document-outline" class="mr-1 size-4" aria-hidden="true" />
+          {{ $t('page.docs.title') }}
+        </Button>
+        <Button type="primary" @click="onCreate">
+          <Plus class="size-5" />
+          {{ $t('serverManagement.server.createServer') }}
+        </Button>
+        <!-- 视图切换 -->
+        <div class="view-toggle flex rounded overflow-hidden border border-gray-600">
+          <button
+            class="view-toggle-btn"
+            :class="{ active: viewMode === 'grid' }"
+            title="卡片视图"
+            @click="switchViewMode('grid')"
+          >
+            <IconifyIcon icon="mdi:view-grid" class="size-4" />
+          </button>
+          <button
+            class="view-toggle-btn"
+            :class="{ active: viewMode === 'list' }"
+            title="列表视图"
+            @click="switchViewMode('list')"
+          >
+            <IconifyIcon icon="mdi:view-list" class="size-4" />
+          </button>
+        </div>
+      </Space>
+    </div>
+
+    <!-- Grid 卡片视图 -->
+    <div v-if="viewMode === 'grid'">
+      <Spin :spinning="serverListLoading">
+        <div v-if="serverList.length === 0 && !serverListLoading" class="empty-state flex flex-col items-center justify-center py-20 text-gray-400">
+          <IconifyIcon icon="mdi:server-off" class="size-16 mb-4 opacity-30" />
+          <p class="text-sm">暂无服务器，点击「新建服务器」添加</p>
+        </div>
+        <div v-else class="server-grid">
+          <div
+            v-for="server in serverList"
+            :key="server.id"
+            class="server-card"
+            :class="{ 'server-card--online': server.status === 'online', 'server-card--offline': server.status !== 'online' }"
+          >
+            <!-- 卡片头部：OS logo + 名称 + 状态 -->
+            <div class="server-card__header">
+              <div class="server-card__os-icon">
+                <IconifyIcon
+                  :icon="getOsIcon(server.os)"
+                  class="size-10"
+                  :style="{ color: getOsIconColor(server.os) }"
+                />
+              </div>
+              <div class="server-card__title-area flex-1 min-w-0">
+                <Tooltip>
+                  <template #title>
+                    <div style="padding: 4px">
+                      <div><strong>主机名:</strong> {{ server.hostname || '-' }}</div>
+                      <div><strong>版本:</strong> {{ server.version || '-' }}</div>
+                      <div><strong>CPU:</strong> {{ server.cpuModel || '-' }}</div>
+                    </div>
+                  </template>
+                  <div class="server-card__name truncate" :title="server.serverName">{{ server.serverName }}</div>
+                </Tooltip>
+                <div class="server-card__env truncate text-xs text-gray-400">{{ server.environmentName || '-' }}</div>
+              </div>
+              <Tag
+                :color="server.status === 'online' ? 'success' : 'default'"
+                class="server-card__status-tag shrink-0"
+              >
+                {{ server.status === 'online' ? $t('serverManagement.server.online') : $t('serverManagement.server.offline') }}
+              </Tag>
+            </div>
+
+            <!-- 卡片信息区 -->
+            <div class="server-card__info">
+              <div class="server-card__info-row">
+                <IconifyIcon icon="mdi:ip-network" class="size-3.5 shrink-0 text-gray-400" />
+                <span class="truncate">
+                  <span v-if="server.publicIp || server.ip">{{ server.publicIp || server.ip }}</span>
+                  <span v-if="server.privateIps" class="text-gray-400 ml-1 text-xs">{{ server.privateIps }}</span>
+                  <span v-if="!server.publicIp && !server.ip && !server.privateIps" class="text-gray-400">-</span>
+                </span>
+              </div>
+              <div class="server-card__info-row">
+                <IconifyIcon icon="mdi:chip" class="size-3.5 shrink-0 text-gray-400" />
+                <span class="font-mono text-xs truncate">{{ [server.os, server.arch].filter(Boolean).join('/') || '-' }}</span>
+              </div>
+              <div class="server-card__info-row">
+                <IconifyIcon icon="mdi:monitor-dashboard" class="size-3.5 shrink-0 text-gray-400" />
+                <span class="truncate">{{ server.osVersion || server.os || '-' }}</span>
+              </div>
+              <div class="server-card__info-row">
+                <IconifyIcon icon="mdi:clock-outline" class="size-3.5 shrink-0 text-gray-400" />
+                <span class="truncate text-xs">{{ formatTimestamp(server.lastSeenAt) }}</span>
+              </div>
+            </div>
+
+            <!-- 卡片操作区 -->
+            <div class="server-card__actions">
+              <Button
+                type="primary"
+                size="small"
+                :disabled="server.status !== 'online'"
+                class="flex-1"
+                @click="openTerminal(server)"
+              >
+                <IconifyIcon icon="mdi:console" class="size-3.5 mr-1" />
+                {{ $t('serverManagement.server.openTerminal') }}
+              </Button>
+              <Button
+                size="small"
+                :disabled="server.status !== 'online'"
+                @click="openStats(server)"
+              >
+                <IconifyIcon icon="mdi:chart-line" class="size-3.5" />
+              </Button>
+              <Button
+                size="small"
+                :disabled="server.status !== 'online'"
+                @click="openFileManager(server)"
+              >
+                <IconifyIcon icon="mdi:folder-open" class="size-3.5" />
+              </Button>
+              <Button
+                size="small"
+                :disabled="server.status !== 'online'"
+                @click="openProxy(server)"
+              >
+                <IconifyIcon icon="mdi:transit-connection-variant" class="size-3.5" />
+              </Button>
+              <Button size="small" @click="openEdit(server)">
+                <IconifyIcon icon="mdi:pencil" class="size-3.5" />
+              </Button>
+              <Button danger size="small" @click="deleteServer(server)">
+                <IconifyIcon icon="mdi:delete" class="size-3.5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Spin>
+    </div>
+
+    <!-- List 表格视图 -->
+    <Grid v-if="viewMode === 'list'" :table-title="$t('serverManagement.server.title')">
       <template #toolbar-tools>
         <Button type="default" class="mr-3" @click="openDocs">
           <IconifyIcon icon="mdi:file-document-outline" class="mr-1 size-4" aria-hidden="true" />
@@ -626,6 +849,25 @@ const proxyColumns = [
           <Plus class="size-5" />
           {{ $t('serverManagement.server.createServer') }}
         </Button>
+        <!-- 视图切换 -->
+        <div class="view-toggle flex rounded overflow-hidden border border-gray-600 ml-3">
+          <button
+            class="view-toggle-btn"
+            :class="{ active: viewMode === 'grid' }"
+            title="卡片视图"
+            @click="switchViewMode('grid')"
+          >
+            <IconifyIcon icon="mdi:view-grid" class="size-4" />
+          </button>
+          <button
+            class="view-toggle-btn"
+            :class="{ active: viewMode === 'list' }"
+            title="列表视图"
+            @click="switchViewMode('list')"
+          >
+            <IconifyIcon icon="mdi:view-list" class="size-4" />
+          </button>
+        </div>
       </template>
       <!-- 服务器名称（带 hover 显示详细信息） -->
       <template #serverName="{ row }">
@@ -674,9 +916,16 @@ const proxyColumns = [
         <span v-else class="text-gray-400">-</span>
       </template>
 
-      <!-- 操作系统：显示发行版名称 -->
+      <!-- 操作系统：显示发行版名称 + logo -->
       <template #os="{ row }">
-        <span class="text-sm">{{ row.osVersion || row.os || '-' }}</span>
+        <div class="flex items-center gap-1.5">
+          <IconifyIcon
+            :icon="getOsIcon(row.os)"
+            class="size-4 shrink-0"
+            :style="{ color: getOsIconColor(row.os) }"
+          />
+          <span class="text-sm">{{ row.osVersion || row.os || '-' }}</span>
+        </div>
       </template>
 
       <!-- 操作按钮 -->
@@ -1196,6 +1445,133 @@ const proxyColumns = [
 
 .create-server-instruction-list li {
   margin-bottom: 4px;
+}
+
+/* 视图切换按钮 */
+.view-toggle {
+  height: 32px;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
+  transition: background 0.2s, color 0.2s;
+  padding: 0;
+}
+
+.view-toggle-btn:hover {
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.view-toggle-btn.active {
+  color: #1677ff;
+  background: rgba(22, 119, 255, 0.12);
+}
+
+/* 服务器卡片网格 */
+.server-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.server-card {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.server-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.server-card--online {
+  border-left: 3px solid #52c41a;
+}
+
+.server-card--offline {
+  border-left: 3px solid rgba(255, 255, 255, 0.15);
+  opacity: 0.75;
+}
+
+.server-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.server-card__os-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  flex-shrink: 0;
+}
+
+.server-card__title-area {
+  padding-top: 2px;
+}
+
+.server-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}
+
+.server-card__env {
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+.server-card__status-tag {
+  margin-top: 2px;
+}
+
+.server-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.server-card__info-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+  min-width: 0;
+}
+
+.server-card__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* 页面头部 */
+.server-page-header {
+  padding: 0 2px;
 }
 
 .create-server-instruction-warning {
