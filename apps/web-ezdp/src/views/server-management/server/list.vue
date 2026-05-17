@@ -6,12 +6,13 @@ import { Plus } from '@vben/icons';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert, Table, Upload, Spin, Popconfirm } from 'ant-design-vue';
+import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Alert, Table, Upload, Spin, Popconfirm } from 'ant-design-vue';
 import type { Rule } from 'ant-design-vue/es/form';
 import type { UploadProps } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { ServerManagementApi } from '#/api/server-management';
+import { SystemConfig } from '#/api/system/config';
 import { $t } from '#/locales';
 import { copyToClipboard } from '#/utils/clipboard';
 import WebTerminal from '#/components/web-terminal/index.vue';
@@ -222,6 +223,7 @@ const tokenResultVisible = ref(false);
 const tokenResultData = ref({
   token: '',
   serverName: '',
+  serverAgentAddr: '',
 });
 
 // 打开终端
@@ -333,17 +335,24 @@ const handleCreateServer = async () => {
 
   createLoading.value = true;
   try {
-    const result = await ServerManagementApi.createEnvironmentAgent({
-      name: createFormData.value.name,
-      description: createFormData.value.description,
-    });
+    const [result, sysConfig] = await Promise.all([
+      ServerManagementApi.createEnvironmentAgent({
+        name: createFormData.value.name,
+        description: createFormData.value.description,
+      }),
+      SystemConfig.getConfig().catch(() => null),
+    ]);
 
     message.success($t('serverManagement.environmentAgent.createSuccess'));
+    const savedName = createFormData.value.name;
     closeCreateModal();
 
+    const rawAddr = sysConfig?.serverAgentAddr || '';
+    const cleanAddr = rawAddr.replace(/^https?:\/\//i, '');
     tokenResultData.value = {
       token: result.token,
-      serverName: createFormData.value.name,
+      serverName: savedName,
+      serverAgentAddr: cleanAddr,
     };
     tokenResultVisible.value = true;
     refreshData();
@@ -364,12 +373,23 @@ const handleCopyToken = async () => {
   }
 };
 
+// 复制安装命令
+const handleCopyInstallCmd = async () => {
+  try {
+    await copyToClipboard(oneLineInstallCmd.value);
+    message.success($t('serverManagement.server.copyInstallCmdSuccess'));
+  } catch {
+    message.error($t('common.copyFailed'));
+  }
+};
+
 // 关闭Token结果弹窗
 const closeTokenResult = () => {
   tokenResultVisible.value = false;
   tokenResultData.value = {
     token: '',
     serverName: '',
+    serverAgentAddr: '',
   };
 };
 
@@ -397,32 +417,13 @@ const createRules: Record<string, Rule[]> = {
   ],
 };
 
-// 安装命令计算属性
-const installCommands = computed(() => ({
-  download: `# 下载安装脚本
-curl -fsSL https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/install.sh -o install.sh
-chmod +x install.sh
-
-# 安装
-sudo ./install.sh install`,
-  config: `# 配置 Token（从 EZDP 管理后台获取）
-sudo vim /etc/ezdp-server-agent/config.json
-
-# 在配置文件中填入 Token
-# {
-#   "serverAddr": "your-backend-server.com:82",
-#   "serverName": "${tokenResultData.value.serverName || 'your-server-name'}",
-#   "token": "${tokenResultData.value.token}"
-# }`,
-  start: `# 启动服务
-sudo ./install.sh start
-
-# 设置开机自启
-sudo ./install.sh enable
-
-# 查看服务状态
-sudo ./install.sh status`,
-}));
+// 一行安装命令
+const oneLineInstallCmd = computed(() => {
+  const addr = tokenResultData.value.serverAgentAddr || 'your-ezdp-server.com:82';
+  const token = tokenResultData.value.token || '<TOKEN>';
+  const name = tokenResultData.value.serverName || 'my-server';
+  return `curl -fsSL https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/install.sh | env EZDP_SERVER=${addr} EZDP_TOKEN=${token} EZDP_NAME="${name}" bash`;
+});
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -1329,7 +1330,7 @@ const proxyColumns = [
     <Modal
       v-model:open="tokenResultVisible"
       :title="$t('serverManagement.server.tokenResult')"
-      :width="800"
+      :width="700"
       :footer="null"
       :mask-closable="false"
     >
@@ -1343,66 +1344,40 @@ const proxyColumns = [
         />
 
         <!-- Token 显示区域 -->
-        <div class="space-y-3">
-          <div>
-            <div class="text-sm font-medium mb-2">
-              {{ $t('serverManagement.environmentAgent.token') }}
-            </div>
-            <div class="flex items-center gap-2">
-              <Input
-                :value="tokenResultData.token"
-                readonly
-                class="font-mono text-sm"
-              />
-              <Button type="primary" @click="handleCopyToken">
-                {{ $t('serverManagement.environmentAgent.copyToken') }}
-              </Button>
-            </div>
+        <div>
+          <div class="text-sm font-medium mb-2">
+            {{ $t('serverManagement.environmentAgent.token') }}
           </div>
-
-          <div class="pt-3 border-t">
-            <div class="text-sm font-medium mb-1">
-              {{ $t('serverManagement.server.serverName') }}
-            </div>
-            <div class="text-gray-700 text-sm">{{ tokenResultData.serverName || '-' }}</div>
+          <div class="flex items-center gap-2">
+            <Input
+              :value="tokenResultData.token"
+              readonly
+              class="font-mono text-sm"
+            />
+            <Button type="primary" @click="handleCopyToken">
+              {{ $t('serverManagement.environmentAgent.copyToken') }}
+            </Button>
           </div>
         </div>
 
-        <!-- 安装教程 -->
-        <Collapse>
-          <CollapsePanel :header="$t('serverManagement.server.step1Title')" key="1">
-            <p class="mb-3 text-sm text-gray-600">
-              {{ $t('serverManagement.server.step1Desc') }}
-            </p>
-            <div class="bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto">
-              <pre class="text-xs font-mono whitespace-pre-wrap">{{
-                installCommands.download
-              }}</pre>
-            </div>
-          </CollapsePanel>
-
-          <CollapsePanel :header="$t('serverManagement.server.step2Title')" key="2">
-            <p class="mb-3 text-sm text-gray-600">
-              {{ $t('serverManagement.server.step2Desc') }}
-            </p>
-            <div class="bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto">
-              <pre class="text-xs font-mono whitespace-pre-wrap">{{
-                installCommands.config
-              }}</pre>
-            </div>
-          </CollapsePanel>
-
-          <CollapsePanel :header="$t('serverManagement.server.step3Title')" key="3">
-            <p class="mb-3 text-sm text-gray-600">
-              {{ $t('serverManagement.server.step3Desc') }}
-            </p>
-            <div class="bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto">
-              <pre class="text-xs font-mono whitespace-pre-wrap">{{
-                installCommands.start
-              }}</pre>
-            </div>
-          </CollapsePanel>
-        </Collapse>
+        <!-- 一行安装命令 -->
+        <div>
+          <div class="text-sm font-medium mb-2">
+            {{ $t('serverManagement.server.oneLineInstall') }}
+          </div>
+          <p class="text-xs text-gray-400 mb-2">{{ $t('serverManagement.server.oneLineInstallDesc') }}</p>
+          <div class="relative bg-gray-900 rounded-lg p-3 pr-28 overflow-x-auto">
+            <pre class="text-xs font-mono text-gray-100 whitespace-pre-wrap break-all">{{ oneLineInstallCmd }}</pre>
+            <Button
+              type="primary"
+              size="small"
+              class="absolute right-3 top-3"
+              @click="handleCopyInstallCmd"
+            >
+              {{ $t('serverManagement.server.copyInstallCmd') }}
+            </Button>
+          </div>
+        </div>
 
         <!-- 重要提示 -->
         <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">

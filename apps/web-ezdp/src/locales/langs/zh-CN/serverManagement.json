@@ -44,7 +44,11 @@
     "instruction2": "请在目标服务器上按照安装教程配置 Token 并启动 Server Agent。",
     "instruction3": "Token 仅显示一次，关闭此页面后将无法再次查看。",
     "closeAndReturn": "关闭并返回",
-    "tokenResult": "Token 结果"
+    "tokenResult": "Token 结果",
+    "oneLineInstall": "一键安装命令",
+    "oneLineInstallDesc": "在目标服务器上执行以下命令，自动完成 Agent 安装、配置和启动",
+    "copyInstallCmd": "复制命令",
+    "copyInstallCmdSuccess": "安装命令已复制到剪贴板"
   },
   "environmentAgent": {
     "title": "环境代理",

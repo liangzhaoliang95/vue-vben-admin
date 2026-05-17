@@ -44,7 +44,11 @@
     "instruction2": "Please follow the installation tutorial to configure the Token and start the Server Agent on the target server.",
     "instruction3": "The Token is only displayed once and cannot be viewed again after closing this page.",
     "closeAndReturn": "Close and Return",
-    "tokenResult": "Token Result"
+    "tokenResult": "Token Result",
+    "oneLineInstall": "One-Line Install Command",
+    "oneLineInstallDesc": "Run the following command on the target server to automatically install, configure, and start the Agent",
+    "copyInstallCmd": "Copy Command",
+    "copyInstallCmdSuccess": "Install command copied to clipboard"
   },
   "environmentAgent": {
     "title": "Environment Agents",
