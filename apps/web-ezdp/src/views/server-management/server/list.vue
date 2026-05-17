@@ -5,7 +5,7 @@ import { Plus } from '@vben/icons';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert, Progress, Table, Upload, Spin, Descriptions, DescriptionsItem, Popconfirm } from 'ant-design-vue';
+import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert, Table, Upload, Spin, Popconfirm } from 'ant-design-vue';
 import type { Rule } from 'ant-design-vue/es/form';
 import type { UploadProps } from 'ant-design-vue';
 
@@ -14,6 +14,7 @@ import { ServerManagementApi } from '#/api/server-management';
 import { $t } from '#/locales';
 import { copyToClipboard } from '#/utils/clipboard';
 import WebTerminal from '#/components/web-terminal/index.vue';
+import MonitorModal from './modules/monitor-modal.vue';
 
 defineOptions({
   name: 'ServerList',
@@ -29,6 +30,8 @@ const editVisible = ref(false);
 const editForm = ref({
   id: '',
   serverName: '',
+  ip: '',
+  ipLocation: '',
 });
 
 // 新建服务器弹窗状态
@@ -73,6 +76,8 @@ const openEdit = (row: any) => {
   editForm.value = {
     id: row.id,
     serverName: row.serverName,
+    ip: row.ip || '',
+    ipLocation: row.ipLocation || '',
   };
   editVisible.value = true;
 };
@@ -240,16 +245,35 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: [
       {
-        field: 'serverId',
-        title: $t('serverManagement.server.serverId'),
-        minWidth: 200,
-      },
-      {
         field: 'serverName',
         title: $t('serverManagement.server.serverName'),
         minWidth: 150,
         slots: {
           default: 'serverName',
+        },
+      },
+      {
+        field: 'ip',
+        title: $t('serverManagement.server.ip'),
+        minWidth: 140,
+        slots: {
+          default: 'ip',
+        },
+      },
+      {
+        field: 'arch',
+        title: $t('serverManagement.server.arch'),
+        minWidth: 120,
+        slots: {
+          default: 'arch',
+        },
+      },
+      {
+        field: 'os',
+        title: $t('serverManagement.server.os'),
+        minWidth: 140,
+        slots: {
+          default: 'os',
         },
       },
       {
@@ -319,43 +343,15 @@ function onCreate() {
 const statsVisible = ref(false);
 const statsServerId = ref('');
 const statsServerName = ref('');
-const statsData = ref<ServerManagementApi.ServerStats | null>(null);
-const statsLoading = ref(false);
+const statsCpuModel = ref('');
+const statsMemTotal = ref(0);
 
-const openStats = async (row: any) => {
+const openStats = (row: any) => {
   statsServerId.value = row.serverId;
   statsServerName.value = row.serverName;
-  statsData.value = null;
+  statsCpuModel.value = row.cpuModel || '';
+  statsMemTotal.value = row.memTotal || 0;
   statsVisible.value = true;
-  await refreshStats();
-};
-
-const refreshStats = async () => {
-  statsLoading.value = true;
-  try {
-    const res = await ServerManagementApi.getServerStats({ serverId: statsServerId.value });
-    statsData.value = res.stats;
-  } catch {
-    message.error('获取状态失败');
-  } finally {
-    statsLoading.value = false;
-  }
-};
-
-const formatBytes = (bytes: number) => {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
-};
-
-const formatUptime = (seconds: number) => {
-  if (!seconds) return '-';
-  const d = Math.floor(seconds / 86400);
-  const h = Math.floor((seconds % 86400) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return d > 0 ? `${d}天 ${h}小时` : h > 0 ? `${h}小时 ${m}分钟` : `${m}分钟`;
 };
 
 // ---- 文件管理 ----
@@ -656,6 +652,33 @@ const proxyColumns = [
         </Tag>
       </template>
 
+      <!-- IP 地址 + 归属地 -->
+      <template #ip="{ row }">
+        <div class="leading-tight">
+          <!-- 公网 IP：优先显示 agent 上报的 publicIp，其次手动填写的 ip -->
+          <div v-if="row.publicIp || row.ip" class="text-sm">
+            {{ row.publicIp || row.ip }}
+            <span v-if="row.ipLocation" class="text-xs text-gray-400 ml-1">({{ row.ipLocation }})</span>
+          </div>
+          <!-- 内网 IP -->
+          <div v-if="row.privateIps" class="text-xs text-gray-400">{{ row.privateIps }}</div>
+          <div v-if="!row.publicIp && !row.ip && !row.privateIps" class="text-sm">-</div>
+        </div>
+      </template>
+
+      <!-- 架构：os/arch 格式 -->
+      <template #arch="{ row }">
+        <span v-if="row.os || row.arch" class="text-sm font-mono">
+          {{ [row.os, row.arch].filter(Boolean).join('/') }}
+        </span>
+        <span v-else class="text-gray-400">-</span>
+      </template>
+
+      <!-- 操作系统：显示发行版名称 -->
+      <template #os="{ row }">
+        <span class="text-sm">{{ row.osVersion || row.os || '-' }}</span>
+      </template>
+
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <Space :size="4" wrap>
@@ -734,6 +757,18 @@ const proxyColumns = [
       <Form :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
         <FormItem :label="$t('serverManagement.server.serverName')">
           <Input v-model:value="editForm.serverName" />
+        </FormItem>
+        <FormItem :label="$t('serverManagement.server.ip')">
+          <Input
+            v-model:value="editForm.ip"
+            :placeholder="$t('serverManagement.server.ipPlaceholder')"
+          />
+        </FormItem>
+        <FormItem :label="$t('serverManagement.server.ipLocation')">
+          <Input
+            v-model:value="editForm.ipLocation"
+            :placeholder="$t('serverManagement.server.ipLocationPlaceholder')"
+          />
         </FormItem>
       </Form>
     </Modal>
@@ -903,52 +938,13 @@ const proxyColumns = [
     </Modal>
 
     <!-- 状态监控弹窗 -->
-    <Modal
+    <MonitorModal
       v-model:open="statsVisible"
-      :title="`监控 - ${statsServerName}`"
-      :width="700"
-      :footer="null"
-      :destroy-on-close="true"
-    >
-      <div class="mb-3 flex justify-end">
-        <Button :loading="statsLoading" @click="refreshStats">刷新</Button>
-      </div>
-      <Spin :spinning="statsLoading">
-        <div v-if="statsData" class="space-y-4">
-          <Descriptions bordered :column="2" size="small">
-            <DescriptionsItem label="运行时间">{{ formatUptime(statsData.uptime) }}</DescriptionsItem>
-            <DescriptionsItem label="进程数">{{ statsData.processCount }}</DescriptionsItem>
-            <DescriptionsItem label="系统负载 (1/5/15min)">
-              {{ statsData.loadAvg?.load1?.toFixed(2) }} / {{ statsData.loadAvg?.load5?.toFixed(2) }} / {{ statsData.loadAvg?.load15?.toFixed(2) }}
-            </DescriptionsItem>
-            <DescriptionsItem label="网络收/发">
-              ↓ {{ formatBytes(statsData.network?.bytesRecv) }} / ↑ {{ formatBytes(statsData.network?.bytesSent) }}
-            </DescriptionsItem>
-          </Descriptions>
-
-          <div>
-            <div class="text-sm font-medium mb-1">CPU 使用率 ({{ statsData.cpu?.coreCount }} 核)</div>
-            <Progress :percent="Math.round(statsData.cpu?.usagePercent || 0)" :stroke-color="statsData.cpu?.usagePercent > 80 ? '#ff4d4f' : '#1677ff'" />
-          </div>
-
-          <div>
-            <div class="text-sm font-medium mb-1">
-              内存使用率 — {{ formatBytes(statsData.memory?.used) }} / {{ formatBytes(statsData.memory?.total) }}
-            </div>
-            <Progress :percent="Math.round(statsData.memory?.usedPercent || 0)" :stroke-color="statsData.memory?.usedPercent > 80 ? '#ff4d4f' : '#52c41a'" />
-          </div>
-
-          <div v-if="statsData.disk?.length">
-            <div class="text-sm font-medium mb-2">磁盘</div>
-            <div v-for="d in statsData.disk" :key="d.path" class="mb-2">
-              <div class="text-xs text-gray-500 mb-1">{{ d.path }} — {{ formatBytes(d.used) }} / {{ formatBytes(d.total) }}</div>
-              <Progress :percent="Math.round(d.usedPercent || 0)" size="small" :stroke-color="d.usedPercent > 85 ? '#ff4d4f' : '#faad14'" />
-            </div>
-          </div>
-        </div>
-        <div v-else-if="!statsLoading" class="text-center text-gray-400 py-8">暂无状态数据</div>
-      </Spin>
-    </Modal>
+      :server-id="statsServerId"
+      :server-name="statsServerName"
+      :cpu-model="statsCpuModel"
+      :mem-total="statsMemTotal"
+    />
 
     <!-- 文件管理弹窗 -->
     <Modal
@@ -957,8 +953,9 @@ const proxyColumns = [
       :width="900"
       :footer="null"
       :destroy-on-close="true"
+      wrap-class-name="file-manager-modal"
     >
-      <div class="flex flex-col" style="height: 520px">
+      <div class="flex flex-col" style="height: calc(80vh - 110px)">
         <!-- 地址栏 -->
         <div class="flex items-center gap-2 mb-2 px-1">
           <!-- 返回上级 -->
@@ -1006,7 +1003,7 @@ const proxyColumns = [
         </div>
 
         <!-- 文件列表 -->
-        <div class="flex-1 overflow-hidden">
+        <div class="flex-1 overflow-hidden min-h-0">
           <Spin :spinning="dirLoading" class="h-full">
             <Table
               :data-source="dirEntries"
@@ -1014,7 +1011,7 @@ const proxyColumns = [
               :pagination="false"
               size="small"
               row-key="path"
-              :scroll="{ y: 420 }"
+              :scroll="{ y: 'calc(80vh - 200px)', x: 'max-content' }"
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'name'">
@@ -1127,6 +1124,25 @@ const proxyColumns = [
 .terminal-modal .ant-modal-body {
   padding: 0;
   height: 600px;
+}
+
+.file-manager-modal .ant-modal-body {
+  padding: 12px 16px;
+}
+
+.file-manager-modal .ant-table-wrapper,
+.file-manager-modal .ant-spin-nested-loading,
+.file-manager-modal .ant-spin-container,
+.file-manager-modal .ant-table,
+.file-manager-modal .ant-table-container {
+  height: 100%;
+}
+
+.file-manager-modal .ant-table-body {
+  flex: 1;
+  overflow-y: auto !important;
+  height: calc(80vh - 200px) !important;
+  max-height: none !important;
 }
 
 /* 新建服务器弹窗样式优化 */

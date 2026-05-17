@@ -661,6 +661,9 @@ importers:
       dayjs:
         specifier: 'catalog:'
         version: 1.11.19
+      echarts:
+        specifier: 'catalog:'
+        version: 5.6.0
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
