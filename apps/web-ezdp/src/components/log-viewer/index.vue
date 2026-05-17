@@ -44,6 +44,7 @@ let searchAddon: null | SearchAddon = null;
 let unsubscribe: (() => void) | null = null;
 let hasOnlyWaitingMessage = true; // 标记是否只有等待提示
 let resizeObserver: null | ResizeObserver = null; // 提升到组件作用域
+let wheelHandler: ((e: WheelEvent) => void) | null = null;
 
 // 状态
 const isConnected = ref(false);
@@ -123,14 +124,23 @@ onMounted(async () => {
   });
   resizeObserver.observe(terminalRef.value);
 
-  // 监听滚动事件，更新自动滚动状态
+  // 监听滚动事件：滚动到底部时自动恢复自动滚动
   terminal.onScroll(() => {
     if (!terminal) return;
     const viewportY = terminal.buffer.active.viewportY;
     const baseY = terminal.buffer.active.baseY;
-    // 如果用户手动滚动到底部，自动开启自动滚动
-    autoScroll.value = viewportY === baseY;
+    if (viewportY === baseY) {
+      autoScroll.value = true;
+    }
   });
+
+  // 监听鼠标滚轮向上滚动，取消自动滚动
+  wheelHandler = (e: WheelEvent) => {
+    if (e.deltaY < 0) {
+      autoScroll.value = false;
+    }
+  };
+  terminalRef.value.addEventListener('wheel', wheelHandler, { passive: true });
 
   // 清除 terminal 内容，确保从干净状态开始
   terminal.clear();
@@ -172,6 +182,12 @@ onBeforeUnmount(() => {
   if (resizeObserver) {
     resizeObserver.disconnect();
     resizeObserver = null;
+  }
+
+  // 清理 wheel 事件监听
+  if (wheelHandler && terminalRef.value) {
+    terminalRef.value.removeEventListener('wheel', wheelHandler);
+    wheelHandler = null;
   }
 
   // 清理 WebSocket 订阅
