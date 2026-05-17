@@ -5,7 +5,7 @@ import { Plus } from '@vben/icons';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert, Progress, Table, Upload, Spin, Descriptions, DescriptionsItem } from 'ant-design-vue';
+import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Collapse, CollapsePanel, Alert, Progress, Table, Upload, Spin, Descriptions, DescriptionsItem, Popconfirm } from 'ant-design-vue';
 import type { Rule } from 'ant-design-vue/es/form';
 import type { UploadProps } from 'ant-design-vue';
 
@@ -362,35 +362,111 @@ const formatUptime = (seconds: number) => {
 const fileVisible = ref(false);
 const fileServerId = ref('');
 const fileServerName = ref('');
-const uploadRemotePath = ref('');
-const uploadFileList = ref<any[]>([]);
-const uploadLoading = ref(false);
-const downloadRemotePath = ref('');
-const downloadLoading = ref(false);
 
-const openFileManager = (row: any) => {
+const fileColumns = [
+  { key: 'name', title: '名称', ellipsis: true },
+  { key: 'size', title: '大小', width: 90 },
+  { key: 'mode', title: '权限', width: 120 },
+  { key: 'modTime', title: '修改时间', width: 160 },
+  { key: 'action', title: '操作', width: 120, fixed: 'right' },
+];
+
+// 目录浏览
+const currentPath = ref('/');
+const dirEntries = ref<ServerManagementApi.FileEntry[]>([]);
+const dirLoading = ref(false);
+
+// 路径输入框（快速跳转）
+const pathInputVisible = ref(false);
+const pathInputValue = ref('');
+
+// 上传
+const uploadLoading = ref(false);
+const uploadFileList = ref<any[]>([]);
+
+// 下载
+const downloadLoading = ref<Record<string, boolean>>({});
+
+// 新建文件夹
+const mkdirVisible = ref(false);
+const mkdirName = ref('');
+const mkdirLoading = ref(false);
+
+const openFileManager = async (row: any) => {
   fileServerId.value = row.serverId;
   fileServerName.value = row.serverName;
-  uploadRemotePath.value = '';
-  uploadFileList.value = [];
-  downloadRemotePath.value = '';
+  currentPath.value = '/';
+  dirEntries.value = [];
   fileVisible.value = true;
+  await loadDir('/');
 };
 
-const handleUpload: UploadProps['customRequest'] = async (options) => {
-  if (!uploadRemotePath.value) {
-    message.warning('请先填写远端目标路径');
-    return;
+const loadDir = async (path: string) => {
+  dirLoading.value = true;
+  try {
+    const res = await ServerManagementApi.listDir({ serverId: fileServerId.value, path });
+    currentPath.value = res.path || path;
+    dirEntries.value = (res.entries || []).sort((a, b) => {
+      if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+  } catch (e: any) {
+    message.error(e?.message || '获取目录失败');
+  } finally {
+    dirLoading.value = false;
   }
+};
+
+const enterDir = async (entry: ServerManagementApi.FileEntry) => {
+  if (!entry.isDir) return;
+  await loadDir(entry.path);
+};
+
+// 面包屑
+const breadcrumbs = computed(() => {
+  const parts = currentPath.value.split('/').filter(Boolean);
+  const result: { label: string; path: string }[] = [{ label: '/', path: '/' }];
+  let acc = '';
+  for (const p of parts) {
+    acc += '/' + p;
+    result.push({ label: p, path: acc });
+  }
+  return result;
+});
+
+const goUp = async () => {
+  if (currentPath.value === '/') return;
+  const parent = currentPath.value.replace(/\/[^/]+\/?$/, '') || '/';
+  await loadDir(parent);
+};
+
+// 路径输入快速跳转
+const showPathInput = () => {
+  pathInputValue.value = currentPath.value;
+  pathInputVisible.value = true;
+  nextTick(() => {
+    const el = document.getElementById('file-path-input');
+    el?.focus();
+    (el as HTMLInputElement)?.select();
+  });
+};
+
+const confirmPathInput = async () => {
+  const p = pathInputValue.value.trim() || '/';
+  pathInputVisible.value = false;
+  await loadDir(p);
+};
+
+// 上传
+const handleUpload: UploadProps['customRequest'] = async (options) => {
   uploadLoading.value = true;
   try {
-    await ServerManagementApi.uploadFile(
-      fileServerId.value,
-      uploadRemotePath.value,
-      options.file as File,
-    );
-    message.success('文件上传成功');
+    const base = currentPath.value === '/' ? '' : currentPath.value.replace(/\/$/, '');
+    const remotePath = base + '/' + (options.file as File).name;
+    await ServerManagementApi.uploadFile(fileServerId.value, remotePath, options.file as File);
+    message.success('上传成功');
     uploadFileList.value = [];
+    await loadDir(currentPath.value);
   } catch (e: any) {
     message.error(e?.message || '上传失败');
   } finally {
@@ -398,29 +474,79 @@ const handleUpload: UploadProps['customRequest'] = async (options) => {
   }
 };
 
-const handleDownload = async () => {
-  if (!downloadRemotePath.value) {
-    message.warning('请填写远端文件路径');
-    return;
-  }
-  downloadLoading.value = true;
+// 下载
+const handleDownload = async (entry: ServerManagementApi.FileEntry) => {
+  downloadLoading.value = { ...downloadLoading.value, [entry.path]: true };
   try {
     const blob = await ServerManagementApi.downloadFile({
       serverId: fileServerId.value,
-      remotePath: downloadRemotePath.value,
+      remotePath: entry.path,
     });
     const url = URL.createObjectURL(blob as Blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = downloadRemotePath.value.split('/').pop() || 'download';
+    a.download = entry.name;
     a.click();
     URL.revokeObjectURL(url);
-    message.success('文件下载成功');
+    message.success('下载成功');
   } catch (e: any) {
     message.error(e?.message || '下载失败');
   } finally {
-    downloadLoading.value = false;
+    const next = { ...downloadLoading.value };
+    delete next[entry.path];
+    downloadLoading.value = next;
   }
+};
+
+// 删除
+const handleDelete = async (entry: ServerManagementApi.FileEntry) => {
+  try {
+    await ServerManagementApi.deleteFile({
+      serverId: fileServerId.value,
+      path: entry.path,
+      recursive: entry.isDir,
+    });
+    message.success('删除成功');
+    await loadDir(currentPath.value);
+  } catch (e: any) {
+    message.error(e?.message || '删除失败');
+  }
+};
+
+// 新建文件夹
+const openMkdir = () => {
+  mkdirName.value = '';
+  mkdirVisible.value = true;
+};
+
+const confirmMkdir = async () => {
+  const name = mkdirName.value.trim();
+  if (!name) return;
+  mkdirLoading.value = true;
+  try {
+    const base = currentPath.value === '/' ? '' : currentPath.value.replace(/\/$/, '');
+    await ServerManagementApi.mkdir({ serverId: fileServerId.value, path: base + '/' + name });
+    message.success('创建成功');
+    mkdirVisible.value = false;
+    await loadDir(currentPath.value);
+  } catch (e: any) {
+    message.error(e?.message || '创建失败');
+  } finally {
+    mkdirLoading.value = false;
+  }
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '-';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+};
+
+const formatModTime = (ms: number): string => {
+  if (!ms) return '-';
+  return new Date(ms).toLocaleString('zh-CN', { hour12: false });
 };
 
 // ---- 端口代理 ----
@@ -828,41 +954,131 @@ const proxyColumns = [
     <Modal
       v-model:open="fileVisible"
       :title="`文件管理 - ${fileServerName}`"
-      :width="560"
+      :width="900"
       :footer="null"
       :destroy-on-close="true"
     >
-      <div class="space-y-6">
-        <Card title="上传文件到服务器" size="small">
-          <Form layout="vertical">
-            <FormItem label="远端目标路径" required>
-              <Input v-model:value="uploadRemotePath" placeholder="如 /tmp/myfile.tar.gz" />
-            </FormItem>
-            <FormItem label="选择文件">
-              <Upload
-                v-model:file-list="uploadFileList"
-                :custom-request="handleUpload"
-                :max-count="1"
-                :disabled="!uploadRemotePath"
-              >
-                <Button :loading="uploadLoading" :disabled="!uploadRemotePath">
-                  点击选择并上传
-                </Button>
-              </Upload>
-            </FormItem>
-          </Form>
-        </Card>
+      <div class="flex flex-col" style="height: 520px">
+        <!-- 地址栏 -->
+        <div class="flex items-center gap-2 mb-2 px-1">
+          <!-- 返回上级 -->
+          <Button size="small" :disabled="currentPath === '/'" @click="goUp">↑</Button>
 
-        <Card title="从服务器下载文件" size="small">
-          <Form layout="vertical">
-            <FormItem label="远端文件路径" required>
-              <Input v-model:value="downloadRemotePath" placeholder="如 /var/log/app.log" />
-            </FormItem>
-            <Button type="primary" :loading="downloadLoading" :disabled="!downloadRemotePath" @click="handleDownload">
-              下载文件
-            </Button>
-          </Form>
-        </Card>
+          <!-- 面包屑 / 路径输入框 -->
+          <div class="flex-1 min-w-0">
+            <div
+              v-if="!pathInputVisible"
+              class="flex items-center gap-1 px-2 py-1 rounded border border-transparent hover:border-gray-500 cursor-text select-none overflow-x-auto whitespace-nowrap"
+              style="font-size: 13px"
+              @click="showPathInput"
+            >
+              <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.path">
+                <span
+                  class="hover:text-blue-400 cursor-pointer shrink-0"
+                  @click.stop="loadDir(crumb.path)"
+                >{{ crumb.label }}</span>
+                <span v-if="idx < breadcrumbs.length - 1" class="text-gray-500 shrink-0">/</span>
+              </template>
+            </div>
+            <Input
+              v-else
+              id="file-path-input"
+              v-model:value="pathInputValue"
+              size="small"
+              @blur="confirmPathInput"
+              @press-enter="confirmPathInput"
+            />
+          </div>
+
+          <!-- 工具按钮 -->
+          <Space size="small">
+            <Button size="small" @click="openMkdir">新建文件夹</Button>
+            <Upload
+              v-model:file-list="uploadFileList"
+              :custom-request="handleUpload"
+              :max-count="1"
+              :show-upload-list="false"
+            >
+              <Button size="small" :loading="uploadLoading">上传文件</Button>
+            </Upload>
+            <Button size="small" @click="loadDir(currentPath)">刷新</Button>
+          </Space>
+        </div>
+
+        <!-- 文件列表 -->
+        <div class="flex-1 overflow-hidden">
+          <Spin :spinning="dirLoading" class="h-full">
+            <Table
+              :data-source="dirEntries"
+              :columns="fileColumns"
+              :pagination="false"
+              size="small"
+              row-key="path"
+              :scroll="{ y: 420 }"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'name'">
+                  <span
+                    :class="record.isDir ? 'cursor-pointer hover:text-blue-400' : ''"
+                    @click="record.isDir && enterDir(record)"
+                  >
+                    <span class="mr-1">{{ record.isDir ? '📁' : '📄' }}</span>
+                    {{ record.name }}
+                  </span>
+                </template>
+                <template v-else-if="column.key === 'size'">
+                  <span class="text-gray-400 text-xs">{{ record.isDir ? '-' : formatFileSize(record.size) }}</span>
+                </template>
+                <template v-else-if="column.key === 'mode'">
+                  <span class="font-mono text-xs text-gray-400">{{ record.mode }}</span>
+                </template>
+                <template v-else-if="column.key === 'modTime'">
+                  <span class="text-xs text-gray-400">{{ formatModTime(record.modTime) }}</span>
+                </template>
+                <template v-else-if="column.key === 'action'">
+                  <Space size="small">
+                    <Button
+                      v-if="!record.isDir"
+                      size="small"
+                      type="link"
+                      :loading="!!downloadLoading[record.path]"
+                      @click="handleDownload(record)"
+                    >下载</Button>
+                    <Popconfirm
+                      :title="`确认删除 ${record.name}${record.isDir ? ' 及其所有内容' : ''}？`"
+                      ok-text="删除"
+                      ok-type="danger"
+                      cancel-text="取消"
+                      @confirm="handleDelete(record)"
+                    >
+                      <Button size="small" type="link" danger>删除</Button>
+                    </Popconfirm>
+                  </Space>
+                </template>
+              </template>
+            </Table>
+          </Spin>
+        </div>
+      </div>
+    </Modal>
+
+    <!-- 新建文件夹弹窗 -->
+    <Modal
+      v-model:open="mkdirVisible"
+      title="新建文件夹"
+      :width="360"
+      :confirm-loading="mkdirLoading"
+      ok-text="创建"
+      cancel-text="取消"
+      @ok="confirmMkdir"
+    >
+      <div class="py-2">
+        <div class="text-xs text-gray-400 mb-2">当前路径：{{ currentPath }}</div>
+        <Input
+          v-model:value="mkdirName"
+          placeholder="文件夹名称"
+          @press-enter="confirmMkdir"
+        />
       </div>
     </Modal>
 

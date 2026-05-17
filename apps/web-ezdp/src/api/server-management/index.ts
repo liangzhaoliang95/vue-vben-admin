@@ -205,6 +205,32 @@ export namespace ServerManagementApi {
     });
   }
 
+  // ---- 文件管理 ----
+
+  export interface FileEntry {
+    name: string;
+    path: string;
+    isDir: boolean;
+    size: number;
+    modTime: number;
+    mode: string;
+  }
+
+  export function listDir(params: { serverId: string; path?: string }) {
+    return requestClient.post<{ path: string; entries: FileEntry[] }>(
+      '/serverAgent/listDir',
+      params,
+    );
+  }
+
+  export function deleteFile(params: { serverId: string; path: string; recursive?: boolean }) {
+    return requestClient.post<{ message: string }>('/serverAgent/deleteFile', params);
+  }
+
+  export function mkdir(params: { serverId: string; path: string }) {
+    return requestClient.post<{ message: string }>('/serverAgent/mkdir', params);
+  }
+
   // ---- 端口代理 ----
 
   export interface ProxyInfo {
