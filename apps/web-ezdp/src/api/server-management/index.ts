@@ -271,4 +271,19 @@ export namespace ServerManagementApi {
       params || {},
     );
   }
+
+  // ---- 远程升级 ----
+
+  export interface UpgradeAgentResult {
+    status: 'success' | 'upgrading';
+    message: string;
+    stdout?: string;
+  }
+
+  export function upgradeAgent(params: { serverId: string }) {
+    return requestClient.post<UpgradeAgentResult>(
+      '/serverAgent/upgradeAgent',
+      params,
+    );
+  }
 }

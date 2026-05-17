@@ -40,6 +40,7 @@ interface Props {
   serverName: string;
   cpuModel?: string;
   memTotal?: number;
+  server?: ServerManagementApi.Server | null;
 }
 
 const props = defineProps<Props>();
@@ -312,6 +313,26 @@ onUnmounted(() => {
 
       <!-- 滚动内容区 -->
       <div class="monitor-scroll">
+        <!-- 服务器基本信息 -->
+        <div v-if="props.server" class="mb-4">
+          <Descriptions bordered :column="2" size="small">
+            <DescriptionsItem label="主机名">
+              {{ props.server.hostname || '-' }}
+            </DescriptionsItem>
+            <DescriptionsItem label="操作系统">
+              {{ props.server.osVersion || props.server.os || '-' }}
+              <span v-if="props.server.arch" class="text-gray-400 ml-1">({{ props.server.arch }})</span>
+            </DescriptionsItem>
+            <DescriptionsItem label="公网 IP">
+              {{ props.server.publicIp || props.server.ip || '-' }}
+              <span v-if="props.server.ipLocation" class="text-gray-400 ml-1">({{ props.server.ipLocation }})</span>
+            </DescriptionsItem>
+            <DescriptionsItem label="内网 IP">
+              {{ props.server.privateIps || '-' }}
+            </DescriptionsItem>
+          </Descriptions>
+        </div>
+
         <!-- 硬件配置（始终显示，不依赖实时数据） -->
         <div v-if="props.cpuModel || props.memTotal" class="mb-4">
           <Descriptions bordered :column="2" size="small">

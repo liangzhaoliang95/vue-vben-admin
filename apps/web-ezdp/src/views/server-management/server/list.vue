@@ -163,13 +163,14 @@ const loadServerList = async () => {
 };
 
 // 根据 OS 返回对应的 Iconify 图标名
-const getOsIcon = (os: string): string => {
-  const lower = (os || '').toLowerCase();
+const getOsIcon = (os: string, osVersion?: string): string => {
+  const lower = ((osVersion || '') + ' ' + (os || '')).toLowerCase();
   if (lower.includes('darwin') || lower.includes('macos') || lower.includes('mac os')) {
     return 'simple-icons:apple';
   }
   if (lower.includes('ubuntu')) return 'simple-icons:ubuntu';
   if (lower.includes('debian')) return 'simple-icons:debian';
+  if (lower.includes('rocky')) return 'simple-icons:rockylinux';
   if (lower.includes('centos')) return 'simple-icons:centos';
   if (lower.includes('fedora')) return 'simple-icons:fedora';
   if (lower.includes('arch')) return 'simple-icons:archlinux';
@@ -181,11 +182,12 @@ const getOsIcon = (os: string): string => {
 };
 
 // 根据 OS 返回图标颜色
-const getOsIconColor = (os: string): string => {
-  const lower = (os || '').toLowerCase();
+const getOsIconColor = (os: string, osVersion?: string): string => {
+  const lower = ((osVersion || '') + ' ' + (os || '')).toLowerCase();
   if (lower.includes('darwin') || lower.includes('macos')) return '#a0a0a0';
   if (lower.includes('ubuntu')) return '#e95420';
   if (lower.includes('debian')) return '#a80030';
+  if (lower.includes('rocky')) return '#10b981';
   if (lower.includes('centos')) return '#932279';
   if (lower.includes('fedora')) return '#294172';
   if (lower.includes('arch')) return '#1793d1';
@@ -544,7 +546,75 @@ const switchViewMode = (mode: 'grid' | 'list') => {
 
 onMounted(() => {
   loadServerList();
+  fetchLatestAgentVersion();
 });
+
+// ---- 最新 Agent 版本 ----
+const latestAgentVersion = ref('');
+
+const fetchLatestAgentVersion = async () => {
+  try {
+    const res = await fetch('https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/version.json');
+    const data = await res.json();
+    latestAgentVersion.value = data.version || '';
+  } catch {
+    // 获取失败时静默处理，不影响页面功能
+  }
+};
+
+// 比较版本号，返回 true 表示 current < latest（需要更新）
+const needsUpdate = (currentVersion: string): boolean => {
+  if (!latestAgentVersion.value || !currentVersion) return false;
+  const parse = (v: string) => v.replace(/^v/, '').split('.').map(Number);
+  const cur = parse(currentVersion);
+  const lat = parse(latestAgentVersion.value);
+  for (let i = 0; i < Math.max(cur.length, lat.length); i++) {
+    const c = cur[i] ?? 0;
+    const l = lat[i] ?? 0;
+    if (c < l) return true;
+    if (c > l) return false;
+  }
+  return false;
+};
+
+// 正在升级中的服务器 serverId 集合
+const upgradingServers = ref<Set<string>>(new Set());
+
+const handleUpgradeAgent = async (server: ServerManagementApi.Server) => {
+  if (upgradingServers.value.has(server.serverId)) return;
+
+  Modal.confirm({
+    title: $t('serverManagement.server.upgradeConfirmTitle'),
+    content: $t('serverManagement.server.upgradeConfirmContent', {
+      name: server.serverName,
+      current: server.version,
+      latest: latestAgentVersion.value,
+    }),
+    okText: $t('serverManagement.server.upgradeConfirmOk'),
+    cancelText: $t('common.cancel'),
+    onOk: async () => {
+      upgradingServers.value = new Set([...upgradingServers.value, server.serverId]);
+      try {
+        const res = await ServerManagementApi.upgradeAgent({ serverId: server.serverId });
+        if (res.status === 'upgrading') {
+          message.info($t('serverManagement.server.upgradeTriggered'));
+        } else {
+          message.success($t('serverManagement.server.upgradeSuccess'));
+        }
+        // 延迟 15 秒后刷新列表，等 agent 重启完成
+        setTimeout(() => {
+          loadServerList();
+        }, 15_000);
+      } catch (e: any) {
+        message.error(e?.message || $t('common.operationFailed'));
+      } finally {
+        const next = new Set(upgradingServers.value);
+        next.delete(server.serverId);
+        upgradingServers.value = next;
+      }
+    },
+  });
+};
 
 // ---- 状态监控 ----
 const statsVisible = ref(false);
@@ -552,12 +622,14 @@ const statsServerId = ref('');
 const statsServerName = ref('');
 const statsCpuModel = ref('');
 const statsMemTotal = ref(0);
+const statsServer = ref<ServerManagementApi.Server | null>(null);
 
 const openStats = (row: any) => {
   statsServerId.value = row.serverId;
   statsServerName.value = row.serverName;
   statsCpuModel.value = row.cpuModel || '';
   statsMemTotal.value = row.memTotal || 0;
+  statsServer.value = row;
   statsVisible.value = true;
 };
 
@@ -960,11 +1032,11 @@ const proxyColumns = [
             <div class="server-card__header">
               <div class="server-card__os-icon">
                 <IconifyIcon
-                  :icon="getOsIcon(server.os)"
+                  :icon="getOsIcon(server.os, server.osVersion)"
                   class="size-10"
                   :style="{
-                    color: server.status === 'online' ? getOsIconColor(server.os) : '#4b5563',
-                    filter: server.status === 'online' ? `drop-shadow(0 0 6px ${getOsIconColor(server.os)}80)` : 'none',
+                    color: getOsIconColor(server.os, server.osVersion),
+                    filter: server.status === 'online' ? `drop-shadow(0 0 6px ${getOsIconColor(server.os, server.osVersion)}80)` : 'none',
                     transition: 'color 0.3s, filter 0.3s',
                   }"
                 />
@@ -988,6 +1060,35 @@ const proxyColumns = [
               >
                 {{ server.status === 'online' ? $t('serverManagement.server.online') : $t('serverManagement.server.offline') }}
               </Tag>
+              <!-- 版本 tag -->
+              <Tooltip
+                v-if="server.version"
+                :title="upgradingServers.has(server.serverId)
+                  ? $t('serverManagement.server.upgrading')
+                  : needsUpdate(server.version)
+                    ? (server.status === 'online'
+                        ? $t('serverManagement.server.agentUpdateClickToUpgrade', { version: latestAgentVersion })
+                        : $t('serverManagement.server.agentVersionLatest', { version: latestAgentVersion }))
+                    : $t('serverManagement.server.agentLatest')"
+              >
+                <div
+                  class="agent-version-tag shrink-0"
+                  :class="{
+                    'agent-version-tag--outdated': needsUpdate(server.version),
+                    'agent-version-tag--upgrading': upgradingServers.has(server.serverId),
+                    'agent-version-tag--clickable': needsUpdate(server.version) && server.status === 'online' && !upgradingServers.has(server.serverId),
+                  }"
+                  @click.stop="needsUpdate(server.version) && server.status === 'online' && !upgradingServers.has(server.serverId) && handleUpgradeAgent(server)"
+                >
+                  <IconifyIcon
+                    v-if="upgradingServers.has(server.serverId)"
+                    icon="mdi:loading"
+                    class="size-3 animate-spin"
+                  />
+                  <span class="agent-version-tag__text">{{ server.version }}</span>
+                  <span v-if="needsUpdate(server.version) && !upgradingServers.has(server.serverId)" class="agent-version-tag__dot" />
+                </div>
+              </Tooltip>
             </div>
 
             <!-- 卡片信息区 + 迷你图 -->
@@ -1160,9 +1261,9 @@ const proxyColumns = [
       <template #os="{ row }">
         <div class="flex items-center gap-1.5">
           <IconifyIcon
-            :icon="getOsIcon(row.os)"
+            :icon="getOsIcon(row.os, row.osVersion)"
             class="size-4 shrink-0"
-            :style="{ color: getOsIconColor(row.os) }"
+            :style="{ color: getOsIconColor(row.os, row.osVersion) }"
           />
           <span class="text-sm">{{ row.osVersion || row.os || '-' }}</span>
         </div>
@@ -1407,6 +1508,7 @@ const proxyColumns = [
       :server-name="statsServerName"
       :cpu-model="statsCpuModel"
       :mem-total="statsMemTotal"
+      :server="statsServer"
     />
 
     <!-- 文件管理弹窗 -->
@@ -1709,8 +1811,9 @@ const proxyColumns = [
 }
 
 .server-card:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border-color: #52c41a;
+  border-left-color: #52c41a;
+  box-shadow: 0 4px 16px rgba(82, 196, 26, 0.2);
 }
 
 .server-card--online {
@@ -1948,5 +2051,58 @@ const proxyColumns = [
 .create-server-instruction-warning {
   font-weight: 500;
   color: #d46b08;
+}
+
+/* Agent 版本 tag */
+.agent-version-tag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: default;
+  transition: border-color 0.2s, color 0.2s;
+  line-height: 18px;
+}
+
+.agent-version-tag--outdated {
+  border-color: rgba(255, 77, 79, 0.4);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.agent-version-tag--clickable {
+  cursor: pointer;
+}
+
+.agent-version-tag--clickable:hover {
+  border-color: rgba(255, 77, 79, 0.7);
+  background: rgba(255, 77, 79, 0.12);
+  color: #ff7875;
+}
+
+.agent-version-tag--upgrading {
+  border-color: rgba(250, 173, 20, 0.5);
+  color: rgba(250, 173, 20, 0.85);
+  cursor: default;
+}
+
+.agent-version-tag__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff4d4f;
+  flex-shrink: 0;
+  animation: version-dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes version-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
 }
 </style>

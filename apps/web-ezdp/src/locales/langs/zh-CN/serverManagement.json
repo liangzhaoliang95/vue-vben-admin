@@ -48,7 +48,19 @@
     "oneLineInstall": "一键安装命令",
     "oneLineInstallDesc": "在目标服务器上执行以下命令，自动完成 Agent 安装、配置和启动",
     "copyInstallCmd": "复制命令",
-    "copyInstallCmdSuccess": "安装命令已复制到剪贴板"
+    "copyInstallCmdSuccess": "安装命令已复制到剪贴板",
+    "agentVersion": "Agent 版本",
+    "agentUpdateAvailable": "有新版本可用",
+    "agentLatest": "已是最新版本",
+    "agentVersionLatest": "最新版 {version}",
+    "agentVersionCurrent": "当前 {version}",
+    "agentUpdateClickToUpgrade": "有新版本 {version}，点击升级",
+    "upgradeConfirmTitle": "确认升级 Agent",
+    "upgradeConfirmContent": "将把 {name} 的 Agent 从 {current} 升级到 {latest}，升级期间 Agent 会短暂离线。",
+    "upgradeConfirmOk": "立即升级",
+    "upgradeTriggered": "升级指令已下发，Agent 正在重启，请稍候...",
+    "upgradeSuccess": "升级成功",
+    "upgrading": "升级中..."
   },
   "environmentAgent": {
     "title": "环境代理",

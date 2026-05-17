@@ -9,7 +9,7 @@ export namespace BuildAgentApi {
     businessLineName?: string;
     name: string;
     description: string;
-    status: 0 | 1; // 0=离线, 1=在线
+    status: 0 | 1 | 2 | 3; // 0=离线, 1=在线, 2=忙碌, 3=已禁用
     ipAddress: string;
     hostname: string;
     os: string;

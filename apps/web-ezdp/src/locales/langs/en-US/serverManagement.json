@@ -48,7 +48,19 @@
     "oneLineInstall": "One-Line Install Command",
     "oneLineInstallDesc": "Run the following command on the target server to automatically install, configure, and start the Agent",
     "copyInstallCmd": "Copy Command",
-    "copyInstallCmdSuccess": "Install command copied to clipboard"
+    "copyInstallCmdSuccess": "Install command copied to clipboard",
+    "agentVersion": "Agent Version",
+    "agentUpdateAvailable": "Update Available",
+    "agentLatest": "Up to date",
+    "agentVersionLatest": "Latest {version}",
+    "agentVersionCurrent": "Current {version}",
+    "agentUpdateClickToUpgrade": "New version {version} available, click to upgrade",
+    "upgradeConfirmTitle": "Confirm Agent Upgrade",
+    "upgradeConfirmContent": "Upgrade {name}'s Agent from {current} to {latest}. The Agent will be briefly offline during upgrade.",
+    "upgradeConfirmOk": "Upgrade Now",
+    "upgradeTriggered": "Upgrade command sent, Agent is restarting...",
+    "upgradeSuccess": "Upgrade successful",
+    "upgrading": "Upgrading..."
   },
   "environmentAgent": {
     "title": "Environment Agents",
