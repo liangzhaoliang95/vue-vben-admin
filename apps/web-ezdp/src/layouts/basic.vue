@@ -266,8 +266,8 @@ async function openLogViewer() {
   // 先订阅业务线日志
   await wsStore.subscribeBusinessLine(businessLineId);
 
-  // 打开日志查看器（默认显示构建日志）
-  wsStore.openGlobalLogViewer(1);
+  // 打开日志查看器（显示全部日志）
+  wsStore.openGlobalLogViewer();
 }
 
 // 关闭实时日志

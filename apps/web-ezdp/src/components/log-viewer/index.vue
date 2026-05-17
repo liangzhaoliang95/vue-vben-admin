@@ -24,12 +24,11 @@ import 'xterm/css/xterm.css';
 interface Props {
   subscriptionId: string;
   title?: string;
-  taskType?: 1 | 2; // 1=构建日志, 2=部署日志
+  taskType?: 1 | 2; // 1=构建日志, 2=部署日志, undefined=全部
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: '实时日志',
-  taskType: 1,
 });
 
 const emit = defineEmits<{
@@ -216,14 +215,11 @@ function renderLogMessage(message: WebSocketMessage) {
     return;
   }
 
-  // 根据 taskType 过滤消息：只显示对应 commandId 的日志
-  // taskType=1 时只显示 commandId=1 的消息（构建日志）
-  // taskType=2 时只显示 commandId=2 的消息（部署日志）
-  if (message.commandId !== props.taskType) {
-    return;
-  }
-
   if (message.commandType === 'log') {
+    // taskType 有值时只显示对应 commandId 的日志，undefined 时显示全部
+    if (props.taskType !== undefined && message.commandId !== props.taskType) {
+      return;
+    }
     const content = message.data?.content || '';
 
     // 写入日志内容
