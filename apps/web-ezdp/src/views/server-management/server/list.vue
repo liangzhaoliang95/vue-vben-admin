@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { computed, h, nextTick, onMounted, ref, watch } from 'vue';
-import { onClickOutside } from '@vueuse/core';
+import { computed, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { onClickOutside, useDraggable } from '@vueuse/core';
 import { Page } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
@@ -197,10 +197,72 @@ const getOsIconColor = (os: string, osVersion?: string): string => {
   return '#6b7280';
 };
 
-// 终端弹窗状态
+// 终端浮层状态
 const terminalVisible = ref(false);
 const currentServerId = ref('');
 const currentServerName = ref('');
+
+// 终端浮层拖拽 & resize
+const terminalPanelRef = ref<HTMLElement | null>(null);
+const terminalDragHandleRef = ref<HTMLElement | null>(null);
+const terminalWidth = ref(900);
+const terminalHeight = ref(600);
+const terminalMinWidth = 480;
+const terminalMinHeight = 320;
+
+const { x: terminalX, y: terminalY } = useDraggable(terminalPanelRef, {
+  handle: terminalDragHandleRef,
+  initialValue: () => ({
+    x: Math.max(0, (window.innerWidth - terminalWidth.value) / 2),
+    y: Math.max(0, (window.innerHeight - terminalHeight.value) / 2),
+  }),
+});
+
+const terminalPanelStyle = computed(() => ({
+  position: 'fixed' as const,
+  left: `${terminalX.value}px`,
+  top: `${terminalY.value}px`,
+  width: `${terminalWidth.value}px`,
+  height: `${terminalHeight.value}px`,
+}));
+
+// resize 逻辑
+let resizing = false;
+let resizeStartX = 0;
+let resizeStartY = 0;
+let resizeStartW = 0;
+let resizeStartH = 0;
+
+const onResizeStart = (e: MouseEvent) => {
+  e.preventDefault();
+  e.stopPropagation();
+  resizing = true;
+  resizeStartX = e.clientX;
+  resizeStartY = e.clientY;
+  resizeStartW = terminalWidth.value;
+  resizeStartH = terminalHeight.value;
+  window.addEventListener('mousemove', onResizeMove);
+  window.addEventListener('mouseup', onResizeEnd);
+};
+
+const onResizeMove = (e: MouseEvent) => {
+  if (!resizing) return;
+  const dx = e.clientX - resizeStartX;
+  const dy = e.clientY - resizeStartY;
+  terminalWidth.value = Math.max(terminalMinWidth, resizeStartW + dx);
+  terminalHeight.value = Math.max(terminalMinHeight, resizeStartH + dy);
+};
+
+const onResizeEnd = () => {
+  resizing = false;
+  window.removeEventListener('mousemove', onResizeMove);
+  window.removeEventListener('mouseup', onResizeEnd);
+};
+
+onUnmounted(() => {
+  window.removeEventListener('mousemove', onResizeMove);
+  window.removeEventListener('mouseup', onResizeEnd);
+});
 
 // 编辑弹窗状态
 const editVisible = ref(false);
@@ -239,6 +301,9 @@ const openTerminal = (row: any) => {
   }
   currentServerId.value = row.serverId;
   currentServerName.value = row.serverName;
+  // 每次打开居中显示
+  terminalX.value = Math.max(0, (window.innerWidth - terminalWidth.value) / 2);
+  terminalY.value = Math.max(0, (window.innerHeight - terminalHeight.value) / 2);
   terminalVisible.value = true;
 };
 
@@ -1318,25 +1383,34 @@ const proxyColumns = [
       </template>
     </Grid>
 
-    <!-- 终端弹窗 -->
-    <Modal
-      v-model:open="terminalVisible"
-      :title="`${$t('serverManagement.server.terminal')} - ${currentServerName}`"
-      width="80%"
-      :footer="null"
-      :destroy-on-close="true"
-      wrap-class-name="terminal-modal"
-      @cancel="closeTerminal"
-    >
-      <div style="height: 600px">
-        <WebTerminal
-          v-if="terminalVisible"
-          :server-id="currentServerId"
-          :title="currentServerName"
-          @close="closeTerminal"
-        />
+    <!-- 终端浮层（可拖动 + 可缩放） -->
+    <Teleport to="body">
+      <div
+        v-if="terminalVisible"
+        ref="terminalPanelRef"
+        class="terminal-float-panel"
+        :style="terminalPanelStyle"
+      >
+        <div ref="terminalDragHandleRef" class="terminal-float-header">
+          <div class="terminal-float-title">
+            <span class="terminal-float-dot red"></span>
+            <span class="terminal-float-dot yellow"></span>
+            <span class="terminal-float-dot green"></span>
+            <span class="terminal-float-name">{{ $t('serverManagement.server.terminal') }} — {{ currentServerName }}</span>
+          </div>
+          <button class="terminal-float-close" @click="closeTerminal">✕</button>
+        </div>
+        <div class="terminal-float-body">
+          <WebTerminal
+            v-if="terminalVisible"
+            :server-id="currentServerId"
+            :title="currentServerName"
+            @close="closeTerminal"
+          />
+        </div>
+        <div class="terminal-resize-handle" @mousedown="onResizeStart"></div>
       </div>
-    </Modal>
+    </Teleport>
 
     <!-- 编辑弹窗 -->
     <Modal
@@ -1689,6 +1763,81 @@ const proxyColumns = [
 .terminal-modal .ant-modal-body {
   padding: 0;
   height: 600px;
+}
+
+.terminal-float-panel {
+  z-index: 1050;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  min-width: 480px;
+  min-height: 320px;
+}
+
+.terminal-float-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #2d2d2d;
+  cursor: move;
+  user-select: none;
+  flex-shrink: 0;
+  border-bottom: 1px solid #3e3e3e;
+}
+
+.terminal-float-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminal-float-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  &.red    { background: #ff5f57; }
+  &.yellow { background: #febc2e; }
+  &.green  { background: #28c840; }
+}
+
+.terminal-float-name {
+  margin-left: 8px;
+  font-size: 13px;
+  color: #d4d4d4;
+  font-weight: 500;
+}
+
+.terminal-float-close {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  line-height: 1;
+  &:hover { color: #fff; background: #ff5f57; }
+}
+
+.terminal-float-body {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.terminal-resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  background: linear-gradient(135deg, transparent 50%, #555 50%, #555 60%, transparent 60%, transparent 70%, #555 70%, #555 80%, transparent 80%);
 }
 
 .file-manager-modal .ant-modal-body {
