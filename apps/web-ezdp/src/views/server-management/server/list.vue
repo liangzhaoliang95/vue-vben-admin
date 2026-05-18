@@ -67,7 +67,11 @@ const getOsCategory = (os: string): OsFilter => {
   if (lower.includes('windows')) return 'windows';
   if (lower.includes('linux') || lower.includes('ubuntu') || lower.includes('debian') ||
       lower.includes('centos') || lower.includes('fedora') || lower.includes('arch') ||
-      lower.includes('alpine')) return 'linux';
+      lower.includes('alpine') || lower.includes('kylin') || lower.includes('麒麟') ||
+      lower.includes('uos') || lower.includes('uniontech') || lower.includes('openeuler') ||
+      lower.includes('euler') || lower.includes('anolis') || lower.includes('tencentos') ||
+      lower.includes('alinux') || lower.includes('rocky') || lower.includes('opensuse') ||
+      lower.includes('suse') || lower.includes('manjaro') || lower.includes('kali')) return 'linux';
   return 'other';
 };
 
@@ -175,6 +179,18 @@ const getOsIcon = (os: string, osVersion?: string): string => {
   if (lower.includes('fedora')) return 'simple-icons:fedora';
   if (lower.includes('arch')) return 'simple-icons:archlinux';
   if (lower.includes('alpine')) return 'simple-icons:alpinelinux';
+  if (lower.includes('opensuse') || lower.includes('suse')) return 'simple-icons:opensuse';
+  if (lower.includes('manjaro')) return 'simple-icons:manjaro';
+  if (lower.includes('kali')) return 'simple-icons:kalilinux';
+  if (lower.includes('raspberry')) return 'simple-icons:raspberrypi';
+  // 国产发行版：麒麟、统信、欧拉等无专属图标，统一用通用 Linux 图标
+  if (lower.includes('kylin') || lower.includes('麒麟') ||
+      lower.includes('uos') || lower.includes('uniontech') || lower.includes('统信') ||
+      lower.includes('openeuler') || lower.includes('euler') ||
+      lower.includes('anolis') || lower.includes('tencentos') ||
+      lower.includes('alibaba') || lower.includes('alinux')) {
+    return 'simple-icons:linux';
+  }
   if (lower.includes('linux')) return 'simple-icons:linux';
   if (lower.includes('windows')) return 'simple-icons:windows';
   if (lower.includes('freebsd') || lower.includes('bsd')) return 'simple-icons:freebsd';
@@ -192,6 +208,17 @@ const getOsIconColor = (os: string, osVersion?: string): string => {
   if (lower.includes('fedora')) return '#294172';
   if (lower.includes('arch')) return '#1793d1';
   if (lower.includes('alpine')) return '#0d597f';
+  if (lower.includes('opensuse') || lower.includes('suse')) return '#73ba25';
+  if (lower.includes('manjaro')) return '#35bf5c';
+  if (lower.includes('kali')) return '#367bf0';
+  if (lower.includes('raspberry')) return '#c51a4a';
+  // 国产发行版配色
+  if (lower.includes('kylin') || lower.includes('麒麟')) return '#c8232c';       // 麒麟红
+  if (lower.includes('uos') || lower.includes('uniontech') || lower.includes('统信')) return '#0050b3'; // 统信蓝
+  if (lower.includes('openeuler') || lower.includes('euler')) return '#c7000b';  // 欧拉红
+  if (lower.includes('anolis')) return '#ff6a00';                                 // Anolis 橙
+  if (lower.includes('tencentos')) return '#006eff';                              // TencentOS 蓝
+  if (lower.includes('alibaba') || lower.includes('alinux')) return '#ff6a00';   // Alibaba Cloud Linux 橙
   if (lower.includes('windows')) return '#0078d4';
   if (lower.includes('freebsd')) return '#ab2b28';
   return '#6b7280';
