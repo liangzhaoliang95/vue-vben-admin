@@ -458,13 +458,16 @@
       "topologyChildBranch": "Child Branch",
       "topologyDisabledBranch": "Disabled",
       "topologyLeafBranch": "Leaf Branch (no children)",
-      "topologyTip": "Scroll to zoom · Right-drag to pan · Left-drag node to reorder",
+      "topologyTip": "Scroll to zoom · Right-drag canvas · Left-drag to select · Drag node/conn to reorder",
       "topologyDragInsert": "Insert here",
       "topologyDragToRoot": "Set as root",
       "topologyDragToChild": "Set as child of {name}",
+      "topologyDragToParent": "Set as parent of {name}",
       "topologyDragSuccess": "Inheritance updated",
       "topologyDragFailed": "Failed to update inheritance",
-      "topologyDragCannotSelf": "Cannot drag onto itself"
+      "topologyDragCannotSelf": "Circular inheritance is not allowed",
+      "topologyLeftConn": "Left: group inherits branch",
+      "topologyRightConn": "Right: branch inherits group"
     },
     "environmentConfig": {
       "title": "Environment Configuration",

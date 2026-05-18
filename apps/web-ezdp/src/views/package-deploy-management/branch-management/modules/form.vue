@@ -150,7 +150,7 @@ async function handleConfirm() {
     name: values.name,
     versionTemplate: values.versionTemplate?.trim() || '',
     description: values.description,
-    parentBranchId: parentBranchId.value || null,
+    parentBranchId: parentBranchId.value ?? '',
   };
 
   if (values.sortOrder !== undefined && values.sortOrder !== null) {
