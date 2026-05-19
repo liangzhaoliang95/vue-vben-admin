@@ -195,7 +195,11 @@ export function useColumns<T = BuildAgentApi.BuildAgent>(
         default: ({ row }: { row: BuildAgentApi.BuildAgent }) => {
           const statusText = getStatusText(row.status);
           const color = getStatusColor(row.status);
-          return h(Tag, { color }, () => statusText);
+          const tags = [h(Tag, { color }, () => statusText)];
+          if (row.sharedEnabled) {
+            tags.push(h(Tag, { color: 'purple', style: { marginLeft: '4px' } }, () => $t('deploy.tools.buildAgent.sharedTag')));
+          }
+          return tags;
         },
       },
     },
@@ -257,12 +261,12 @@ export function useColumns<T = BuildAgentApi.BuildAgent>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['detail', 'delete'],
+        options: ['detail', 'edit', 'delete'],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('common.action'),
-      width: 150,
+      width: 180,
     },
   ];
 }

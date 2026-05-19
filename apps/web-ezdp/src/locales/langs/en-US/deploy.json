@@ -88,6 +88,9 @@
       "tokenDescriptionLabel": "Token Description",
       "tokenDescriptionPlaceholder": "Enter token description (optional), e.g.: For production build agent",
       "tokenDescriptionHelp": "A token will be generated after creation. Agent will report its name and other information when registering with the token",
+      "sharedEnabled": "Enable Sharing",
+      "sharedEnabledHelp": "When enabled, other business lines can use this agent for builds when they have no available agents",
+      "sharedTag": "Shared",
       "configExample": "server:\n  url: \"ws://your-server/server/ezdp/ws/agent\"\n  token: \"{token}\"\n  reconnectInterval: 10\n\nagent:\n  name: \"your-agent-name\"\n  maxConcurrentTasks: 2\n  workDir: \"/tmp/ezdp_build\"\n\nheartbeat:\n  interval: 30"
     },
     "deployAgent": {

@@ -32,6 +32,7 @@ export namespace BuildAgentApi {
     lastHeartbeatAt: number | null;
     registeredAt: number | null;
     enabled: boolean;
+    sharedEnabled: boolean; // 是否开启跨业务线共享
     tags: Record<string, string>;
     createdAt: number;
     updatedAt: number;
@@ -45,17 +46,6 @@ export namespace BuildAgentApi {
     createdAt: number;
   }
 
-  export interface DispatchTaskParams {
-    agentId: string;
-    taskId: string;
-    taskType: string;
-    branch: string;
-    tagPrefix: string;
-    devopsPath?: string;
-    projectDefine: Record<string, any>;
-    gitlabConfig?: Record<string, any>;
-    dockerConfig?: Record<string, any>;
-  }
 }
 
 /**
@@ -109,7 +99,7 @@ async function updateBuildAgent(
   data: Partial<
     Pick<
       BuildAgentApi.BuildAgent,
-      'description' | 'enabled' | 'maxConcurrentTasks' | 'name' | 'tags'
+      'description' | 'enabled' | 'maxConcurrentTasks' | 'name' | 'sharedEnabled' | 'tags'
     >
   >,
 ) {
@@ -142,19 +132,9 @@ async function getBuildAgentDetail(id: number | string) {
   );
 }
 
-/**
- * 下发任务到 Agent
- *
- * @param params 任务参数
- */
-async function dispatchTaskToAgent(params: BuildAgentApi.DispatchTaskParams) {
-  return requestClient.post('/buildAgent/dispatchTask', params);
-}
-
 export {
   createBuildAgent,
   deleteBuildAgent,
-  dispatchTaskToAgent,
   getBuildAgentDetail,
   getBuildAgentList,
   updateBuildAgent,

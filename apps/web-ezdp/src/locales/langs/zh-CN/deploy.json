@@ -88,6 +88,9 @@
       "tokenDescriptionLabel": "Token描述",
       "tokenDescriptionPlaceholder": "请输入Token描述（可选），例如：用于生产环境的构建代理",
       "tokenDescriptionHelp": "创建后将生成Token，Agent使用Token注册时会上报名称等信息",
+      "sharedEnabled": "开启共享",
+      "sharedEnabledHelp": "开启后，其他业务线在没有可用代理时可以使用此代理执行构建任务",
+      "sharedTag": "共享",
       "configExample": "server:\n  url: \"ws://your-server/server/ezdp/ws/agent\"\n  token: \"{token}\"\n  reconnectInterval: 10\n\nagent:\n  name: \"your-agent-name\"\n  maxConcurrentTasks: 2\n  workDir: \"/tmp/ezdp_build\"\n\nheartbeat:\n  interval: 30"
     },
     "deployAgent": {

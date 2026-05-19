@@ -22,6 +22,7 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import DetailModal from './modules/detail-modal.vue';
+import EditModal from './modules/edit-modal.vue';
 import Form from './modules/form.vue';
 import TokenDialog from './modules/token-dialog.vue';
 
@@ -37,6 +38,7 @@ const agentListLoading = ref(false);
 const formRef = ref<InstanceType<typeof Form>>();
 const tokenDialogRef = ref<InstanceType<typeof TokenDialog>>();
 const detailModalRef = ref<InstanceType<typeof DetailModal>>();
+const editModalRef = ref<InstanceType<typeof EditModal>>();
 
 const businessStore = useBusinessStore();
 
@@ -143,11 +145,19 @@ function onActionClick(e: OnActionClickParams<BuildAgentApi.BuildAgent>) {
       onDetail(e.row);
       break;
     }
+    case 'edit': {
+      onEdit(e.row);
+      break;
+    }
     case 'delete': {
       onDelete(e.row);
       break;
     }
   }
+}
+
+function onEdit(row: BuildAgentApi.BuildAgent) {
+  editModalRef.value?.modalApi.setData(row).open();
 }
 
 function onDelete(row: BuildAgentApi.BuildAgent) {
@@ -271,6 +281,7 @@ function usageColor(percent: number): string {
     <Form ref="formRef" @success="onRefresh" />
     <TokenDialog ref="tokenDialogRef" />
     <DetailModal ref="detailModalRef" />
+    <EditModal ref="editModalRef" @success="onRefresh" />
 
     <!-- Grid 卡片视图 -->
     <div v-if="isGridView">
@@ -360,6 +371,9 @@ function usageColor(percent: number): string {
               </div>
               <Tag :color="getStatusColor(agent.status)" class="agent-card__status-tag shrink-0">
                 {{ getStatusText(agent.status) }}
+              </Tag>
+              <Tag v-if="agent.sharedEnabled" color="purple" class="agent-card__status-tag shrink-0">
+                {{ $t('deploy.tools.buildAgent.sharedTag') }}
               </Tag>
             </div>
 
@@ -457,6 +471,9 @@ function usageColor(percent: number): string {
               >
                 <IconifyIcon icon="mdi:information-outline" class="size-3.5 mr-1" />
                 {{ $t('common.detail') }}
+              </Button>
+              <Button size="small" @click="onEdit(agent)">
+                <IconifyIcon icon="mdi:pencil" class="size-3.5" />
               </Button>
               <Button danger size="small" @click="onDelete(agent)">
                 <IconifyIcon icon="mdi:delete" class="size-3.5" />
