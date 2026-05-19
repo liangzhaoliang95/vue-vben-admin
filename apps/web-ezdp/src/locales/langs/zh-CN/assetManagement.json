@@ -68,6 +68,8 @@
     "checking": "检查中...",
     "checkSuccess": "检查完成",
     "notChecked": "未检查",
-    "selectBranchFirst": "请先选择分支"
+    "selectBranchFirst": "请先选择分支",
+    "detailTitle": "镜像检查详情 - {name}",
+    "noCheckedImages": "暂无检查记录"
   }
 }

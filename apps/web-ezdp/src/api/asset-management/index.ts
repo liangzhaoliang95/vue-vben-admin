@@ -101,6 +101,10 @@ export namespace AssetManagementApi {
     version: string;
   }
 
+  export interface VersionImageItem {
+    image: string;
+  }
+
   export function getImageCheckList() {
     return requestClient.post<ImageCheckItem[]>('/assetManagement/imageCheck/list', {});
   }
@@ -128,6 +132,13 @@ export namespace AssetManagementApi {
   export function getImageCheckBranchVersionList(params: { branchId: string }) {
     return requestClient.post<BranchVersionItem[]>(
       '/assetManagement/imageCheck/branchVersionList',
+      params,
+    );
+  }
+
+  export function getImageCheckVersionImages(params: { id: string }) {
+    return requestClient.post<VersionImageItem[]>(
+      '/assetManagement/imageCheck/versionImages',
       params,
     );
   }

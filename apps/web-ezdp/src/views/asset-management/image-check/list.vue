@@ -15,6 +15,7 @@ import {
   Space,
   Switch,
   TabPane,
+  Table,
   Tabs,
   Tag,
   Tooltip,
@@ -27,6 +28,7 @@ import { $t } from '#/locales';
 
 defineOptions({ name: 'ImageCheckList' });
 
+// ── 编辑/新建 Modal ──────────────────────────────────────────
 const modalVisible = ref(false);
 const modalLoading = ref(false);
 const isEdit = ref(false);
@@ -129,6 +131,83 @@ const onTabChange = () => {
   versionList.value = [];
 };
 
+// ── 镜像详情 Modal ────────────────────────────────────────────
+interface CheckedImage {
+  image: string;
+  status: string;
+  error?: string;
+}
+
+const detailVisible = ref(false);
+const detailTitle = ref('');
+const detailImages = ref<CheckedImage[]>([]);
+const detailLoading = ref(false);
+
+const detailColumns = [
+  {
+    title: $t('assetManagement.imageCheck.imageName'),
+    dataIndex: 'image',
+    key: 'image',
+    minWidth: 420,
+    ellipsis: true,
+  },
+  {
+    title: $t('assetManagement.imageCheck.checkStatus'),
+    dataIndex: 'status',
+    key: 'status',
+    width: 100,
+  },
+  {
+    title: $t('assetManagement.imageCheck.checkError'),
+    dataIndex: 'error',
+    key: 'error',
+    width: 200,
+    ellipsis: true,
+  },
+];
+
+const openDetail = async (row: AssetManagementApi.ImageCheckItem) => {
+  if (row.mode !== 'version') return;
+  detailTitle.value = `${row.branchName} / ${row.buildVersion}`;
+  detailImages.value = [];
+  detailLoading.value = true;
+  detailVisible.value = true;
+
+  // 已有检查结果：以结果为索引
+  const resultMap = new Map<string, CheckedImage>();
+  if (row.checkedImages) {
+    try {
+      const results = JSON.parse(row.checkedImages) as CheckedImage[];
+      for (const r of results) {
+        resultMap.set(r.image, r);
+      }
+    } catch {
+      // ignore parse error
+    }
+  }
+
+  try {
+    // 获取该版本应检查的完整镜像列表
+    const versionImages = await AssetManagementApi.getImageCheckVersionImages({ id: row.id });
+    const merged: CheckedImage[] = (versionImages || []).map((item) => {
+      return resultMap.get(item.image) ?? { image: item.image, status: 'pending' };
+    });
+    // 如果检查结果里有版本列表没有的镜像（极少数情况），也追加进去
+    for (const [img, result] of resultMap) {
+      if (!merged.some((m) => m.image === img)) {
+        merged.push(result);
+      }
+    }
+    detailImages.value = merged;
+  } catch {
+    // 接口失败时降级：直接用已有检查结果
+    detailImages.value = [...resultMap.values()];
+  } finally {
+    detailLoading.value = false;
+  }
+};
+
+// ── 工具函数 ──────────────────────────────────────────────────
 const formatTimestamp = (ts: number) => {
   if (!ts) return '-';
   return new Date(ts).toLocaleString('zh-CN', {
@@ -142,38 +221,23 @@ const formatTimestamp = (ts: number) => {
 
 const statusColor = (status: string) => {
   switch (status) {
-    case 'ok': {
-      return 'success';
-    }
-    case 'not_found': {
-      return 'error';
-    }
-    case 'error': {
-      return 'default';
-    }
-    default: {
-      return 'processing';
-    }
+    case 'ok': return 'success';
+    case 'not_found': return 'error';
+    case 'error': return 'default';
+    default: return 'processing';
   }
 };
 
 const statusText = (status: string) => {
   switch (status) {
-    case 'ok': {
-      return $t('assetManagement.imageCheck.statusOk');
-    }
-    case 'not_found': {
-      return $t('assetManagement.imageCheck.statusNotFound');
-    }
-    case 'error': {
-      return $t('assetManagement.imageCheck.statusError');
-    }
-    default: {
-      return $t('assetManagement.imageCheck.statusPending');
-    }
+    case 'ok': return $t('assetManagement.imageCheck.statusOk');
+    case 'not_found': return $t('assetManagement.imageCheck.statusNotFound');
+    case 'error': return $t('assetManagement.imageCheck.statusError');
+    default: return $t('assetManagement.imageCheck.statusPending');
   }
 };
 
+// ── 表格 ─────────────────────────────────────────────────────
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: [
@@ -243,6 +307,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
 });
 
+// ── CRUD 操作 ─────────────────────────────────────────────────
 const openCreate = async () => {
   isEdit.value = false;
   activeTab.value = 'manual';
@@ -323,7 +388,6 @@ const handleDelete = (row: AssetManagementApi.ImageCheckItem) => {
 
 const handleCheckNow = async (row: AssetManagementApi.ImageCheckItem) => {
   if (checkingId.value === row.id) return;
-
   checkingId.value = row.id;
   try {
     await AssetManagementApi.checkNowImageCheck({ id: row.id });
@@ -351,15 +415,26 @@ onMounted(() => {
         </Button>
       </template>
 
+      <!-- 镜像名称列 -->
       <template #imageName="{ row }">
-        <Tooltip v-if="row.checkError" :title="row.checkError">
-          <span class="cursor-help border-b border-dashed border-gray-400">
-            {{ row.mode === 'version' ? `${row.branchName} / ${row.buildVersion}` : row.imageName }}
+        <!-- 版本模式：可点击查看镜像列表 -->
+        <template v-if="row.mode === 'version'">
+          <span
+            class="cursor-pointer border-b border-dashed border-blue-400 text-blue-500 hover:text-blue-400"
+            @click="openDetail(row)"
+          >
+            {{ row.branchName }} / {{ row.buildVersion }}
           </span>
-        </Tooltip>
-        <span v-else>
-          {{ row.mode === 'version' ? `${row.branchName} / ${row.buildVersion}` : row.imageName }}
-        </span>
+        </template>
+        <!-- 手动模式：显示镜像名，有错误时 tooltip 展示 -->
+        <template v-else>
+          <Tooltip v-if="row.checkError" :title="row.checkError">
+            <span class="cursor-help border-b border-dashed border-gray-400">
+              {{ row.imageName }}
+            </span>
+          </Tooltip>
+          <span v-else>{{ row.imageName }}</span>
+        </template>
       </template>
 
       <template #checkStatus="{ row }">
@@ -388,16 +463,13 @@ onMounted(() => {
                 : $t('assetManagement.imageCheck.checkNow')
             }}
           </Button>
-          <Button size="small" @click="openEdit(row)">
-            {{ $t('common.edit') }}
-          </Button>
-          <Button danger size="small" @click="handleDelete(row)">
-            {{ $t('common.delete') }}
-          </Button>
+          <Button size="small" @click="openEdit(row)">{{ $t('common.edit') }}</Button>
+          <Button danger size="small" @click="handleDelete(row)">{{ $t('common.delete') }}</Button>
         </Space>
       </template>
     </Grid>
 
+    <!-- 编辑/新建 Modal -->
     <Modal
       v-model:open="modalVisible"
       :title="
@@ -412,13 +484,7 @@ onMounted(() => {
     >
       <Tabs v-model:active-key="activeTab" class="mt-2" @change="onTabChange">
         <TabPane key="manual" :tab="$t('assetManagement.imageCheck.modeManual')">
-          <Form
-            ref="formRef"
-            :model="formData"
-            :rules="manualRules"
-            layout="vertical"
-            class="mt-4"
-          >
+          <Form ref="formRef" :model="formData" :rules="manualRules" layout="vertical" class="mt-4">
             <FormItem :label="$t('assetManagement.imageCheck.imageName')" name="imageName">
               <Input
                 v-model:value="formData.imageName"
@@ -489,6 +555,44 @@ onMounted(() => {
           </Form>
         </TabPane>
       </Tabs>
+    </Modal>
+
+    <!-- 镜像详情 Modal -->
+    <Modal
+      v-model:open="detailVisible"
+      :title="$t('assetManagement.imageCheck.detailTitle', { name: detailTitle })"
+      :footer="null"
+      width="900px"
+    >
+      <Table
+        :columns="detailColumns"
+        :data-source="detailImages"
+        :pagination="false"
+        :loading="detailLoading"
+        row-key="image"
+        size="small"
+        class="mt-2"
+      >
+        <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'status'">
+            <Tag :color="statusColor(record.status)">
+              {{ statusText(record.status) }}
+            </Tag>
+          </template>
+          <template v-else-if="column.key === 'error'">
+            <span v-if="record.error" class="text-xs text-red-400">{{ record.error }}</span>
+            <span v-else class="text-gray-400">-</span>
+          </template>
+          <template v-else-if="column.key === 'image'">
+            <Tooltip :title="record.image">
+              <span class="font-mono text-xs">{{ record.image }}</span>
+            </Tooltip>
+          </template>
+        </template>
+      </Table>
+      <div v-if="!detailLoading && detailImages.length === 0" class="py-8 text-center text-gray-400">
+        {{ $t('assetManagement.imageCheck.noCheckedImages') }}
+      </div>
     </Modal>
   </Page>
 </template>
