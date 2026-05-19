@@ -608,6 +608,39 @@ async function copyVersionAsMarkdown(version: any) {
   }
 }
 
+
+// changelog modal 状态
+const changelogModalOpen = ref(false);
+const changelogVersion = ref<any>(null);
+
+// 解析 changelog JSON
+const changelogCommits = computed(() => {
+  if (!changelogVersion.value?.changelog) return [];
+  try {
+    return JSON.parse(changelogVersion.value.changelog);
+  } catch {
+    return [];
+  }
+});
+
+// 打开 changelog modal
+function openChangelog(version: any) {
+  changelogVersion.value = version;
+  changelogModalOpen.value = true;
+}
+
+// 格式化 commit 时间
+function formatCommitTime(ms: number) {
+  if (!ms) return '-';
+  return new Date(ms).toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 // 路由切换时清理资源
 onDeactivated(() => {
   try {
@@ -785,9 +818,15 @@ onDeactivated(() => {
                       class="project-item"
                       :class="[`project-type-${project.projectType || 'default'}`]"
                     >
-                      <span class="project-name">{{
-                        project.projectName || '-'
-                      }}</span>
+                      <div class="project-name-wrapper">
+                        <span class="project-name">{{
+                          project.projectName || '-'
+                        }}</span>
+                        <span
+                          v-if="!!(project.version && project.version === version.version)"
+                          class="new-badge"
+                        >NEW</span>
+                      </div>
                       <span
                         v-if="project.duration && project.duration > 0"
                         class="duration-text"
@@ -802,20 +841,33 @@ onDeactivated(() => {
                       <Tag color="red" class="version-tag">
                         {{ project.version || '-' }}
                       </Tag>
-                      <Tag
-                        :color="
-                          getStatusConfig(
-                            (project && project.status) || 'pending',
-                          ).color
-                        "
-                        class="status-tag"
-                      >
-                        {{
-                          getStatusConfig(
-                            (project && project.status) || 'pending',
-                          ).text
-                        }}
-                      </Tag>
+                      <div class="project-actions">
+                        <Tag
+                          v-if="(project && project.status) !== 'success'"
+                          :color="
+                            getStatusConfig(
+                              (project && project.status) || 'pending',
+                            ).color
+                          "
+                          class="status-tag"
+                        >
+                          {{
+                            getStatusConfig(
+                              (project && project.status) || 'pending',
+                            ).text
+                          }}
+                        </Tag>
+                        <span
+                          class="changelog-btn"
+                          :class="{ 'changelog-btn--empty': !project.changelog }"
+                          @click.stop="project.changelog && openChangelog(project)"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
+                            <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
+                          </svg>
+                          提交记录
+                        </span>
+                      </div>
                     </div>
                   </template>
                   <div
@@ -843,9 +895,15 @@ onDeactivated(() => {
                       class="project-item"
                       :class="[`project-type-${project.projectType || 'default'}`]"
                     >
-                      <span class="project-name">{{
-                        project.projectName || '-'
-                      }}</span>
+                      <div class="project-name-wrapper">
+                        <span class="project-name">{{
+                          project.projectName || '-'
+                        }}</span>
+                        <span
+                          v-if="!!(project.version && project.version === version.version)"
+                          class="new-badge"
+                        >NEW</span>
+                      </div>
                       <span
                         v-if="project.duration && project.duration > 0"
                         class="duration-text"
@@ -860,20 +918,33 @@ onDeactivated(() => {
                       <Tag color="red" class="version-tag">
                         {{ project.version || '-' }}
                       </Tag>
-                      <Tag
-                        :color="
-                          getStatusConfig(
-                            (project && project.status) || 'pending',
-                          ).color
-                        "
-                        class="status-tag"
-                      >
-                        {{
-                          getStatusConfig(
-                            (project && project.status) || 'pending',
-                          ).text
-                        }}
-                      </Tag>
+                      <div class="project-actions">
+                        <Tag
+                          v-if="(project && project.status) !== 'success'"
+                          :color="
+                            getStatusConfig(
+                              (project && project.status) || 'pending',
+                            ).color
+                          "
+                          class="status-tag"
+                        >
+                          {{
+                            getStatusConfig(
+                              (project && project.status) || 'pending',
+                            ).text
+                          }}
+                        </Tag>
+                        <span
+                          class="changelog-btn"
+                          :class="{ 'changelog-btn--empty': !project.changelog }"
+                          @click.stop="project.changelog && openChangelog(project)"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
+                            <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
+                          </svg>
+                          提交记录
+                        </span>
+                      </div>
                     </div>
                   </template>
                   <div
@@ -893,6 +964,33 @@ onDeactivated(() => {
         </Collapse>
       </Spin>
     </Card>
+
+    <!-- Changelog Modal -->
+    <Modal
+      v-model:open="changelogModalOpen"
+      :title="$t('deploy.packageDeployManagement.projectPackage.changelogTitle', [changelogVersion?.projectName || changelogVersion?.version])"
+      :footer="null"
+      width="800px"
+    >
+      <div v-if="changelogCommits.length === 0" class="py-8 text-center text-gray-400">
+        {{ $t('deploy.packageDeployManagement.projectPackage.changelogEmpty') }}
+      </div>
+      <div v-else class="changelog-list">
+        <div
+          v-for="commit in changelogCommits"
+          :key="commit.id"
+          class="changelog-item"
+        >
+          <span class="commit-title">{{ commit.title }}</span>
+          <div class="commit-meta">
+            <Tag color="warning" class="commit-id-tag">{{ commit.shortId }}</Tag>
+            <Tag color="blue" class="commit-author-tag">{{ commit.authorName }}</Tag>
+            <Tag class="commit-time-tag">{{ formatCommitTime(commit.committedAt) }}</Tag>
+          </div>
+        </div>
+      </div>
+    </Modal>
+
   </Page>
 </template>
 
@@ -901,8 +999,30 @@ onDeactivated(() => {
 
 /* project-package 独有：项目列表列宽（含构建时长列） */
 .project-item {
-  grid-template-columns: minmax(0, 1fr) 60px 80px minmax(0, 100px) 70px;
-  column-gap: 16px;
+  grid-template-columns: repeat(5, 1fr);
+  column-gap: 8px;
+}
+
+.project-item > * {
+  justify-self: end;
+}
+
+.project-item > :first-child {
+  justify-self: start;
+}
+
+.project-item .project-type-tag,
+.project-item .version-tag,
+.project-item .status-tag {
+  justify-self: end;
+}
+
+.project-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  justify-self: end;
 }
 
 /* 复制按钮样式 */
@@ -915,10 +1035,119 @@ onDeactivated(() => {
   transform: scale(1.1);
 }
 
+.changelog-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 10px;
+  height: 26px;
+  flex-shrink: 0;
+  color: #f05033;
+  border: 1px solid #f05033;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.15s, background-color 0.15s;
+  white-space: nowrap;
+}
+
+.changelog-btn:hover {
+  opacity: 1;
+  background-color: rgba(240, 80, 51, 0.08);
+}
+
+.changelog-btn--empty {
+  color: hsl(var(--muted-foreground));
+  border-color: hsl(var(--border));
+  cursor: default;
+  opacity: 0.4;
+}
+
+.changelog-btn--empty:hover {
+  background-color: transparent;
+  opacity: 0.4;
+}
+
+.changelog-placeholder {
+  display: block;
+}
+
+.project-name-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.new-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  height: 16px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: #52c41a;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
 .project-item .duration-text {
   font-size: 13px;
   color: hsl(var(--muted-foreground));
   white-space: nowrap;
   cursor: default;
 }
+
+/* Changelog Modal 样式 */
+.changelog-list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.changelog-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.changelog-item:last-child {
+  border-bottom: none;
+}
+
+.commit-title {
+  flex: 1;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+  line-height: 1.4;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-meta {
+  display: grid;
+  grid-template-columns: 90px 110px 140px;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.commit-id-tag,
+.commit-author-tag,
+.commit-time-tag {
+  font-size: 11px;
+  justify-self: start;
+}
+
 </style>

@@ -342,7 +342,15 @@
         "building": "构建中",
         "success": "成功",
         "failed": "失败"
-      }
+      },
+      "changelog": "变更日志",
+      "changelogTitle": "版本 {0} 变更日志",
+      "changelogEmpty": "暂无变更记录",
+      "commitId": "Commit ID",
+      "commitTitle": "提交说明",
+      "commitAuthor": "提交人",
+      "commitTime": "提交时间",
+      "commitProject": "所属项目"
     },
     "projectPackage": {
       "title": "项目打包",
@@ -393,7 +401,15 @@
         "searchPrev": "上一个",
         "noResults": "未找到匹配项",
         "waitingForData": "等待日志数据..."
-      }
+      },
+      "changelog": "变更日志",
+      "changelogTitle": "版本 {0} 变更日志",
+      "changelogEmpty": "暂无变更记录",
+      "commitId": "Commit ID",
+      "commitTitle": "提交说明",
+      "commitAuthor": "提交人",
+      "commitTime": "提交时间",
+      "commitProject": "所属项目"
     },
     "deployHistory": {
       "title": "发布历史",

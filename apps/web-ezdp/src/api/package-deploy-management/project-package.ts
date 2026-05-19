@@ -27,6 +27,7 @@ export namespace ProjectPackageApi {
     buildTime: number; // 构建时间
     businessLineId?: number; // 业务线ID
     description?: string; // 版本描述
+    changelog?: string; // 变更日志（JSON格式）
     children: BuildTask[]; // 子项目列表
   }
 

@@ -342,7 +342,15 @@
         "building": "Building",
         "success": "Success",
         "failed": "Failed"
-      }
+      },
+      "changelog": "Changelog",
+      "changelogTitle": "Version {0} Changelog",
+      "changelogEmpty": "No change records",
+      "commitId": "Commit ID",
+      "commitTitle": "Commit Message",
+      "commitAuthor": "Author",
+      "commitTime": "Committed At",
+      "commitProject": "Project"
     },
     "projectPackage": {
       "title": "Project Package",
@@ -393,7 +401,15 @@
         "searchPrev": "Previous",
         "noResults": "No results found",
         "waitingForData": "Waiting for log data..."
-      }
+      },
+      "changelog": "Changelog",
+      "changelogTitle": "Version {0} Changelog",
+      "changelogEmpty": "No change records",
+      "commitId": "Commit ID",
+      "commitTitle": "Commit Message",
+      "commitAuthor": "Author",
+      "commitTime": "Committed At",
+      "commitProject": "Project"
     },
     "deployHistory": {
       "title": "Deploy History",
