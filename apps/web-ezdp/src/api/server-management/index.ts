@@ -67,6 +67,7 @@ export namespace ServerManagementApi {
     id: string;
     serverId: string;
     serverName: string;
+    remark: string;
     businessLineId: number;
     serverAgentEnvironmentId: string;
     environmentName: string;
@@ -76,14 +77,12 @@ export namespace ServerManagementApi {
     arch: string;
     version: string;
     status: string;
-    ip: string;
     ipLocation: string;
     remoteIP: string;
     publicIp: string;
     privateIps: string;
     cpuModel: string;
     memTotal: number;
-    price: number;
     lastSeenAt: number;
     createdAt: number;
     updatedAt: number;
@@ -105,7 +104,7 @@ export namespace ServerManagementApi {
     );
   }
 
-  export function updateServer(params: { id: string; serverName: string; ip?: string; ipLocation?: string }) {
+  export function updateServer(params: { id: string; serverName: string; remark?: string }) {
     return requestClient.post('/serverAgent/updateServer', params);
   }
 

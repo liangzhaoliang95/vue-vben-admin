@@ -296,8 +296,7 @@ const editVisible = ref(false);
 const editForm = ref({
   id: '',
   serverName: '',
-  ip: '',
-  ipLocation: '',
+  remark: '',
 });
 
 // 新建服务器弹窗状态
@@ -346,8 +345,7 @@ const openEdit = (row: any) => {
   editForm.value = {
     id: row.id,
     serverName: row.serverName,
-    ip: row.ip || '',
-    ipLocation: row.ipLocation || '',
+    remark: row.remark || '',
   };
   editVisible.value = true;
 };
@@ -1190,14 +1188,18 @@ const proxyColumns = [
                 <div class="server-card__info-row">
                   <IconifyIcon icon="mdi:ip-network" class="size-3.5 shrink-0 text-gray-400" />
                   <span class="truncate">
-                    <span v-if="server.publicIp || server.ip">{{ server.publicIp || server.ip }}</span>
+                    <span v-if="server.publicIp">{{ server.publicIp }}</span>
                     <span v-if="server.privateIps" class="text-gray-400 ml-1 text-xs">{{ server.privateIps }}</span>
-                    <span v-if="!server.publicIp && !server.ip && !server.privateIps" class="text-gray-400">-</span>
+                    <span v-if="!server.publicIp && !server.privateIps" class="text-gray-400">-</span>
                   </span>
                 </div>
                 <div v-if="server.ipLocation" class="server-card__info-row">
                   <IconifyIcon icon="mdi:map-marker-outline" class="size-3.5 shrink-0 text-gray-400" />
                   <span class="truncate">{{ server.ipLocation }}</span>
+                </div>
+                <div v-if="server.remark" class="server-card__info-row">
+                  <IconifyIcon icon="mdi:note-text-outline" class="size-3.5 shrink-0 text-gray-400" />
+                  <span class="truncate text-xs">{{ server.remark }}</span>
                 </div>
                 <div class="server-card__info-row">
                   <IconifyIcon icon="mdi:chip" class="size-3.5 shrink-0 text-gray-400" />
@@ -1330,14 +1332,13 @@ const proxyColumns = [
       <!-- IP 地址 + 归属地 -->
       <template #ip="{ row }">
         <div class="leading-tight">
-          <!-- 公网 IP：优先显示 agent 上报的 publicIp，其次手动填写的 ip -->
-          <div v-if="row.publicIp || row.ip" class="text-sm">
-            {{ row.publicIp || row.ip }}
+          <div v-if="row.publicIp" class="text-sm">
+            {{ row.publicIp }}
             <span v-if="row.ipLocation" class="text-xs text-gray-400 ml-1">({{ row.ipLocation }})</span>
           </div>
           <!-- 内网 IP -->
           <div v-if="row.privateIps" class="text-xs text-gray-400">{{ row.privateIps }}</div>
-          <div v-if="!row.publicIp && !row.ip && !row.privateIps" class="text-sm">-</div>
+          <div v-if="!row.publicIp && !row.privateIps" class="text-sm">-</div>
         </div>
       </template>
 
@@ -1449,16 +1450,13 @@ const proxyColumns = [
         <FormItem :label="$t('serverManagement.server.serverName')">
           <Input v-model:value="editForm.serverName" />
         </FormItem>
-        <FormItem :label="$t('serverManagement.server.ip')">
-          <Input
-            v-model:value="editForm.ip"
-            :placeholder="$t('serverManagement.server.ipPlaceholder')"
-          />
-        </FormItem>
-        <FormItem :label="$t('serverManagement.server.ipLocation')">
-          <Input
-            v-model:value="editForm.ipLocation"
-            :placeholder="$t('serverManagement.server.ipLocationPlaceholder')"
+        <FormItem :label="$t('serverManagement.server.remark')">
+          <Input.TextArea
+            v-model:value="editForm.remark"
+            :placeholder="$t('serverManagement.server.remarkPlaceholder')"
+            :rows="3"
+            :maxlength="512"
+            show-count
           />
         </FormItem>
       </Form>
@@ -2054,7 +2052,27 @@ const proxyColumns = [
   gap: 6px;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.server-card__info::-webkit-scrollbar {
+  width: 3px;
+}
+
+.server-card__info::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.server-card__info::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.server-card__info::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .server-card__mini-stats {
