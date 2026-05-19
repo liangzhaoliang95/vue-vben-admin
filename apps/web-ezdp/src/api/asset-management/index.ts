@@ -91,11 +91,6 @@ export namespace AssetManagementApi {
     enabled: boolean;
   }
 
-  export interface BranchItem {
-    id: string;
-    name: string;
-  }
-
   export interface BranchVersionItem {
     id: string;
     version: string;
@@ -123,10 +118,6 @@ export namespace AssetManagementApi {
 
   export function checkNowImageCheck(params: { id: string }) {
     return requestClient.post<ImageCheckItem>('/assetManagement/imageCheck/checkNow', params);
-  }
-
-  export function getImageCheckBranchList() {
-    return requestClient.post<BranchItem[]>('/assetManagement/imageCheck/branchList', {});
   }
 
   export function getImageCheckBranchVersionList(params: { branchId: string }) {

@@ -24,6 +24,7 @@ import {
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { AssetManagementApi } from '#/api/asset-management';
+import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
 import { $t } from '#/locales';
 
 defineOptions({ name: 'ImageCheckList' });
@@ -79,7 +80,7 @@ const versionRules = {
   ],
 };
 
-const branchList = ref<AssetManagementApi.BranchItem[]>([]);
+const branchList = ref<{ id: string; name: string }[]>([]);
 const versionList = ref<AssetManagementApi.BranchVersionItem[]>([]);
 const branchLoading = ref(false);
 const versionLoading = ref(false);
@@ -87,7 +88,8 @@ const versionLoading = ref(false);
 const loadBranchList = async () => {
   branchLoading.value = true;
   try {
-    branchList.value = (await AssetManagementApi.getImageCheckBranchList()) || [];
+    const res = await getBranchManagementList({ pageIndex: 1, pageSize: 500 });
+    branchList.value = (res?.items || []).map((b) => ({ id: b.id, name: b.name }));
   } catch {
     branchList.value = [];
   } finally {
