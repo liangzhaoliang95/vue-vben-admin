@@ -804,9 +804,17 @@ onDeactivated(() => {
             </template>
 
             <!-- 项目列表（两列：左服务端，右前端） -->
-            <div class="project-list-columns">
+            <div
+              class="project-list-columns"
+              :class="{
+                'project-list-columns--single': getSortedProjects(version.children).filter((p) => p.projectType !== 'frontend').length === 0 || getSortedProjects(version.children).filter((p) => p.projectType === 'frontend').length === 0,
+              }"
+            >
               <!-- 服务端列 -->
-              <div class="project-column">
+              <div
+                v-if="getSortedProjects(version.children).filter((p) => p.projectType !== 'frontend').length > 0"
+                class="project-column"
+              >
                 <div class="project-column-body">
                   <template
                     v-for="project in getSortedProjects(version.children).filter(
@@ -870,20 +878,13 @@ onDeactivated(() => {
                       </div>
                     </div>
                   </template>
-                  <div
-                    v-if="
-                      getSortedProjects(version.children).filter(
-                        (p) => p.projectType !== 'frontend',
-                      ).length === 0
-                    "
-                    class="project-column-empty"
-                  >
-                    暂无
-                  </div>
                 </div>
               </div>
               <!-- 前端列 -->
-              <div class="project-column">
+              <div
+                v-if="getSortedProjects(version.children).filter((p) => p.projectType === 'frontend').length > 0"
+                class="project-column"
+              >
                 <div class="project-column-body">
                   <template
                     v-for="project in getSortedProjects(version.children).filter(
@@ -947,16 +948,6 @@ onDeactivated(() => {
                       </div>
                     </div>
                   </template>
-                  <div
-                    v-if="
-                      getSortedProjects(version.children).filter(
-                        (p) => p.projectType === 'frontend',
-                      ).length === 0
-                    "
-                    class="project-column-empty"
-                  >
-                    暂无
-                  </div>
                 </div>
               </div>
             </div>
