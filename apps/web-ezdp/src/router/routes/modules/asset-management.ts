@@ -22,6 +22,16 @@ const routes: RouteRecordRaw[] = [
           title: $t('assetManagement.sslCertCheck.title'),
         },
       },
+      {
+        name: 'ImageCheck',
+        path: '/asset-management/image-check',
+        component: () =>
+          import('#/views/asset-management/image-check/list.vue'),
+        meta: {
+          icon: 'mdi:docker',
+          title: $t('assetManagement.imageCheck.title'),
+        },
+      },
     ],
   },
 ];
