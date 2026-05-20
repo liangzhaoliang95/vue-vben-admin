@@ -20,7 +20,11 @@
     "selectChannel": "Select Channel",
     "createSuccess": "Scenario created successfully",
     "updateSuccess": "Scenario updated successfully",
-    "saveFailed": "Failed to save scenario"
+    "saveFailed": "Failed to save scenario",
+    "groupBuild": "Build",
+    "groupDeploy": "Deploy",
+    "groupRelease": "Release",
+    "groupAlert": "Alert"
   },
   "channel": {
     "title": "Channel Configuration",

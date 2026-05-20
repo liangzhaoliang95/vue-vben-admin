@@ -20,7 +20,11 @@
     "selectChannel": "请选择渠道",
     "createSuccess": "创建场景配置成功",
     "updateSuccess": "更新场景配置成功",
-    "saveFailed": "保存场景配置失败"
+    "saveFailed": "保存场景配置失败",
+    "groupBuild": "构建",
+    "groupDeploy": "发布",
+    "groupRelease": "Release",
+    "groupAlert": "告警"
   },
   "channel": {
     "title": "渠道配置",
