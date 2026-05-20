@@ -647,7 +647,7 @@ const latestAgentVersion = ref('');
 
 const fetchLatestAgentVersion = async () => {
   try {
-    const res = await fetch('https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/version.json');
+    const res = await fetch(`https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/version.json?_t=${Date.now()}`);
     const data = await res.json();
     latestAgentVersion.value = data.version || '';
   } catch {
