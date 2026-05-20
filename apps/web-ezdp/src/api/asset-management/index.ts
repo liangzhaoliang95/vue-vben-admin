@@ -32,8 +32,18 @@ export namespace AssetManagementApi {
     enabled: boolean;
   }
 
-  export function getSslCertCheckList() {
-    return requestClient.post<SslCertCheck[]>('/assetManagement/sslCertCheck/list', {});
+  export interface ListParams {
+    pageIndex: number;
+    pageSize: number;
+  }
+
+  export interface ListResult<T> {
+    list: T[];
+    total: number;
+  }
+
+  export function getSslCertCheckList(params: ListParams) {
+    return requestClient.post<ListResult<SslCertCheck>>('/assetManagement/sslCertCheck/list', params);
   }
 
   export function createSslCertCheck(params: CreateSslCertCheckParams) {
@@ -100,8 +110,8 @@ export namespace AssetManagementApi {
     image: string;
   }
 
-  export function getImageCheckList() {
-    return requestClient.post<ImageCheckItem[]>('/assetManagement/imageCheck/list', {});
+  export function getImageCheckList(params: ListParams) {
+    return requestClient.post<ListResult<ImageCheckItem>>('/assetManagement/imageCheck/list', params);
   }
 
   export function createImageCheck(params: CreateImageCheckParams) {

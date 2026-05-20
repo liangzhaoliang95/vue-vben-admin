@@ -585,9 +585,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     ],
     height: 'auto',
     keepSource: true,
+    pagerConfig: { enabled: true },
     proxyConfig: {
       ajax: {
-        query: async () => {
+        query: async ({ page }) => {
           const res = await ServerManagementApi.getServerList();
           let servers = res.servers || [];
 
@@ -602,9 +603,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
           // 排序
           servers = applySort(servers);
 
+          const start = (page.currentPage - 1) * page.pageSize;
+          const end = start + page.pageSize;
           return {
-            page: { total: servers.length },
-            items: servers,
+            total: servers.length,
+            items: servers.slice(start, end),
           };
         },
       },

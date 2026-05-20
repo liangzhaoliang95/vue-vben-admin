@@ -296,12 +296,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
     ],
     height: 'auto',
     keepSource: true,
+    pagerConfig: { enabled: true },
     proxyConfig: {
       ajax: {
-        query: async () => {
-          const res = await AssetManagementApi.getImageCheckList();
-          const list = res || [];
-          return { page: { total: list.length }, items: list };
+        query: async ({ page }) => {
+          const res = await AssetManagementApi.getImageCheckList({
+            pageIndex: page.currentPage,
+            pageSize: page.pageSize,
+          });
+          return { total: res.total, items: res.list || [] };
         },
       },
     },
