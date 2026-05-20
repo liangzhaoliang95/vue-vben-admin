@@ -29,6 +29,8 @@ export const defaultResponseInterceptor = ({
       if (status >= 200 && status < 400) {
         if (config.responseReturn === 'body') {
           return responseData;
+        } else if (config.responseType === 'blob' || responseData instanceof Blob) {
+          return responseData;
         } else if (
           isFunction(successCode)
             ? successCode(responseData[codeField])

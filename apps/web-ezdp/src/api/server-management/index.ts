@@ -210,6 +210,7 @@ export namespace ServerManagementApi {
   export function downloadFile(params: { serverId: string; remotePath: string }) {
     return requestClient.post<Blob>('/serverAgent/downloadFile', params, {
       responseType: 'blob',
+      timeout: 5 * 60 * 1000, // 文件下载最多等待 5 分钟
     });
   }
 
