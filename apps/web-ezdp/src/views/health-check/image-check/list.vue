@@ -57,7 +57,7 @@ const manualRules = {
   imageName: [
     {
       required: true,
-      message: $t('assetManagement.imageCheck.imageNameRequired'),
+      message: $t('healthCheck.imageCheck.imageNameRequired'),
       trigger: 'blur',
     },
   ],
@@ -67,14 +67,14 @@ const versionRules = {
   branchId: [
     {
       required: true,
-      message: $t('assetManagement.imageCheck.branchIdRequired'),
+      message: $t('healthCheck.imageCheck.branchIdRequired'),
       trigger: 'change',
     },
   ],
   buildVersionId: [
     {
       required: true,
-      message: $t('assetManagement.imageCheck.versionRequired'),
+      message: $t('healthCheck.imageCheck.versionRequired'),
       trigger: 'change',
     },
   ],
@@ -147,20 +147,20 @@ const detailLoading = ref(false);
 
 const detailColumns = [
   {
-    title: $t('assetManagement.imageCheck.imageName'),
+    title: $t('healthCheck.imageCheck.imageName'),
     dataIndex: 'image',
     key: 'image',
     minWidth: 420,
     ellipsis: true,
   },
   {
-    title: $t('assetManagement.imageCheck.checkStatus'),
+    title: $t('healthCheck.imageCheck.checkStatus'),
     dataIndex: 'status',
     key: 'status',
     width: 100,
   },
   {
-    title: $t('assetManagement.imageCheck.checkError'),
+    title: $t('healthCheck.imageCheck.checkError'),
     dataIndex: 'error',
     key: 'error',
     width: 200,
@@ -232,10 +232,10 @@ const statusColor = (status: string) => {
 
 const statusText = (status: string) => {
   switch (status) {
-    case 'ok': return $t('assetManagement.imageCheck.statusOk');
-    case 'not_found': return $t('assetManagement.imageCheck.statusNotFound');
-    case 'error': return $t('assetManagement.imageCheck.statusError');
-    default: return $t('assetManagement.imageCheck.statusPending');
+    case 'ok': return $t('healthCheck.imageCheck.statusOk');
+    case 'not_found': return $t('healthCheck.imageCheck.statusNotFound');
+    case 'error': return $t('healthCheck.imageCheck.statusError');
+    default: return $t('healthCheck.imageCheck.statusPending');
   }
 };
 
@@ -245,44 +245,44 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: [
       {
         field: 'imageName',
-        title: $t('assetManagement.imageCheck.imageName'),
+        title: $t('healthCheck.imageCheck.imageName'),
         minWidth: 220,
         slots: { default: 'imageName' },
       },
       {
         field: 'branchName',
-        title: $t('assetManagement.imageCheck.branchId'),
+        title: $t('healthCheck.imageCheck.branchId'),
         width: 120,
         formatter: ({ row }: { row: AssetManagementApi.ImageCheckItem }) =>
           row.branchName || '-',
       },
       {
         field: 'buildVersion',
-        title: $t('assetManagement.imageCheck.version'),
+        title: $t('healthCheck.imageCheck.version'),
         width: 120,
         formatter: ({ row }: { row: AssetManagementApi.ImageCheckItem }) =>
           row.buildVersion || '-',
       },
       {
         field: 'checkStatus',
-        title: $t('assetManagement.imageCheck.checkStatus'),
+        title: $t('healthCheck.imageCheck.checkStatus'),
         width: 120,
         slots: { default: 'checkStatus' },
       },
       {
         field: 'lastCheckAt',
-        title: $t('assetManagement.imageCheck.lastCheckAt'),
+        title: $t('healthCheck.imageCheck.lastCheckAt'),
         width: 150,
         formatter: ({ cellValue }: { cellValue: number }) => formatTimestamp(cellValue),
       },
       {
         field: 'remark',
-        title: $t('assetManagement.imageCheck.remark'),
+        title: $t('healthCheck.imageCheck.remark'),
         minWidth: 100,
       },
       {
         field: 'enabled',
-        title: $t('assetManagement.imageCheck.enabled'),
+        title: $t('healthCheck.imageCheck.enabled'),
         width: 70,
         slots: { default: 'enabled' },
       },
@@ -361,10 +361,10 @@ const handleOk = async () => {
 
     if (isEdit.value) {
       await AssetManagementApi.updateImageCheck({ id: formData.value.id, ...base });
-      message.success($t('assetManagement.imageCheck.updateSuccess'));
+      message.success($t('healthCheck.imageCheck.updateSuccess'));
     } else {
       await AssetManagementApi.createImageCheck(base);
-      message.success($t('assetManagement.imageCheck.createSuccess'));
+      message.success($t('healthCheck.imageCheck.createSuccess'));
     }
     modalVisible.value = false;
     gridApi.query();
@@ -377,12 +377,12 @@ const handleOk = async () => {
 
 const handleDelete = (row: AssetManagementApi.ImageCheckItem) => {
   Modal.confirm({
-    title: $t('assetManagement.imageCheck.deleteConfirm'),
+    title: $t('healthCheck.imageCheck.deleteConfirm'),
     content: row.imageName || `${row.branchName} ${row.buildVersion}`,
     onOk: async () => {
       try {
         await AssetManagementApi.deleteImageCheck({ id: row.id });
-        message.success($t('assetManagement.imageCheck.deleteSuccess'));
+        message.success($t('healthCheck.imageCheck.deleteSuccess'));
         gridApi.query();
       } catch (e: any) {
         message.error(e?.message || $t('common.operationFailed'));
@@ -396,7 +396,7 @@ const handleCheckNow = async (row: AssetManagementApi.ImageCheckItem) => {
   checkingId.value = row.id;
   try {
     await AssetManagementApi.checkNowImageCheck({ id: row.id });
-    message.success($t('assetManagement.imageCheck.checkSuccess'));
+    message.success($t('healthCheck.imageCheck.checkSuccess'));
     await gridApi.query();
   } catch (e: any) {
     message.error(e?.message || $t('common.operationFailed'));
@@ -412,7 +412,7 @@ onMounted(() => {
 
 <template>
   <Page auto-content-height>
-    <Grid :table-title="$t('assetManagement.imageCheck.title')">
+    <Grid :table-title="$t('healthCheck.imageCheck.title')">
       <template #toolbar-tools>
         <Button type="primary" @click="openCreate">
           <Plus class="size-5" />
@@ -464,8 +464,8 @@ onMounted(() => {
           >
             {{
               checkingId === row.id
-                ? $t('assetManagement.imageCheck.checking')
-                : $t('assetManagement.imageCheck.checkNow')
+                ? $t('healthCheck.imageCheck.checking')
+                : $t('healthCheck.imageCheck.checkNow')
             }}
           </Button>
           <Button size="small" @click="openEdit(row)">{{ $t('common.edit') }}</Button>
@@ -479,8 +479,8 @@ onMounted(() => {
       v-model:open="modalVisible"
       :title="
         isEdit
-          ? $t('assetManagement.imageCheck.editTitle')
-          : $t('assetManagement.imageCheck.createTitle')
+          ? $t('healthCheck.imageCheck.editTitle')
+          : $t('healthCheck.imageCheck.createTitle')
       "
       :confirm-loading="modalLoading"
       :ok-text="$t('common.confirm')"
@@ -488,29 +488,29 @@ onMounted(() => {
       @ok="handleOk"
     >
       <Tabs v-model:active-key="activeTab" class="mt-2" @change="onTabChange">
-        <TabPane key="manual" :tab="$t('assetManagement.imageCheck.modeManual')">
+        <TabPane key="manual" :tab="$t('healthCheck.imageCheck.modeManual')">
           <Form ref="formRef" :model="formData" :rules="manualRules" layout="vertical" class="mt-4">
-            <FormItem :label="$t('assetManagement.imageCheck.imageName')" name="imageName">
+            <FormItem :label="$t('healthCheck.imageCheck.imageName')" name="imageName">
               <Input
                 v-model:value="formData.imageName"
-                :placeholder="$t('assetManagement.imageCheck.imageNamePlaceholder')"
+                :placeholder="$t('healthCheck.imageCheck.imageNamePlaceholder')"
                 :maxlength="500"
               />
             </FormItem>
-            <FormItem :label="$t('assetManagement.imageCheck.remark')" name="remark">
+            <FormItem :label="$t('healthCheck.imageCheck.remark')" name="remark">
               <Input
                 v-model:value="formData.remark"
-                :placeholder="$t('assetManagement.imageCheck.remarkPlaceholder')"
+                :placeholder="$t('healthCheck.imageCheck.remarkPlaceholder')"
                 :maxlength="255"
               />
             </FormItem>
-            <FormItem :label="$t('assetManagement.imageCheck.enabled')" name="enabled">
+            <FormItem :label="$t('healthCheck.imageCheck.enabled')" name="enabled">
               <Switch v-model:checked="formData.enabled" />
             </FormItem>
           </Form>
         </TabPane>
 
-        <TabPane key="version" :tab="$t('assetManagement.imageCheck.modeVersion')">
+        <TabPane key="version" :tab="$t('healthCheck.imageCheck.modeVersion')">
           <Form
             ref="formRef"
             :model="formData"
@@ -518,10 +518,10 @@ onMounted(() => {
             layout="vertical"
             class="mt-4"
           >
-            <FormItem :label="$t('assetManagement.imageCheck.branchId')" name="branchId">
+            <FormItem :label="$t('healthCheck.imageCheck.branchId')" name="branchId">
               <Select
                 v-model:value="formData.branchId"
-                :placeholder="$t('assetManagement.imageCheck.branchIdPlaceholder')"
+                :placeholder="$t('healthCheck.imageCheck.branchIdPlaceholder')"
                 :loading="branchLoading"
                 class="w-full"
               >
@@ -530,13 +530,13 @@ onMounted(() => {
                 </SelectOption>
               </Select>
             </FormItem>
-            <FormItem :label="$t('assetManagement.imageCheck.version')" name="buildVersionId">
+            <FormItem :label="$t('healthCheck.imageCheck.version')" name="buildVersionId">
               <Select
                 v-model:value="formData.buildVersionId"
                 :placeholder="
                   formData.branchId
-                    ? $t('assetManagement.imageCheck.versionPlaceholder')
-                    : $t('assetManagement.imageCheck.selectBranchFirst')
+                    ? $t('healthCheck.imageCheck.versionPlaceholder')
+                    : $t('healthCheck.imageCheck.selectBranchFirst')
                 "
                 :loading="versionLoading"
                 :disabled="!formData.branchId"
@@ -547,14 +547,14 @@ onMounted(() => {
                 </SelectOption>
               </Select>
             </FormItem>
-            <FormItem :label="$t('assetManagement.imageCheck.remark')" name="remark">
+            <FormItem :label="$t('healthCheck.imageCheck.remark')" name="remark">
               <Input
                 v-model:value="formData.remark"
-                :placeholder="$t('assetManagement.imageCheck.remarkPlaceholder')"
+                :placeholder="$t('healthCheck.imageCheck.remarkPlaceholder')"
                 :maxlength="255"
               />
             </FormItem>
-            <FormItem :label="$t('assetManagement.imageCheck.enabled')" name="enabled">
+            <FormItem :label="$t('healthCheck.imageCheck.enabled')" name="enabled">
               <Switch v-model:checked="formData.enabled" />
             </FormItem>
           </Form>
@@ -565,7 +565,7 @@ onMounted(() => {
     <!-- 镜像详情 Modal -->
     <Modal
       v-model:open="detailVisible"
-      :title="$t('assetManagement.imageCheck.detailTitle', { name: detailTitle })"
+      :title="$t('healthCheck.imageCheck.detailTitle', { name: detailTitle })"
       :footer="null"
       width="900px"
     >
@@ -596,7 +596,7 @@ onMounted(() => {
         </template>
       </Table>
       <div v-if="!detailLoading && detailImages.length === 0" class="py-8 text-center text-gray-400">
-        {{ $t('assetManagement.imageCheck.noCheckedImages') }}
+        {{ $t('healthCheck.imageCheck.noCheckedImages') }}
       </div>
     </Modal>
   </Page>

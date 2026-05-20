@@ -40,8 +40,8 @@ const formData = ref({
 });
 
 const formRules = {
-  domain: [{ required: true, message: $t('assetManagement.sslCertCheck.domainRequired'), trigger: 'blur' }],
-  port: [{ required: true, message: $t('assetManagement.sslCertCheck.portRequired'), trigger: 'blur' }],
+  domain: [{ required: true, message: $t('healthCheck.sslCertCheck.domainRequired'), trigger: 'blur' }],
+  port: [{ required: true, message: $t('healthCheck.sslCertCheck.portRequired'), trigger: 'blur' }],
 };
 
 const formatTimestamp = (ts: number) => {
@@ -67,11 +67,11 @@ const statusColor = (status: string) => {
 
 const statusText = (status: string) => {
   switch (status) {
-    case 'ok': return $t('assetManagement.sslCertCheck.statusOk');
-    case 'expiring': return $t('assetManagement.sslCertCheck.statusExpiring');
-    case 'expired': return $t('assetManagement.sslCertCheck.statusExpired');
-    case 'error': return $t('assetManagement.sslCertCheck.statusError');
-    default: return $t('assetManagement.sslCertCheck.statusPending');
+    case 'ok': return $t('healthCheck.sslCertCheck.statusOk');
+    case 'expiring': return $t('healthCheck.sslCertCheck.statusExpiring');
+    case 'expired': return $t('healthCheck.sslCertCheck.statusExpired');
+    case 'error': return $t('healthCheck.sslCertCheck.statusError');
+    default: return $t('healthCheck.sslCertCheck.statusPending');
   }
 };
 
@@ -80,47 +80,47 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns: [
       {
         field: 'domain',
-        title: $t('assetManagement.sslCertCheck.domain'),
+        title: $t('healthCheck.sslCertCheck.domain'),
         minWidth: 180,
         slots: { default: 'domain' },
       },
       {
         field: 'port',
-        title: $t('assetManagement.sslCertCheck.port'),
+        title: $t('healthCheck.sslCertCheck.port'),
         width: 80,
       },
       {
         field: 'checkStatus',
-        title: $t('assetManagement.sslCertCheck.checkStatus'),
+        title: $t('healthCheck.sslCertCheck.checkStatus'),
         width: 120,
         slots: { default: 'checkStatus' },
       },
       {
         field: 'daysRemaining',
-        title: $t('assetManagement.sslCertCheck.daysRemaining'),
+        title: $t('healthCheck.sslCertCheck.daysRemaining'),
         width: 120,
         slots: { default: 'daysRemaining' },
       },
       {
         field: 'expireAt',
-        title: $t('assetManagement.sslCertCheck.expireAt'),
+        title: $t('healthCheck.sslCertCheck.expireAt'),
         width: 140,
         formatter: ({ cellValue }: { cellValue: number }) => formatTimestamp(cellValue),
       },
       {
         field: 'lastCheckAt',
-        title: $t('assetManagement.sslCertCheck.lastCheckAt'),
+        title: $t('healthCheck.sslCertCheck.lastCheckAt'),
         width: 140,
         formatter: ({ cellValue }: { cellValue: number }) => formatTimestamp(cellValue),
       },
       {
         field: 'remark',
-        title: $t('assetManagement.sslCertCheck.remark'),
+        title: $t('healthCheck.sslCertCheck.remark'),
         minWidth: 100,
       },
       {
         field: 'enabled',
-        title: $t('assetManagement.sslCertCheck.enabled'),
+        title: $t('healthCheck.sslCertCheck.enabled'),
         width: 70,
         slots: { default: 'enabled' },
       },
@@ -179,10 +179,10 @@ const handleOk = async () => {
   try {
     if (isEdit.value) {
       await AssetManagementApi.updateSslCertCheck(formData.value);
-      message.success($t('assetManagement.sslCertCheck.updateSuccess'));
+      message.success($t('healthCheck.sslCertCheck.updateSuccess'));
     } else {
       await AssetManagementApi.createSslCertCheck(formData.value);
-      message.success($t('assetManagement.sslCertCheck.createSuccess'));
+      message.success($t('healthCheck.sslCertCheck.createSuccess'));
     }
     modalVisible.value = false;
     gridApi.query();
@@ -195,12 +195,12 @@ const handleOk = async () => {
 
 const handleDelete = (row: AssetManagementApi.SslCertCheck) => {
   Modal.confirm({
-    title: $t('assetManagement.sslCertCheck.deleteConfirm'),
+    title: $t('healthCheck.sslCertCheck.deleteConfirm'),
     content: `${row.domain}:${row.port}`,
     onOk: async () => {
       try {
         await AssetManagementApi.deleteSslCertCheck({ id: row.id });
-        message.success($t('assetManagement.sslCertCheck.deleteSuccess'));
+        message.success($t('healthCheck.sslCertCheck.deleteSuccess'));
         gridApi.query();
       } catch (e: any) {
         message.error(e?.message || $t('common.operationFailed'));
@@ -215,7 +215,7 @@ const handleCheckNow = async (row: AssetManagementApi.SslCertCheck) => {
   checkingId.value = row.id;
   try {
     const result = await AssetManagementApi.checkNowSslCert({ id: row.id });
-    message.success($t('assetManagement.sslCertCheck.checkSuccess'));
+    message.success($t('healthCheck.sslCertCheck.checkSuccess'));
     // 更新表格中的数据
     await gridApi.query();
   } catch (e: any) {
@@ -232,7 +232,7 @@ onMounted(() => {
 
 <template>
   <Page auto-content-height>
-    <Grid :table-title="$t('assetManagement.sslCertCheck.title')">
+    <Grid :table-title="$t('healthCheck.sslCertCheck.title')">
       <template #toolbar-tools>
         <Button type="primary" @click="openCreate">
           <Plus class="size-5" />
@@ -255,7 +255,7 @@ onMounted(() => {
 
       <template #daysRemaining="{ row }">
         <span v-if="row.checkStatus === 'pending' || row.lastCheckAt === 0" class="text-gray-400">
-          {{ $t('assetManagement.sslCertCheck.notChecked') }}
+          {{ $t('healthCheck.sslCertCheck.notChecked') }}
         </span>
         <span
           v-else
@@ -265,7 +265,7 @@ onMounted(() => {
             'text-green-500': row.daysRemaining > 30,
           }"
         >
-          {{ row.daysRemaining < 0 ? $t('assetManagement.sslCertCheck.statusExpired') : `${row.daysRemaining} ${$t('assetManagement.sslCertCheck.days')}` }}
+          {{ row.daysRemaining < 0 ? $t('healthCheck.sslCertCheck.statusExpired') : `${row.daysRemaining} ${$t('healthCheck.sslCertCheck.days')}` }}
         </span>
       </template>
 
@@ -283,7 +283,7 @@ onMounted(() => {
             :loading="checkingId === row.id"
             @click="handleCheckNow(row)"
           >
-            {{ checkingId === row.id ? $t('assetManagement.sslCertCheck.checking') : $t('assetManagement.sslCertCheck.checkNow') }}
+            {{ checkingId === row.id ? $t('healthCheck.sslCertCheck.checking') : $t('healthCheck.sslCertCheck.checkNow') }}
           </Button>
           <Button size="small" @click="openEdit(row)">
             {{ $t('common.edit') }}
@@ -297,7 +297,7 @@ onMounted(() => {
 
     <Modal
       v-model:open="modalVisible"
-      :title="isEdit ? $t('assetManagement.sslCertCheck.editTitle') : $t('assetManagement.sslCertCheck.createTitle')"
+      :title="isEdit ? $t('healthCheck.sslCertCheck.editTitle') : $t('healthCheck.sslCertCheck.createTitle')"
       :confirm-loading="modalLoading"
       :ok-text="$t('common.confirm')"
       :cancel-text="$t('common.cancel')"
@@ -310,30 +310,30 @@ onMounted(() => {
         layout="vertical"
         class="mt-4"
       >
-        <FormItem :label="$t('assetManagement.sslCertCheck.domain')" name="domain">
+        <FormItem :label="$t('healthCheck.sslCertCheck.domain')" name="domain">
           <Input
             v-model:value="formData.domain"
-            :placeholder="$t('assetManagement.sslCertCheck.domainPlaceholder')"
+            :placeholder="$t('healthCheck.sslCertCheck.domainPlaceholder')"
             :maxlength="255"
           />
         </FormItem>
-        <FormItem :label="$t('assetManagement.sslCertCheck.port')" name="port">
+        <FormItem :label="$t('healthCheck.sslCertCheck.port')" name="port">
           <InputNumber
             v-model:value="formData.port"
             :min="1"
             :max="65535"
-            :placeholder="$t('assetManagement.sslCertCheck.portPlaceholder')"
+            :placeholder="$t('healthCheck.sslCertCheck.portPlaceholder')"
             class="w-full"
           />
         </FormItem>
-        <FormItem :label="$t('assetManagement.sslCertCheck.remark')" name="remark">
+        <FormItem :label="$t('healthCheck.sslCertCheck.remark')" name="remark">
           <Input
             v-model:value="formData.remark"
-            :placeholder="$t('assetManagement.sslCertCheck.remarkPlaceholder')"
+            :placeholder="$t('healthCheck.sslCertCheck.remarkPlaceholder')"
             :maxlength="255"
           />
         </FormItem>
-        <FormItem :label="$t('assetManagement.sslCertCheck.enabled')" name="enabled">
+        <FormItem :label="$t('healthCheck.sslCertCheck.enabled')" name="enabled">
           <Switch v-model:checked="formData.enabled" />
         </FormItem>
       </Form>
