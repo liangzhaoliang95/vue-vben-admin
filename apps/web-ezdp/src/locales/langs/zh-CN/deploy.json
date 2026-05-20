@@ -126,6 +126,26 @@
       "tokenStep1": "复制上面的 Token 并保存到安全位置",
       "tokenStep2": "在生产环境服务器上下载并安装 EZDP Deploy Agent 客户端",
       "tokenStep3": "将 Token 配置到 Agent 的 config.yaml 文件中，启动 Agent 即可在本地执行发布任务"
+    },
+    "cdnConfig": {
+      "title": "CDN配置",
+      "name": "配置名称",
+      "namePlaceholder": "请输入配置名称",
+      "provider": "CDN提供商",
+      "providerAli": "阿里云CDN",
+      "providerEcloud": "移动云CDN",
+      "aliAccessKey": "AccessKey ID",
+      "aliAccessKeyPlaceholder": "请输入阿里云 AccessKey ID",
+      "aliAccessSecret": "AccessKey Secret",
+      "aliAccessSecretPlaceholder": "请输入阿里云 AccessKey Secret",
+      "ecloudDomain": "CDN API地址",
+      "ecloudDomainPlaceholder": "如：https://p.cdn.10086.cn",
+      "ecloudId": "Tenant ID",
+      "ecloudIdPlaceholder": "请输入移动云 Tenant ID",
+      "ecloudKey": "Secret Key",
+      "ecloudKeyPlaceholder": "请输入移动云 Secret Key",
+      "cdnDomains": "CDN域名列表",
+      "cdnDomainsPlaceholder": "每行一个域名，如：https://cdn.example.com"
     }
   },
   "projectManagement": {

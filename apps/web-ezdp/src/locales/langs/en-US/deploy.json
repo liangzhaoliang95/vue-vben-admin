@@ -126,6 +126,26 @@
       "tokenStep1": "Copy the token above and save it to a secure location",
       "tokenStep2": "Download and install EZDP Deploy Agent client on production server",
       "tokenStep3": "Configure the token in Agent's config.yaml file and start the agent to execute deployment tasks locally"
+    },
+    "cdnConfig": {
+      "title": "CDN Config",
+      "name": "Config Name",
+      "namePlaceholder": "Enter config name",
+      "provider": "CDN Provider",
+      "providerAli": "Alibaba Cloud CDN",
+      "providerEcloud": "Ecloud CDN",
+      "aliAccessKey": "AccessKey ID",
+      "aliAccessKeyPlaceholder": "Enter Alibaba Cloud AccessKey ID",
+      "aliAccessSecret": "AccessKey Secret",
+      "aliAccessSecretPlaceholder": "Enter Alibaba Cloud AccessKey Secret",
+      "ecloudDomain": "CDN API URL",
+      "ecloudDomainPlaceholder": "e.g.: https://p.cdn.10086.cn",
+      "ecloudId": "Tenant ID",
+      "ecloudIdPlaceholder": "Enter Ecloud Tenant ID",
+      "ecloudKey": "Secret Key",
+      "ecloudKeyPlaceholder": "Enter Ecloud Secret Key",
+      "cdnDomains": "CDN Domains",
+      "cdnDomainsPlaceholder": "One domain per line, e.g.: https://cdn.example.com"
     }
   },
   "projectManagement": {

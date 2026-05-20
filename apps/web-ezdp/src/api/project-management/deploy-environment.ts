@@ -10,6 +10,7 @@ export namespace DeployEnvironmentApi {
     description?: string;
     frontendStorageId?: string;
     frontendBaseUrl?: string;
+    cdnConfigId?: string;
     backendSecretId?: string;
     backendNamespace?: string;
     isAgentDeploy: boolean;

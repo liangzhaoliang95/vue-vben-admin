@@ -6,13 +6,15 @@ import { ref } from 'vue';
 
 import { useBusinessStore } from '@vben/stores';
 
+import { getCdnConfigList } from '#/api/deploy-tools/cdn-config';
 import { getK8sSecretList } from '#/api/deploy-tools/k8s-secret';
 import { getObjectStorageList } from '#/api/deploy-tools/object-storage';
 import { $t } from '#/locales';
 
-// 缓存对象存储和K8S集群列表，用于显示名称
+// 缓存对象存储、K8S集群和CDN配置列表，用于显示名称
 const objectStorageMap = ref<Map<string, string>>(new Map());
 const k8sSecretMap = ref<Map<string, string>>(new Map());
+const cdnConfigMap = ref<Map<string, string>>(new Map());
 
 // 加载对象存储和K8S集群列表（用于显示名称）
 // 注意：不传businessLineId，后端会根据用户角色自动处理：
@@ -42,6 +44,16 @@ export async function loadReferenceData() {
       });
     }
     k8sSecretMap.value = newK8sSecretMap;
+
+    // 加载CDN配置列表
+    const cdnConfigRes = await getCdnConfigList({ pageIndex: 1, pageSize: 1000 });
+    const newCdnConfigMap = new Map<string, string>();
+    if (cdnConfigRes.items) {
+      cdnConfigRes.items.forEach((item) => {
+        newCdnConfigMap.set(item.id, item.name);
+      });
+    }
+    cdnConfigMap.value = newCdnConfigMap;
   } catch (error) {
     console.error('加载参考数据失败:', error);
   }
@@ -178,6 +190,40 @@ export function useFormSchema(): VbenFormSchema[] {
         placeholder: $t(
           'deploy.packageDeployManagement.environmentConfig.frontendBaseUrlPlaceholder',
         ),
+      },
+    },
+    {
+      component: 'ApiSelect',
+      fieldName: 'cdnConfigId',
+      label: $t('deploy.tools.cdnConfig.title'),
+      ifShow: (values) => !values?.isAgentDeploy,
+      componentProps: {
+        api: async (params?: any) => {
+          const res = await getCdnConfigList({
+            pageIndex: 1,
+            pageSize: 1000,
+            ...params,
+          });
+          return res.items || [];
+        },
+        params: (() => {
+          const businessLineId = businessStore.currentBusinessLineId;
+          return businessLineId ? { businessLineId } : {};
+        })(),
+        fieldNames: { label: 'name', value: 'id' },
+        style: { width: '100%' },
+        placeholder: '请选择CDN配置（可选）',
+        allowClear: true,
+      },
+      dependencies: {
+        triggerFields: ['businessLineId'],
+        componentProps: async (formValues: any) => {
+          const businessLineId =
+            formValues?.businessLineId || businessStore.currentBusinessLineId;
+          return {
+            params: businessLineId ? { businessLineId } : {},
+          };
+        },
       },
     },
     {
@@ -349,6 +395,15 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
         'deploy.packageDeployManagement.environmentConfig.backendEnvironment',
       ),
       minWidth: 150,
+    },
+    {
+      field: 'cdnConfigId',
+      title: $t('deploy.tools.cdnConfig.title'),
+      minWidth: 150,
+      formatter: ({ row }) => {
+        if (!row.cdnConfigId) return '-';
+        return cdnConfigMap.value.get(row.cdnConfigId) || row.cdnConfigId;
+      },
     },
     {
       field: 'isAgentDeploy',
