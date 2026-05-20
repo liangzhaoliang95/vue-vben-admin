@@ -194,7 +194,7 @@ export function useFormSchema(): VbenFormSchema[] {
     },
     {
       component: 'ApiSelect',
-      fieldName: 'cdnConfigId',
+      fieldName: 'cdnConfigIds',
       label: $t('deploy.tools.cdnConfig.title'),
       ifShow: (values) => !values?.isAgentDeploy,
       componentProps: {
@@ -212,8 +212,9 @@ export function useFormSchema(): VbenFormSchema[] {
         })(),
         fieldNames: { label: 'name', value: 'id' },
         style: { width: '100%' },
-        placeholder: '请选择CDN配置（可选）',
+        placeholder: '请选择CDN配置（可多选）',
         allowClear: true,
+        mode: 'multiple',
       },
       dependencies: {
         triggerFields: ['businessLineId'],
@@ -397,12 +398,13 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
       minWidth: 150,
     },
     {
-      field: 'cdnConfigId',
+      field: 'cdnConfigIds',
       title: $t('deploy.tools.cdnConfig.title'),
       minWidth: 150,
       formatter: ({ row }) => {
-        if (!row.cdnConfigId) return '-';
-        return cdnConfigMap.value.get(row.cdnConfigId) || row.cdnConfigId;
+        if (!row.cdnConfigIds || row.cdnConfigIds.length === 0) return '-';
+        const names = row.cdnConfigIds.map((id: string) => cdnConfigMap.value.get(id) || id).filter(Boolean);
+        return names.join(', ');
       },
     },
     {

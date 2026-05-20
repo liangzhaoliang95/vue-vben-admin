@@ -79,7 +79,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             description: detail.description || '',
             frontendStorageId: detail.frontendStorageId || '',
             frontendBaseUrl: detail.frontendBaseUrl || '',
-            cdnConfigId: detail.cdnConfigId || '',
+            cdnConfigIds: detail.cdnConfigIds || [],
             backendSecretId: detail.backendSecretId || '',
             backendNamespace: detail.backendNamespace || '',
             businessLineId: detail.businessLineId,
@@ -96,7 +96,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
             description: data.description || '',
             frontendStorageId: data.frontendStorageId || '',
             frontendBaseUrl: data.frontendBaseUrl || '',
-            cdnConfigId: data.cdnConfigId || '',
+            cdnConfigIds: data.cdnConfigIds || [],
             backendSecretId: data.backendSecretId || '',
             backendNamespace: data.backendNamespace || '',
             businessLineId: data.businessLineId,
@@ -187,8 +187,8 @@ async function handleConfirm() {
     if (values.frontendBaseUrl) {
       submitData.frontendBaseUrl = values.frontendBaseUrl;
     }
-    if (values.cdnConfigId) {
-      submitData.cdnConfigId = values.cdnConfigId;
+    if (values.cdnConfigIds && values.cdnConfigIds.length > 0) {
+      submitData.cdnConfigIds = values.cdnConfigIds;
     }
     if (values.backendSecretId) {
       submitData.backendSecretId = values.backendSecretId;
