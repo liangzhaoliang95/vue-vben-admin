@@ -244,6 +244,25 @@
   white-space: nowrap;
 }
 
+.project-name-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+  justify-self: start;
+}
+
+.project-image-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  opacity: 0.8;
+}
+
 .project-type-tag {
   justify-self: start;
   font-weight: 500;

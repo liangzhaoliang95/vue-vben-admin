@@ -43,17 +43,11 @@ const versionList = ref<any[]>([]);
 const loading = ref(false);
 const activeKeys = ref<string[]>([]); // 展开的版本面板
 
-// 排序模式：version=按版本号降序，name=按名称升序
+// 排序模式：version=版本内项目按类型排序，name=版本内项目按名称升序（版本列表本身始终按版本号降序）
 const sortMode = ref<'version' | 'name'>('version');
 
-// 排序后的版本列表
+// 版本列表始终按语义化版本号降序，排序模式只影响版本内的项目顺序
 const sortedVersionList = computed(() => {
-  if (sortMode.value === 'name') {
-    return [...versionList.value].sort((a, b) =>
-      (a.version || '').localeCompare(b.version || ''),
-    );
-  }
-  // 默认按语义化版本号降序
   return [...versionList.value].sort((a, b) => {
     const parts1 = (a.version || '').split('.').map(Number);
     const parts2 = (b.version || '').split('.').map(Number);
@@ -864,14 +858,17 @@ onDeactivated(() => {
                       class="project-item"
                       :class="[`project-type-${project.projectType || 'default'}`]"
                     >
-                      <div class="project-name-wrapper">
-                        <span class="project-name">{{
-                          project.projectName || '-'
-                        }}</span>
-                        <span
-                          v-if="!!(project.version && project.version === version.version)"
-                          class="new-badge"
-                        >NEW</span>
+                      <div class="project-name-col">
+                        <div class="project-name-wrapper">
+                          <span class="project-name">{{
+                            project.projectName || '-'
+                          }}</span>
+                          <span
+                            v-if="!!(project.version && project.version === version.version)"
+                            class="new-badge"
+                          >NEW</span>
+                        </div>
+                        <span v-if="project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
                       </div>
                       <span
                         v-if="project.duration && project.duration > 0"
@@ -934,14 +931,17 @@ onDeactivated(() => {
                       class="project-item"
                       :class="[`project-type-${project.projectType || 'default'}`]"
                     >
-                      <div class="project-name-wrapper">
-                        <span class="project-name">{{
-                          project.projectName || '-'
-                        }}</span>
-                        <span
-                          v-if="!!(project.version && project.version === version.version)"
-                          class="new-badge"
-                        >NEW</span>
+                      <div class="project-name-col">
+                        <div class="project-name-wrapper">
+                          <span class="project-name">{{
+                            project.projectName || '-'
+                          }}</span>
+                          <span
+                            v-if="!!(project.version && project.version === version.version)"
+                            class="new-badge"
+                          >NEW</span>
+                        </div>
+                        <span v-if="project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
                       </div>
                       <span
                         v-if="project.duration && project.duration > 0"
