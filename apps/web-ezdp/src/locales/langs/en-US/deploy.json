@@ -373,7 +373,10 @@
       "commitTitle": "Commit Message",
       "commitAuthor": "Author",
       "commitTime": "Committed At",
-      "commitProject": "Project"
+      "commitProject": "Project",
+      "sortOrder": "Sort",
+      "sortOrderVersion": "Sort by version",
+      "sortOrderName": "Sort by name"
     },
     "projectPackage": {
       "title": "Project Package",
@@ -432,7 +435,10 @@
       "commitTitle": "Commit Message",
       "commitAuthor": "Author",
       "commitTime": "Committed At",
-      "commitProject": "Project"
+      "commitProject": "Project",
+      "sortOrder": "Sort",
+      "sortOrderVersion": "Sort by version",
+      "sortOrderName": "Sort by name"
     },
     "deployHistory": {
       "title": "Deploy History",

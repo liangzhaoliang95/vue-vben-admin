@@ -373,7 +373,10 @@
       "commitTitle": "提交说明",
       "commitAuthor": "提交人",
       "commitTime": "提交时间",
-      "commitProject": "所属项目"
+      "commitProject": "所属项目",
+      "sortOrder": "排序",
+      "sortOrderVersion": "按版本号排序",
+      "sortOrderName": "按名称排序"
     },
     "projectPackage": {
       "title": "项目打包",
@@ -432,7 +435,10 @@
       "commitTitle": "提交说明",
       "commitAuthor": "提交人",
       "commitTime": "提交时间",
-      "commitProject": "所属项目"
+      "commitProject": "所属项目",
+      "sortOrder": "排序",
+      "sortOrderVersion": "按版本号排序",
+      "sortOrderName": "按名称排序"
     },
     "deployHistory": {
       "title": "发布历史",

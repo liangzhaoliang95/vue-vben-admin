@@ -43,6 +43,30 @@ const versionList = ref<any[]>([]);
 const loading = ref(false);
 const activeKeys = ref<string[]>([]); // 展开的版本面板
 
+// 排序模式：version=按版本号降序，name=按名称升序
+const sortMode = ref<'version' | 'name'>('version');
+
+// 排序后的版本列表
+const sortedVersionList = computed(() => {
+  if (sortMode.value === 'name') {
+    return [...versionList.value].sort((a, b) =>
+      (a.version || '').localeCompare(b.version || ''),
+    );
+  }
+  // 默认按语义化版本号降序
+  return [...versionList.value].sort((a, b) => {
+    const parts1 = (a.version || '').split('.').map(Number);
+    const parts2 = (b.version || '').split('.').map(Number);
+    const len = Math.max(parts1.length, parts2.length);
+    for (let i = 0; i < len; i++) {
+      const n1 = parts1[i] ?? 0;
+      const n2 = parts2[i] ?? 0;
+      if (n1 !== n2) return n2 - n1;
+    }
+    return 0;
+  });
+});
+
 // 组件是否已激活的标记
 const isComponentActive = ref(true);
 // 是否已经初始化过
@@ -434,6 +458,12 @@ function getSortedProjects(projects: any[]) {
     return [];
   }
 
+  if (sortMode.value === 'name') {
+    return [...projects].sort((a, b) =>
+      (a.projectName || '').localeCompare(b.projectName || ''),
+    );
+  }
+
   return [...projects].sort((a, b) => {
     const typeOrder: Record<string, number> = {
       backend: 1,
@@ -706,6 +736,14 @@ onDeactivated(() => {
 
         <!-- 操作按钮组 -->
         <div class="flex flex-shrink-0 items-center gap-3">
+          <Select
+            v-model:value="sortMode"
+            class="w-36"
+            :options="[
+              { label: $t('deploy.packageDeployManagement.projectPackage.sortOrderVersion'), value: 'version' },
+              { label: $t('deploy.packageDeployManagement.projectPackage.sortOrderName'), value: 'name' },
+            ]"
+          />
           <Button @click="handleRefresh">刷新</Button>
           <Button @click="handleShowAll">
             {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
@@ -735,7 +773,7 @@ onDeactivated(() => {
           expand-icon-position="start"
           class="version-collapse"
         >
-          <CollapsePanel v-for="version in versionList" :key="version.id">
+          <CollapsePanel v-for="version in sortedVersionList" :key="version.id">
             <template #header>
               <div class="flex w-full items-center justify-between pr-4">
                 <div class="flex items-center gap-4">
