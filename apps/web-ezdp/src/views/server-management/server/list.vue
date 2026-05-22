@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, h, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { onClickOutside, useDraggable } from '@vueuse/core';
+import { onClickOutside } from '@vueuse/core';
 import { Page } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 
@@ -224,69 +224,84 @@ const getOsIconColor = (os: string, osVersion?: string): string => {
   return '#6b7280';
 };
 
-// 终端浮层状态
-const terminalVisible = ref(false);
-const currentServerId = ref('');
-const currentServerName = ref('');
+// 多终端浮层状态
+interface TerminalInstance {
+  id: string;
+  serverId: string;
+  serverName: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zIndex: number;
+}
 
-// 终端浮层拖拽 & resize
-const terminalPanelRef = ref<HTMLElement | null>(null);
-const terminalDragHandleRef = ref<HTMLElement | null>(null);
-const terminalWidth = ref(900);
-const terminalHeight = ref(600);
+const terminals = ref<TerminalInstance[]>([]);
 const terminalMinWidth = 480;
 const terminalMinHeight = 320;
+let terminalZCounter = 1050;
 
-const { x: terminalX, y: terminalY } = useDraggable(terminalPanelRef, {
-  handle: terminalDragHandleRef,
-  initialValue: () => ({
-    x: Math.max(0, (window.innerWidth - terminalWidth.value) / 2),
-    y: Math.max(0, (window.innerHeight - terminalHeight.value) / 2),
-  }),
-});
+// 拖拽状态（同一时刻只有一个终端在拖拽）
+let dragging: { id: string; startMouseX: number; startMouseY: number; startX: number; startY: number } | null = null;
+// resize 状态
+let resizingState: { id: string; startMouseX: number; startMouseY: number; startW: number; startH: number } | null = null;
 
-const terminalPanelStyle = computed(() => ({
-  position: 'fixed' as const,
-  left: `${terminalX.value}px`,
-  top: `${terminalY.value}px`,
-  width: `${terminalWidth.value}px`,
-  height: `${terminalHeight.value}px`,
-}));
+const onDragStart = (e: MouseEvent, id: string) => {
+  const t = terminals.value.find(t => t.id === id);
+  if (!t) return;
+  bringToFront(id);
+  dragging = { id, startMouseX: e.clientX, startMouseY: e.clientY, startX: t.x, startY: t.y };
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('mouseup', onDragEnd);
+};
 
-// resize 逻辑
-let resizing = false;
-let resizeStartX = 0;
-let resizeStartY = 0;
-let resizeStartW = 0;
-let resizeStartH = 0;
+const onDragMove = (e: MouseEvent) => {
+  if (!dragging) return;
+  const t = terminals.value.find(t => t.id === dragging!.id);
+  if (!t) return;
+  t.x = Math.max(0, dragging.startX + e.clientX - dragging.startMouseX);
+  t.y = Math.max(0, dragging.startY + e.clientY - dragging.startMouseY);
+};
 
-const onResizeStart = (e: MouseEvent) => {
+const onDragEnd = () => {
+  dragging = null;
+  window.removeEventListener('mousemove', onDragMove);
+  window.removeEventListener('mouseup', onDragEnd);
+};
+
+const onResizeStart = (e: MouseEvent, id: string) => {
   e.preventDefault();
   e.stopPropagation();
-  resizing = true;
-  resizeStartX = e.clientX;
-  resizeStartY = e.clientY;
-  resizeStartW = terminalWidth.value;
-  resizeStartH = terminalHeight.value;
+  const t = terminals.value.find(t => t.id === id);
+  if (!t) return;
+  bringToFront(id);
+  resizingState = { id, startMouseX: e.clientX, startMouseY: e.clientY, startW: t.width, startH: t.height };
   window.addEventListener('mousemove', onResizeMove);
   window.addEventListener('mouseup', onResizeEnd);
 };
 
 const onResizeMove = (e: MouseEvent) => {
-  if (!resizing) return;
-  const dx = e.clientX - resizeStartX;
-  const dy = e.clientY - resizeStartY;
-  terminalWidth.value = Math.max(terminalMinWidth, resizeStartW + dx);
-  terminalHeight.value = Math.max(terminalMinHeight, resizeStartH + dy);
+  if (!resizingState) return;
+  const t = terminals.value.find(t => t.id === resizingState!.id);
+  if (!t) return;
+  t.width = Math.max(terminalMinWidth, resizingState.startW + e.clientX - resizingState.startMouseX);
+  t.height = Math.max(terminalMinHeight, resizingState.startH + e.clientY - resizingState.startMouseY);
 };
 
 const onResizeEnd = () => {
-  resizing = false;
+  resizingState = null;
   window.removeEventListener('mousemove', onResizeMove);
   window.removeEventListener('mouseup', onResizeEnd);
 };
 
+const bringToFront = (id: string) => {
+  const t = terminals.value.find(t => t.id === id);
+  if (t) t.zIndex = ++terminalZCounter;
+};
+
 onUnmounted(() => {
+  window.removeEventListener('mousemove', onDragMove);
+  window.removeEventListener('mouseup', onDragEnd);
   window.removeEventListener('mousemove', onResizeMove);
   window.removeEventListener('mouseup', onResizeEnd);
 });
@@ -316,7 +331,7 @@ const tokenResultData = ref({
   serverAgentAddr: '',
 });
 
-// 打开终端
+// 打开终端（支持同时打开多个）
 const openTerminal = (row: any) => {
   if (row.status !== 'online') {
     Modal.warning({
@@ -325,19 +340,26 @@ const openTerminal = (row: any) => {
     });
     return;
   }
-  currentServerId.value = row.serverId;
-  currentServerName.value = row.serverName;
-  // 每次打开居中显示
-  terminalX.value = Math.max(0, (window.innerWidth - terminalWidth.value) / 2);
-  terminalY.value = Math.max(0, (window.innerHeight - terminalHeight.value) / 2);
-  terminalVisible.value = true;
+  const defaultW = 900;
+  const defaultH = 600;
+  const offset = terminals.value.length * 28;
+  const id = `term-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  terminals.value.push({
+    id,
+    serverId: row.serverId,
+    serverName: row.serverName,
+    x: Math.max(0, (window.innerWidth - defaultW) / 2 + offset),
+    y: Math.max(0, (window.innerHeight - defaultH) / 2 + offset),
+    width: defaultW,
+    height: defaultH,
+    zIndex: ++terminalZCounter,
+  });
 };
 
-// 关闭终端
-const closeTerminal = () => {
-  terminalVisible.value = false;
-  currentServerId.value = '';
-  currentServerName.value = '';
+// 关闭指定终端
+const closeTerminal = (id: string) => {
+  const idx = terminals.value.findIndex(t => t.id === id);
+  if (idx !== -1) terminals.value.splice(idx, 1);
 };
 
 // 打开编辑弹窗
@@ -1240,8 +1262,8 @@ const proxyColumns = [
                 style="flex: 1; min-width: 0;"
                 @click="openTerminal(server)"
               >
-                <IconifyIcon icon="mdi:console" class="size-3.5 mr-1" />
-                {{ $t('serverManagement.server.openTerminal') }}
+                <IconifyIcon icon="mdi:console" class="size-3.5" />
+                终端
               </Button>
               <Button
                 size="small"
@@ -1374,7 +1396,8 @@ const proxyColumns = [
             :disabled="row.status !== 'online'"
             @click="openTerminal(row)"
           >
-            {{ $t('serverManagement.server.openTerminal') }}
+            <IconifyIcon icon="mdi:console" class="size-3.5" />
+            终端
           </Button>
           <Button
             size="small"
@@ -1414,32 +1437,39 @@ const proxyColumns = [
       </template>
     </Grid>
 
-    <!-- 终端浮层（可拖动 + 可缩放） -->
+    <!-- 多终端浮层（可拖动 + 可缩放） -->
     <Teleport to="body">
       <div
-        v-if="terminalVisible"
-        ref="terminalPanelRef"
+        v-for="term in terminals"
+        :key="term.id"
         class="terminal-float-panel"
-        :style="terminalPanelStyle"
+        :style="{
+          position: 'fixed',
+          left: `${term.x}px`,
+          top: `${term.y}px`,
+          width: `${term.width}px`,
+          height: `${term.height}px`,
+          zIndex: term.zIndex,
+        }"
+        @mousedown="bringToFront(term.id)"
       >
-        <div ref="terminalDragHandleRef" class="terminal-float-header">
+        <div class="terminal-float-header" @mousedown.stop="onDragStart($event, term.id)">
           <div class="terminal-float-title">
             <span class="terminal-float-dot red"></span>
             <span class="terminal-float-dot yellow"></span>
             <span class="terminal-float-dot green"></span>
-            <span class="terminal-float-name">{{ $t('serverManagement.server.terminal') }} — {{ currentServerName }}</span>
+            <span class="terminal-float-name">{{ $t('serverManagement.server.terminal') }} — {{ term.serverName }}</span>
           </div>
-          <button class="terminal-float-close" @click="closeTerminal">✕</button>
+          <button class="terminal-float-close" @click.stop="closeTerminal(term.id)">✕</button>
         </div>
         <div class="terminal-float-body">
           <WebTerminal
-            v-if="terminalVisible"
-            :server-id="currentServerId"
-            :title="currentServerName"
-            @close="closeTerminal"
+            :server-id="term.serverId"
+            :title="term.serverName"
+            @close="closeTerminal(term.id)"
           />
         </div>
-        <div class="terminal-resize-handle" @mousedown="onResizeStart"></div>
+        <div class="terminal-resize-handle" @mousedown.stop="onResizeStart($event, term.id)"></div>
       </div>
     </Teleport>
 
@@ -1794,7 +1824,6 @@ const proxyColumns = [
 }
 
 .terminal-float-panel {
-  z-index: 1050;
   display: flex;
   flex-direction: column;
   background: #1e1e1e;
