@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
+import { useBusinessStore } from '@vben/stores';
 
 import { Button, Card, Checkbox, Input, message, Modal, Select } from 'ant-design-vue';
 
@@ -28,6 +29,12 @@ const loading = ref(false);
 const showLogViewer = ref(false);
 
 const wsStore = useWebSocketStore();
+const businessStore = useBusinessStore();
+
+// 当前业务线 ID（用于 WebSocket 订阅）
+const currentBusinessLineId = computed(
+  () => wsStore.currentBusinessLineId ?? businessStore.currentBusinessLineId,
+);
 
 // 计算是否禁用项目选择
 const isProjectSelectDisabled = computed(() => formData.value.isFullRelease);
@@ -86,7 +93,10 @@ async function handleExecute() {
 
         message.success(res.message || 'Release已开始执行');
 
-        // 打开日志查看器
+        // 订阅业务线日志，再打开日志查看器
+        if (currentBusinessLineId.value) {
+          await wsStore.subscribeBusinessLine(currentBusinessLineId.value);
+        }
         showLogViewer.value = true;
 
         // 清空表单
@@ -255,7 +265,7 @@ onMounted(() => {
     >
       <div style="height: 600px">
         <LogViewer
-          :subscription-id="String(wsStore.currentBusinessLineId)"
+          :subscription-id="String(currentBusinessLineId ?? 0)"
           :task-type="2"
           title="Release日志"
           @close="handleCloseLogViewer"
