@@ -30,8 +30,9 @@ import { updateProfile } from '#/api/system/user';
 import { getUserInfoApi } from '#/api/core/user';
 import { SystemConfig } from '#/api/system/config';
 import LogViewer from '#/components/log-viewer/index.vue';
+import MFAVerify from '#/components/mfa-verify/index.vue';
 import { $t } from '#/locales';
-import { useAuthStore } from '#/store';
+import { useAuthStore, useMFAStore } from '#/store';
 import { useWebSocketStore } from '#/store/websocket';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
@@ -39,6 +40,7 @@ const notifications = ref<NotificationItem[]>([]);
 
 const userStore = useUserStore();
 const authStore = useAuthStore();
+const mfaStore = useMFAStore();
 const accessStore = useAccessStore();
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
@@ -441,6 +443,13 @@ watch(
           </div>
         </div>
       </Teleport>
+
+      <!-- 全局 MFA 验证弹窗（由 request 拦截器触发） -->
+      <MFAVerify
+        :force-visible="mfaStore.visible"
+        @verify-success="mfaStore.onVerifySuccess"
+        @verify-cancel="mfaStore.onVerifyCancel"
+      />
     </template>
     <template #lock-screen>
       <LockScreen :avatar @to-login="handleLogout" />

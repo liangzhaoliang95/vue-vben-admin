@@ -9,6 +9,7 @@ export namespace MFAApi {
   export interface MFAStatusResult {
     enabled: boolean;
     hasKey: boolean;
+    verified: boolean;
   }
 
   export function generateSecret() {

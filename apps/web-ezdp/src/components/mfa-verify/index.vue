@@ -1,8 +1,19 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { Modal, Input, Button, message } from 'ant-design-vue';
 import { $t } from '#/locales';
 import { MFAApi } from '#/api/mfa';
+
+const props = defineProps<{
+  // 由外部 store 驱动直接弹出验证框（全局拦截器模式）
+  forceVisible?: boolean;
+}>();
+
+const emit = defineEmits<{
+  openSettings: [];
+  verifySuccess: [];
+  verifyCancel: [];
+}>();
 
 // 验证弹窗状态
 const verifyVisible = ref(false);
@@ -14,34 +25,41 @@ let resolveVerify: ((ok: boolean) => void) | null = null;
 const notConfiguredVisible = ref(false);
 let resolveNotConfigured: (() => void) | null = null;
 
-// 打开个人设置的回调（由父组件注入）
-const emit = defineEmits<{
-  openSettings: [];
-}>();
+// 监听外部强制显示（全局拦截器触发）
+watch(
+  () => props.forceVisible,
+  (val) => {
+    if (val) {
+      verifyCode.value = '';
+      verifyVisible.value = true;
+    }
+  },
+);
 
 /**
  * 验证MFA，返回 true 表示验证通过，false 表示取消或失败
  * 如果用户未配置MFA，弹出提醒并返回 false
  */
 const checkMFA = async (): Promise<boolean> => {
-  // 先查询MFA状态
   let status: MFAApi.MFAStatusResult;
   try {
     status = await MFAApi.getStatus();
   } catch {
-    // 查询失败时放行（避免因网络问题阻断操作）
     return true;
   }
 
   if (!status.enabled) {
-    // 未配置MFA，弹出提醒
     return new Promise((resolve) => {
       resolveNotConfigured = () => resolve(false);
       notConfiguredVisible.value = true;
     });
   }
 
-  // 已配置，弹出验证框
+  // 30分钟内已验证过，直接放行
+  if (status.verified) {
+    return true;
+  }
+
   verifyCode.value = '';
   return new Promise((resolve) => {
     resolveVerify = resolve;
@@ -58,8 +76,11 @@ const handleVerifyOk = async () => {
   try {
     await MFAApi.verify(verifyCode.value);
     verifyVisible.value = false;
+    // 主动模式：resolve Promise
     resolveVerify?.(true);
     resolveVerify = null;
+    // 被动模式：emit 事件通知 store
+    emit('verifySuccess');
   } catch (e: any) {
     message.error(e?.message || $t('system.mfa.verifyFailed'));
   } finally {
@@ -71,6 +92,7 @@ const handleVerifyCancel = () => {
   verifyVisible.value = false;
   resolveVerify?.(false);
   resolveVerify = null;
+  emit('verifyCancel');
 };
 
 const handleNotConfiguredOk = () => {
