@@ -76,6 +76,17 @@ const coreRoutes: RouteRecordRaw[] = [
           title: $t('page.dashboard.workspace'),
         },
       },
+      // 个人设置 - 所有登录用户均可访问
+      {
+        name: 'Profile',
+        path: '/profile',
+        component: () => import('#/views/profile/index.vue'),
+        meta: {
+          hideInMenu: true,
+          hideInBreadcrumb: false,
+          title: $t('system.mfa.personalSettings'),
+        },
+      },
     ],
   },
   {

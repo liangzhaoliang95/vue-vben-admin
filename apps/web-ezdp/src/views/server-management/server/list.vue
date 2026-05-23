@@ -16,12 +16,24 @@ import { SystemConfig } from '#/api/system/config';
 import { $t } from '#/locales';
 import { copyToClipboard } from '#/utils/clipboard';
 import WebTerminal from '#/components/web-terminal/index.vue';
+import MFAVerify from '#/components/mfa-verify/index.vue';
 import MonitorModal from './modules/monitor-modal.vue';
 import MiniGauge from './modules/mini-gauge.vue';
+import { useRouter } from 'vue-router';
 
 defineOptions({
   name: 'ServerList',
 });
+
+const router = useRouter();
+
+// MFA验证组件引用
+const mfaVerifyRef = ref<InstanceType<typeof MFAVerify> | null>(null);
+
+// 打开个人设置页面
+const openPersonalSettings = () => {
+  router.push('/profile');
+};
 
 // 视图模式：grid | list
 const viewMode = ref<'grid' | 'list'>('grid');
@@ -332,7 +344,7 @@ const tokenResultData = ref({
 });
 
 // 打开终端（支持同时打开多个）
-const openTerminal = (row: any) => {
+const openTerminal = async (row: any) => {
   if (row.status !== 'online') {
     Modal.warning({
       title: $t('serverManagement.server.terminalWarning'),
@@ -340,6 +352,8 @@ const openTerminal = (row: any) => {
     });
     return;
   }
+  const ok = await mfaVerifyRef.value?.checkMFA();
+  if (!ok) return;
   const defaultW = 900;
   const defaultH = 600;
   const offset = terminals.value.length * 28;
@@ -363,7 +377,9 @@ const closeTerminal = (id: string) => {
 };
 
 // 打开编辑弹窗
-const openEdit = (row: any) => {
+const openEdit = async (row: any) => {
+  const ok = await mfaVerifyRef.value?.checkMFA();
+  if (!ok) return;
   editForm.value = {
     id: row.id,
     serverName: row.serverName,
@@ -698,6 +714,9 @@ const upgradingServers = ref<Set<string>>(new Set());
 const handleUpgradeAgent = async (server: ServerManagementApi.Server) => {
   if (upgradingServers.value.has(server.serverId)) return;
 
+  const ok = await mfaVerifyRef.value?.checkMFA();
+  if (!ok) return;
+
   Modal.confirm({
     title: $t('serverManagement.server.upgradeConfirmTitle'),
     content: $t('serverManagement.server.upgradeConfirmContent', {
@@ -783,6 +802,8 @@ const mkdirName = ref('');
 const mkdirLoading = ref(false);
 
 const openFileManager = async (row: any) => {
+  const ok = await mfaVerifyRef.value?.checkMFA();
+  if (!ok) return;
   fileServerId.value = row.serverId;
   fileServerName.value = row.serverName;
   currentPath.value = '/';
@@ -949,6 +970,8 @@ const proxyForm = ref({ localPort: '', remoteAddr: '' });
 const proxyCreateLoading = ref(false);
 
 const openProxy = async (row: any) => {
+  const ok = await mfaVerifyRef.value?.checkMFA();
+  if (!ok) return;
   proxyServerId.value = row.serverId;
   proxyServerName.value = row.serverName;
   proxyForm.value = { localPort: '', remoteAddr: '' };
@@ -1814,6 +1837,9 @@ const proxyColumns = [
         </Card>
       </div>
     </Modal>
+
+    <!-- MFA验证组件 -->
+    <MFAVerify ref="mfaVerifyRef" @open-settings="openPersonalSettings" />
   </Page>
 </template>
 

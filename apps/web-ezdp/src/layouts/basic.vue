@@ -18,6 +18,7 @@ import { useAccessStore, useBusinessStore, useUserStore } from '@vben/stores';
 import { BarChart2 } from 'lucide-vue-next';
 import { Button, Form, Input, message, Modal } from 'ant-design-vue';
 import { marked } from 'marked';
+import { useRouter } from 'vue-router';
 
 import {
   clearReadNotifications,
@@ -41,6 +42,7 @@ const authStore = useAuthStore();
 const accessStore = useAccessStore();
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
+const router = useRouter();
 const { destroyWatermark, updateWatermark } = useWatermark();
 const showDot = computed(() =>
   notifications.value.some((item) => !item.isRead),
@@ -121,6 +123,11 @@ const menus = computed(() => [
     handler: handleOpenProfile,
     icon: 'lucide:user-cog',
     text: $t('system.user.profileSettings'),
+  },
+  {
+    handler: () => router.push('/profile'),
+    icon: 'lucide:shield-check',
+    text: $t('system.mfa.title'),
   },
   // 隐藏文档、GitHub、问题&帮助
   // {
