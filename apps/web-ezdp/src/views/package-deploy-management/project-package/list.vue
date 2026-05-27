@@ -598,18 +598,17 @@ async function copyVersionAsMarkdown(version: any) {
   try {
     // 构建 Markdown 表格头部
     const versionHeader = `## 版本 ${version.version}\n\n`;
-    const versionInfo = `**构建时间:** ${formatTime(version.buildTime)}\n**状态:** ${getVersionStatusConfig(version.status || 'building').text}\n\n`;
+    const versionInfo = `**构建时间:** ${formatTime(version.buildTime)}\n\n`;
 
     // 构建 Markdown 表格
-    const headers = ['项目名称', '项目类型', '版本号', '状态'];
-    const separator = ['---', '---', '---', '---'];
+    const headers = ['项目名称', '项目类型', '版本号'];
+    const separator = ['---', '---', '---'];
 
     const rows = getSortedProjects(version.children).map((project: any) => {
       return [
         project.projectName || '-',
         getProjectTypeName(project.projectType || ''),
         project.version || '-',
-        getStatusConfig((project && project.status) || 'pending').text,
       ];
     });
 
