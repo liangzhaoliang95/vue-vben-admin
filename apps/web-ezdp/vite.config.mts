@@ -14,7 +14,7 @@ export default defineConfig(async () => {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/server/, ''),
             // 后端服务地址（使用 127.0.0.1 避免 DNS 解析延迟）
-            target: 'http://127.0.0.1:8080/server',
+            target: 'https://simple.plaso.cn/server',
             ws: true,
           },
         },

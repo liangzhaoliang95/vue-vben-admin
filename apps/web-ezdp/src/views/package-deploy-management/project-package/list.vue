@@ -690,8 +690,9 @@ onDeactivated(() => {
 
 <template>
   <Page auto-content-height>
+    <div class="flex h-full flex-col gap-4">
     <!-- 筛选条件区 -->
-    <Card>
+    <Card class="flex-shrink-0">
       <div class="flex w-full items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-4">
           <!-- 业务线筛选(仅超级管理员) -->
@@ -750,7 +751,7 @@ onDeactivated(() => {
     </Card>
 
     <!-- 版本列表 -->
-    <Card class="mt-4">
+    <Card class="flex-1 overflow-y-auto">
       <Spin :spinning="loading">
         <div
           v-if="versionList.length === 0"
@@ -992,6 +993,8 @@ onDeactivated(() => {
         </Collapse>
       </Spin>
     </Card>
+
+    </div><!-- end flex container -->
 
     <!-- Changelog Modal -->
     <Modal
