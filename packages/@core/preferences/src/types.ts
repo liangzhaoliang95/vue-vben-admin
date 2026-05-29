@@ -115,8 +115,10 @@ interface CopyrightPreferences {
   icpLink: string;
   /** 设置面板是否显示*/
   settingShow?: boolean;
-  /** 应用版本号 */
+  /** 应用版本号（后端） */
   appVersion?: string;
+  /** 前端版本号 */
+  frontendVersion?: string;
 }
 
 interface FooterPreferences {

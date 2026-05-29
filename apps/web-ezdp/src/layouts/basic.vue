@@ -290,6 +290,10 @@ onMounted(async () => {
 
   // 获取系统配置，更新版本号到页脚
   try {
+    const frontendVersion = import.meta.env.VITE_APP_VERSION;
+    if (frontendVersion) {
+      updatePreferences({ copyright: { frontendVersion } });
+    }
     const config = await SystemConfig.getConfig();
     if (config.appVersion) {
       updatePreferences({ copyright: { appVersion: config.appVersion } });

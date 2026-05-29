@@ -226,22 +226,6 @@ function renderLogMessage(message: WebSocketMessage) {
     terminal.writeln(content);
     // 只统计 WebSocket 下发的实际日志行数（每收到一条日志消息，增加一行）
     totalLines.value++;
-  } else if (message.commandType === 'event') {
-    const eventType = message.commandId;
-    const data = message.data || {};
-
-    // 根据事件类型显示不同颜色
-    if (eventType === 1 || eventType === 3) {
-      // 成功事件（发布成功、构建成功）
-      terminal.writeln(`\u001B[32m✓ ${data.status || '成功'}\u001B[0m`);
-    } else if (eventType === 2 || eventType === 4) {
-      // 失败事件（发布失败、构建失败）
-      terminal.writeln(
-        `\u001B[31m✗ ${data.status || '失败'}: ${data.error || ''}\u001B[0m`,
-      );
-    }
-    // 事件消息也计入日志行数
-    totalLines.value++;
   }
 }
 

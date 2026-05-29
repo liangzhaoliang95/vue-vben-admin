@@ -12,6 +12,11 @@ new_version="${major}.${minor}.$((patch + 1))"
 
 # 写回 version.json
 jq --arg v "$new_version" '.version = $v' "$VERSION_FILE" > tmp.$$.json && mv tmp.$$.json "$VERSION_FILE"
+
+# 同步更新 apps/web-ezdp/package.json，使 VITE_APP_VERSION 与 version.json 一致
+APP_PKG="apps/web-ezdp/package.json"
+jq --arg v "$new_version" '.version = $v' "$APP_PKG" > tmp.$$.json && mv tmp.$$.json "$APP_PKG"
+
 echo "版本: ${current} → ${new_version}"
 
 docker build -t docker.plaso.cn/ezdp-frontend:${new_version} .
