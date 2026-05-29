@@ -50,6 +50,14 @@ export namespace ProjectPackageApi {
     businessLineId?: number;
     forceRebuild?: boolean; // 强制构建（跳过 tag 和镜像检查）
   }
+
+  export interface PreBuildCheckParams {
+    branchId: string;
+  }
+
+  export interface PreBuildCheckResult {
+    message: string;
+  }
 }
 
 /**
@@ -72,6 +80,18 @@ export async function startBuildTask(
 ) {
   return requestClient.post<ProjectPackageApi.BuildTask>(
     '/packageDeployManagement/projectPackage/build',
+    params,
+  );
+}
+
+/**
+ * 触发预构建检查
+ */
+export async function triggerPreBuildCheck(
+  params: ProjectPackageApi.PreBuildCheckParams,
+) {
+  return requestClient.post<ProjectPackageApi.PreBuildCheckResult>(
+    '/packageDeployManagement/projectPackage/preBuildCheck',
     params,
   );
 }

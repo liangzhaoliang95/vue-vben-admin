@@ -86,7 +86,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
   // 全局日志查看器控制
   const showGlobalLogViewer = ref(false);
-  const globalLogViewerTaskType = ref<1 | 2 | undefined>(undefined); // 1=构建, 2=部署, undefined=全部
+  const globalLogViewerTaskType = ref<1 | 2 | 3 | undefined>(undefined); // 1=构建, 2=部署, 3=预检查, undefined=全部
   const globalLogViewerSubscriptionId = ref<string>('');
   const globalLogViewerTitle = ref<string>('');
 
@@ -1036,9 +1036,9 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
   /**
    * 打开全局日志查看器
-   * @param taskType 任务类型：1=构建, 2=部署, undefined=全部
+   * @param taskType 任务类型：1=构建, 2=部署, 3=预检查, undefined=全部
    */
-  function openGlobalLogViewer(taskType?: 1 | 2) {
+  function openGlobalLogViewer(taskType?: 1 | 2 | 3) {
     // 设置任务类型
     globalLogViewerTaskType.value = taskType;
 
@@ -1052,6 +1052,8 @@ export const useWebSocketStore = defineStore('websocket', () => {
       globalLogViewerTitle.value = '构建日志';
     } else if (taskType === 2) {
       globalLogViewerTitle.value = '部署日志';
+    } else if (taskType === 3) {
+      globalLogViewerTitle.value = '预检查日志';
     } else {
       globalLogViewerTitle.value = '实时日志';
     }

@@ -24,7 +24,8 @@
     "groupBuild": "Build",
     "groupDeploy": "Deploy",
     "groupRelease": "Release",
-    "groupAlert": "Alert"
+    "groupAlert": "Alert",
+    "groupPreBuildCheck": "Build Pre-check"
   },
   "channel": {
     "title": "Channel Configuration",

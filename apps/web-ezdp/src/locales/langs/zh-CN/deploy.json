@@ -438,10 +438,10 @@
       "commitProject": "所属项目",
       "sortOrder": "排序",
       "sortOrderVersion": "按版本号排序",
-      "sortOrderName": "按名称排序"
+      "sortOrderName": "按名称排序",
+      "preBuildCheck": "构建预检查"
     },
     "deployHistory": {
-      "title": "发布历史",
       "projectName": "项目名称",
       "projectNamePlaceholder": "请输入项目名称",
       "projectType": "项目类型",

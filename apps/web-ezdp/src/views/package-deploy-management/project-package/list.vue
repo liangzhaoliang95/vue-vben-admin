@@ -23,6 +23,7 @@ import { getBranchManagementList } from '#/api/package-deploy-management/branch-
 import {
   getBuildTaskList,
   startBuildTask,
+  triggerPreBuildCheck,
 } from '#/api/package-deploy-management/project-package';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
@@ -400,6 +401,24 @@ async function handleForceBuild() {
   }
 }
 
+// 预构建检查
+async function handlePreBuildCheck() {
+  if (!selectedBranchId.value) {
+    message.warning('请先选择分支');
+    return;
+  }
+
+  try {
+    await triggerPreBuildCheck({ branchId: selectedBranchId.value });
+    message.success('预检查任务已启动，请查看实时日志');
+    // 打开全局日志查看器（commandId=3 表示预检查日志）
+    wsStore.openGlobalLogViewer(3);
+  } catch (error) {
+    console.error('启动预检查失败:', error);
+    message.error('启动预检查失败');
+  }
+}
+
 // 格式化时间
 function formatTime(timestamp: number) {
   if (!timestamp) return '-';
@@ -730,6 +749,9 @@ onDeactivated(() => {
 
         <!-- 操作按钮组 -->
         <div class="flex flex-shrink-0 items-center gap-3">
+          <Button style="background-color: #fff7e6; border-color: #ffd591; color: #d46b08;" @click="handlePreBuildCheck">
+            {{ $t('deploy.packageDeployManagement.projectPackage.preBuildCheck') }}
+          </Button>
           <Select
             v-model:value="sortMode"
             class="w-36"

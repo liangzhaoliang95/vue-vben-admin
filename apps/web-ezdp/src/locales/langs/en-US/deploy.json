@@ -438,7 +438,8 @@
       "commitProject": "Project",
       "sortOrder": "Sort",
       "sortOrderVersion": "Sort by version",
-      "sortOrderName": "Sort by name"
+      "sortOrderName": "Sort by name",
+      "preBuildCheck": "Build Pre-check"
     },
     "deployHistory": {
       "title": "Deploy History",

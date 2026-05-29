@@ -24,7 +24,7 @@ import 'xterm/css/xterm.css';
 interface Props {
   subscriptionId: string;
   title?: string;
-  taskType?: 1 | 2; // 1=构建日志, 2=部署日志, undefined=全部
+  taskType?: 1 | 2 | 3; // 1=构建日志, 2=部署日志, 3=预检查日志, undefined=全部
 }
 
 const props = withDefaults(defineProps<Props>(), {

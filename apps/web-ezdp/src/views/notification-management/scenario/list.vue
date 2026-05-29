@@ -66,6 +66,12 @@ const GROUP_DEFINITIONS: Omit<ScenarioGroup, 'items'>[] = [
     color: 'red',
     types: ['ssl_cert_alert', 'image_check_alert'],
   },
+  {
+    key: 'preBuildCheck',
+    label: $t('notification.scenario.groupPreBuildCheck'),
+    color: 'orange',
+    types: ['pre_build_check_start', 'pre_build_check_completed'],
+  },
 ];
 
 const scenarioGroups = computed<ScenarioGroup[]>(() => {

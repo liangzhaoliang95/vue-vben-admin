@@ -24,7 +24,8 @@
     "groupBuild": "构建",
     "groupDeploy": "发布",
     "groupRelease": "Release",
-    "groupAlert": "告警"
+    "groupAlert": "告警",
+    "groupPreBuildCheck": "构建预检查"
   },
   "channel": {
     "title": "渠道配置",
