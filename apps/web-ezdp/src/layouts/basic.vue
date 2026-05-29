@@ -184,6 +184,7 @@ async function loadNotifications() {
       isRead: item.isRead,
       message: item.content,
       title: item.title,
+      operatorName: item.operatorName || '',
     } as any));
   } catch (error) {
     console.error('加载通知失败:', error);
@@ -229,13 +230,7 @@ async function handleMakeAll() {
   }
 }
 
-// 查看所有通知（跳转到通知中心）
-function handleViewAll() {
-  // TODO: 如果有通知中心页面，在这里跳转
-  console.log('跳转到通知中心');
-}
-
-// 点击通知，查看详情
+// 打开实时日志（顶部按钮）
 async function handleNotificationRead(item: NotificationItem) {
   currentNotification.value = item;
   showNotificationDetail.value = true;
@@ -262,8 +257,6 @@ function closeNotificationDetail() {
   showNotificationDetail.value = false;
   currentNotification.value = null;
 }
-
-// 打开实时日志（顶部按钮）
 async function openLogViewer() {
   // 获取当前业务线 ID
   const businessLineId = businessStore.currentBusinessLineId;
@@ -369,7 +362,6 @@ watch(
         @make-all="handleMakeAll"
         @read="handleNotificationRead"
         @refresh="loadNotifications"
-        @view-all="handleViewAll"
       />
     </template>
     <template #extra>
@@ -429,6 +421,9 @@ watch(
           <!-- 通知元信息 -->
           <div class="notification-meta">
             <span class="notification-time">{{ currentNotification?.date }}</span>
+            <span v-if="(currentNotification as any)?.operatorName" class="notification-operator">
+              · 操作人：{{ (currentNotification as any).operatorName }}
+            </span>
           </div>
         </div>
       </Modal>

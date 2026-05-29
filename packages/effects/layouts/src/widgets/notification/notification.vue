@@ -3,7 +3,7 @@ import type { NotificationItem } from './types';
 
 import { nextTick, ref, watch } from 'vue';
 
-import { Bell, MailCheck, RotateCw } from '@vben/icons';
+import { Bell, RotateCw } from '@vben/icons';
 import { $t } from '@vben/locales';
 
 import {
@@ -38,7 +38,6 @@ const emit = defineEmits<{
   makeAll: [];
   read: [NotificationItem];
   refresh: [];
-  viewAll: [];
 }>();
 
 const [open, toggle] = useToggle();
@@ -57,15 +56,6 @@ watch(open, (newValue) => {
     });
   }
 });
-
-function close() {
-  open.value = false;
-}
-
-function handleViewAll() {
-  emit('viewAll');
-  // 不关闭弹窗，让用户可以继续查看通知
-}
 
 function handleMakeAll() {
   emit('makeAll');
@@ -118,13 +108,6 @@ function handleClick(item: NotificationItem) {
           >
             <RotateCw class="size-4" />
           </VbenIconButton>
-          <VbenIconButton
-            :disabled="notifications.length <= 0"
-            :tooltip="$t('ui.widgets.markAllAsRead')"
-            @click="handleMakeAll"
-          >
-            <MailCheck class="size-4" />
-          </VbenIconButton>
         </div>
       </div>
       <VbenScrollbar v-if="notifications.length > 0">
@@ -144,9 +127,12 @@ function handleClick(item: NotificationItem) {
                 <p class="text-muted-foreground my-1 line-clamp-2 text-xs">
                   {{ item.message }}
                 </p>
-                <p class="text-muted-foreground line-clamp-2 text-xs">
-                  {{ item.date }}
-                </p>
+                <div class="text-muted-foreground flex items-center gap-2 text-xs">
+                  <span>{{ item.date }}</span>
+                  <span v-if="(item as any).operatorName" class="text-muted-foreground/70">
+                    · {{ (item as any).operatorName }}
+                  </span>
+                </div>
               </div>
             </li>
           </template>
@@ -168,10 +154,14 @@ function handleClick(item: NotificationItem) {
           variant="ghost"
           @click="handleClear"
         >
-          {{ $t('ui.widgets.clearNotifications') }}
+          {{ $t('ui.widgets.clearReadNotifications') }}
         </VbenButton>
-        <VbenButton size="sm" @click="handleViewAll">
-          {{ $t('ui.widgets.viewAll') }}
+        <VbenButton
+          :disabled="notifications.length <= 0"
+          size="sm"
+          @click="handleMakeAll"
+        >
+          {{ $t('ui.widgets.markAllAsRead') }}
         </VbenButton>
       </div>
     </div>

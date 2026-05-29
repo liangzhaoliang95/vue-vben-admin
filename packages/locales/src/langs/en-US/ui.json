@@ -125,8 +125,9 @@
     "viewAll": "View All Messages",
     "notifications": "Notifications",
     "refresh": "Refresh",
-    "markAllAsRead": "Make All as Read",
+    "markAllAsRead": "Mark All as Read",
     "clearNotifications": "Clear",
+    "clearReadNotifications": "Clear Read",
     "checkUpdatesTitle": "New Version Available",
     "checkUpdatesDescription": "Click to refresh and get the latest version",
     "search": {

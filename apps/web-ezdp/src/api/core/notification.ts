@@ -11,6 +11,7 @@ export namespace NotificationApi {
     isRead: boolean;
     readAt: number;
     createdAt: number;
+    operatorName?: string; // 操作人名称，为空时表示 agent 调用
   }
 
   export interface NotificationListParams {

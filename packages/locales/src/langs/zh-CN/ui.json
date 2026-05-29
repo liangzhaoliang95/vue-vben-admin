@@ -125,8 +125,9 @@
     "viewAll": "查看所有消息",
     "notifications": "通知",
     "refresh": "刷新",
-    "markAllAsRead": "全部标记为已读",
+    "markAllAsRead": "一键已读",
     "clearNotifications": "清空",
+    "clearReadNotifications": "清空已读消息",
     "checkUpdatesTitle": "新版本可用",
     "checkUpdatesDescription": "点击刷新以获取最新版本",
     "search": {
