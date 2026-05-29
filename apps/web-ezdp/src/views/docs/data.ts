@@ -1,4 +1,4 @@
-import type { DocItem, EventData } from './types';
+import type { DocItem, EventData, HttpApiData } from './types';
 
 // 注册事件数据
 const registerEventData: EventData = {
@@ -1023,6 +1023,96 @@ const deployAgentOverviewContent = `<div class="page-doc">
   </div>
 </div>`;
 
+// ============= BuildAgent HTTP API 数据定义 =============
+
+const buildAgentPreBuildCheckApiData: HttpApiData = {
+  apiName: '触发预构建检查',
+  apiPath: 'POST /nc/buildAgent/preBuildCheck',
+  description: '通过 BuildAgent Token 触发预构建检查，异步执行并通过 WebSocket 推送检查结果日志',
+  request: {
+    name: 'PreBuildCheckRequest',
+    description: '预构建检查请求参数',
+    fields: [
+      { name: 'token', type: 'string', required: true, description: 'BuildAgent Token（在 EZDP 控制台创建构建代理时生成）' },
+      { name: 'branchId', type: 'string', required: false, description: '分支 ID（与 branchName 二选一，优先使用）' },
+      { name: 'branchName', type: 'string', required: false, description: '分支名称（与 branchId 二选一，如 "2.43"）' },
+    ],
+    example: JSON.stringify({
+      token: 'your-build-agent-token-here',
+      branchName: '2.43',
+    }, null, 2),
+  },
+  response: {
+    name: 'PreBuildCheckResponse',
+    description: '预构建检查响应（立即返回，实际检查异步执行）',
+    fields: [
+      { name: 'message', type: 'string', required: true, description: '任务启动提示信息，包含检查项目数量' },
+    ],
+    example: JSON.stringify({
+      code: 0,
+      reqId: '507f1f77bcf86cd799439011',
+      reqTime: 1748505600000,
+      data: {
+        message: '预检查任务已启动（共5个项目），请通过日志查看检查结果',
+      },
+    }, null, 2),
+  },
+  example: JSON.stringify({
+    token: 'your-build-agent-token-here',
+    branchName: '2.43',
+  }, null, 2),
+};
+
+const buildAgentTriggerBuildApiData: HttpApiData = {
+  apiName: '触发构建',
+  apiPath: 'POST /nc/buildAgent/build',
+  description: '通过 BuildAgent Token 触发构建任务，支持增量构建（默认）和全量构建（forceRebuild=true），异步执行并通过 WebSocket 推送构建日志',
+  request: {
+    name: 'TriggerBuildRequest',
+    description: '触发构建请求参数',
+    fields: [
+      { name: 'token', type: 'string', required: true, description: 'BuildAgent Token（在 EZDP 控制台创建构建代理时生成）' },
+      { name: 'branchId', type: 'string', required: false, description: '分支 ID（与 branchName 二选一，优先使用）' },
+      { name: 'branchName', type: 'string', required: false, description: '分支名称（与 branchId 二选一，如 "2.43"）' },
+      { name: 'projectIds', type: 'array', required: false, description: '指定构建的项目 ID 列表（可选，为空则构建该分支下所有项目）' },
+      { name: 'forceRebuild', type: 'boolean', required: false, description: '是否强制全量构建（默认 false 为增量构建，true 为全量构建，跳过 tag 和镜像检查）' },
+    ],
+    example: JSON.stringify({
+      token: 'your-build-agent-token-here',
+      branchName: '2.43',
+      projectIds: [],
+      forceRebuild: false,
+    }, null, 2),
+  },
+  response: {
+    name: 'TriggerBuildResponse',
+    description: '触发构建响应（立即返回，实际构建异步执行）',
+    fields: [
+      { name: 'buildVersionId', type: 'string', required: true, description: '构建版本 ID，可用于查询构建状态' },
+      { name: 'version', type: 'string', required: true, description: '本次构建的版本号' },
+      { name: 'status', type: 'string', required: true, description: '构建状态，固定为 "building"' },
+      { name: 'message', type: 'string', required: true, description: '任务启动提示信息，包含构建项目数量' },
+    ],
+    example: JSON.stringify({
+      code: 0,
+      reqId: '507f1f77bcf86cd799439012',
+      reqTime: 1748505600000,
+      data: {
+        buildVersionId: '69d4fb0bb0da27894703e0ff',
+        version: '5.66.001',
+        status: 'building',
+        message: '构建任务已启动（共5个项目），请通过 WebSocket 查看实时日志',
+      },
+    }, null, 2),
+  },
+  example: JSON.stringify({
+    token: 'your-build-agent-token-here',
+    branchName: '2.43',
+    projectIds: [],
+    forceRebuild: false,
+  }, null, 2),
+};
+
 // ============= DeployAgent HTTP API 数据定义 =============
 
 const getAgentInfoApiData = {
@@ -1066,7 +1156,30 @@ const getAgentInfoApiData = {
         }
       }
     ],
-    example: ''
+    example: JSON.stringify({
+      code: 0,
+      reqId: '507f1f77bcf86cd799439013',
+      reqTime: 1748505600000,
+      data: {
+        id: '6954c2d1b0da271a3f4a7b07',
+        businessLineId: 2,
+        businessLineName: '融课',
+        name: '阿里云发布代理',
+        environments: [
+          {
+            id: '6954c288b0da271a3f4a7b06',
+            name: 'rongke-www',
+            description: '阿里云生产环境',
+            backendSecretName: '',
+            backendNamespace: '',
+            frontendStorageName: '',
+            frontendBaseUrl: '',
+            currentVersion: '2.41.30',
+            currentBuildVersionId: '69d4fb0bb0da27894703e0ff'
+          }
+        ]
+      },
+    }, null, 2)
   },
   example: JSON.stringify({
     id: '6954c2d1b0da271a3f4a7b07',
@@ -1114,9 +1227,14 @@ const getBranchesApiData = {
       { name: 'description', type: 'string', required: true, description: '分支描述' },
       { name: 'enabled', type: 'boolean', required: true, description: '是否启用' }
     ],
-    example: JSON.stringify([
-      { id: '69d609bdb0da27894703e12b', name: '2.43', description: '20260420', enabled: true }
-    ], null, 2)
+    example: JSON.stringify({
+      code: 0,
+      reqId: '507f1f77bcf86cd799439014',
+      reqTime: 1748505600000,
+      data: [
+        { id: '69d609bdb0da27894703e12b', name: '2.43', description: '20260420', enabled: true }
+      ],
+    }, null, 2)
   },
   example: JSON.stringify([
     { id: '69d609bdb0da27894703e12b', name: '2.43', description: '20260420', enabled: true }
@@ -1164,32 +1282,19 @@ const getVersionsByBranchApiData = {
       }
     ],
     example: JSON.stringify({
-    total: 13,
-    list: [
-      {
-        id: '69e61817b0da272fd15c917a',
-        version: '2.43.12',
-        description: '',
-        status: 'failed',
-        buildTime: 1776687127793
+      code: 0,
+      reqId: '507f1f77bcf86cd799439015',
+      reqTime: 1748505600000,
+      data: {
+        total: 13,
+        list: [
+          { id: '69e61817b0da272fd15c917a', version: '2.43.12', description: '', status: 'failed', buildTime: 1776687127793 },
+          { id: '69e5f647b0da272fd15c910d', version: '2.43.11', description: '', status: 'success', buildTime: 1776678471678 },
+          { id: '69e5e936b0da272fd15c90d8', version: '2.43.10', description: '', status: 'success', buildTime: 1776675126842 }
+        ]
       },
-      {
-        id: '69e5f647b0da272fd15c910d',
-        version: '2.43.11',
-        description: '',
-        status: 'success',
-        buildTime: 1776678471678
-      },
-      {
-        id: '69e5e936b0da272fd15c90d8',
-        version: '2.43.10',
-        description: '',
-        status: 'success',
-        buildTime: 1776675126842
-      }
-    ]
-  }, null, 2)
-},
+    }, null, 2)
+  },
   example: JSON.stringify({
     total: 13,
     list: [
@@ -1250,54 +1355,62 @@ const getVersionDetailApiData = {
         }
       }
     ],
-    example: ''
+    example: JSON.stringify({
+      code: 0,
+      reqId: '507f1f77bcf86cd799439016',
+      reqTime: 1748505600000,
+      data: {
+        version: '2.43.12',
+        description: '',
+        buildTime: 1776687127793,
+        projects: [
+          {
+            projectConfigId: '1',
+            projectName: 'manage_service',
+            projectType: 'backend',
+            version: '2.43.5',
+            imageName: 'docker-yizhong.plaso.cn/manage_service',
+            imageTag: '2.43.5',
+            deployType: 'k8s',
+            k8sName: 'manage-service',
+            k8sType: 'deployment',
+            k8sContainerName: 'main',
+            ossPath: '',
+            ossBucket: '',
+            ossPrefix: '',
+            ossTargetName: '',
+            obsBucket: '',
+            obsPrefix: '',
+            obsTargetName: '',
+            scriptContent: ''
+          },
+          {
+            projectConfigId: '693d7c31c3666ea79b418289',
+            projectName: 'manageweb',
+            projectType: 'frontend',
+            version: '2.43.8',
+            imageName: 'docker-yizhong.plaso.cn/manageweb',
+            imageTag: '2.43.8',
+            deployType: 'ossutil',
+            k8sName: '',
+            k8sType: '',
+            k8sContainerName: '',
+            ossPath: 'static/build/2.43.8/manage',
+            ossBucket: 'plaso-school',
+            ossPrefix: '',
+            ossTargetName: 'manage',
+            obsBucket: '',
+            obsPrefix: '',
+            obsTargetName: '',
+            scriptContent: ''
+          }
+        ]
+      },
+    }, null, 2)
   },
   example: JSON.stringify({
-    version: '2.43.12',
-    description: '',
-    buildTime: 1776687127793,
-    projects: [
-      {
-        projectConfigId: '1',
-        projectName: 'manage_service',
-        projectType: 'backend',
-        version: '2.43.5',
-        imageName: 'docker-yizhong.plaso.cn/manage_service',
-        imageTag: '2.43.5',
-        deployType: 'k8s',
-        k8sName: 'manage-service',
-        k8sType: 'deployment',
-        k8sContainerName: 'main',
-        ossPath: '',
-        ossBucket: '',
-        ossPrefix: '',
-        ossTargetName: '',
-        obsBucket: '',
-        obsPrefix: '',
-        obsTargetName: '',
-        scriptContent: ''
-      },
-      {
-        projectConfigId: '693d7c31c3666ea79b418289',
-        projectName: 'manageweb',
-        projectType: 'frontend',
-        version: '2.43.8',
-        imageName: 'docker-yizhong.plaso.cn/manageweb',
-        imageTag: '2.43.8',
-        deployType: 'ossutil',
-        k8sName: '',
-        k8sType: '',
-        k8sContainerName: '',
-        ossPath: 'static/build/2.43.8/manage',
-        ossBucket: 'plaso-school',
-        ossPrefix: '',
-        ossTargetName: 'manage',
-        obsBucket: '',
-        obsPrefix: '',
-        obsTargetName: '',
-        scriptContent: ''
-      }
-    ]
+    token: 'your-agent-token-here',
+    buildVersionId: '69e61817b0da272fd15c917a'
   }, null, 2)
 };
 
@@ -1363,12 +1476,27 @@ const submitDeployResultApiData = {
       { name: 'success', type: 'boolean', required: true, description: '是否成功' },
       { name: 'message', type: 'string', required: true, description: '响应消息' }
     ],
-    example: ''
+    example: JSON.stringify({
+      code: 0,
+      reqId: '507f1f77bcf86cd799439017',
+      reqTime: 1748505600000,
+      data: {
+        deployTaskId: 'task-001',
+        success: true,
+        message: '部署结果已上报'
+      },
+    }, null, 2)
   },
   example: JSON.stringify({
-    deployTaskId: 'task-001',
-    success: true,
-    message: '部署结果已上报'
+    token: 'your-agent-token-here',
+    deployEnvironmentId: '6954c288b0da271a3f4a7b06',
+    buildVersionId: '69e61817b0da272fd15c917a',
+    isFullDeploy: false,
+    startedAt: 1745169600000,
+    finishedAt: 1745169720000,
+    projectResults: [
+      { projectConfigId: '1', projectName: 'manage_service', status: 'success', errorMessage: '', deployLogs: 'Deployment updated successfully' }
+    ]
   }, null, 2)
 };
 
@@ -1428,25 +1556,30 @@ const getProjectListDetailByBranchAndVersionApiData = {
       }
     ],
     example: JSON.stringify({
-      version: '2.45.35',
-      description: '',
-      buildTime: 1778739293835,
-      projects: [
-        { projectConfigId: '1', projectName: 'manage_service', projectType: 'backend', version: '2.45.35', imageName: 'docker-yizhong.plaso.cn/manage_service', imageTag: '2.45.35', deployType: 'k8s', k8sName: 'manage-service', k8sType: 'deployment', k8sContainerName: 'main' },
-        { projectConfigId: '69425673089280047a93ee4d', projectName: 'liveclass_service', projectType: 'backend', version: '2.45.28', imageName: 'docker-yizhong.plaso.cn/liveclass_service', imageTag: '2.45.28', deployType: 'k8s', k8sName: 'liveclass-service', k8sType: 'deployment', k8sContainerName: 'main' },
-        { projectConfigId: '694256731ff7424673f5a7ff', projectName: 'wxopen', projectType: 'backend', version: '2.45.1', imageName: 'docker-yizhong.plaso.cn/wxopen', imageTag: '2.45.1', deployType: 'k8s', k8sName: 'wxopen', k8sType: 'deployment', k8sContainerName: 'main' },
-        { projectConfigId: '694256736eef01ec444d065a', projectName: 'school_convert', projectType: 'backend', version: '2.45.9', imageName: 'docker-yizhong.plaso.cn/school_convert', imageTag: '2.45.9', deployType: 'k8s', k8sName: 'school-convert', k8sType: 'deployment', k8sContainerName: 'main' },
-        { projectConfigId: '694256739aad40b613fdf169', projectName: 'statistic_job', projectType: 'backend', version: '2.45.32', imageName: 'docker-yizhong.plaso.cn/statistic_service', imageTag: '2.45.32', deployType: 'k8s', k8sName: 'statistics-job', k8sType: 'cronjob', k8sContainerName: 'main' },
-        { projectConfigId: '69425673e19e8d7acb196dab', projectName: 'statistic_service', projectType: 'backend', version: '2.45.32', imageName: 'docker-yizhong.plaso.cn/statistic_service', imageTag: '2.45.32', deployType: 'k8s', k8sName: 'statistic-service', k8sType: 'deployment', k8sContainerName: 'main' },
-        { projectConfigId: '693d7c31c3666ea79b418289', projectName: 'manageweb', projectType: 'frontend', version: '2.45.34', imageName: 'docker-yizhong.plaso.cn/manageweb', imageTag: '2.45.34', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.34/manage', ossBucket: 'plaso-school', ossTargetName: 'manage' },
-        { projectConfigId: '693d7c31c3666ea79b4182aa', projectName: 'operations_console', projectType: 'frontend', version: '2.45.29', imageName: 'docker-yizhong.plaso.cn/operations_console', imageTag: '2.45.29', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.29/operations_console', ossBucket: 'plaso-school', ossTargetName: 'operations_console' },
-        { projectConfigId: '6942567333c40776fad6c548', projectName: 'board', projectType: 'frontend', version: '2.45.33', imageName: 'docker-yizhong.plaso.cn/board', imageTag: '2.45.33', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.33/board', ossBucket: 'plaso-school', ossTargetName: 'board' },
-        { projectConfigId: '69425673785b55d9d0eb6e19', projectName: 'trweb', projectType: 'frontend', version: '2.45.21', imageName: 'docker-yizhong.plaso.cn/trweb', imageTag: '2.45.21', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.21/tr', ossBucket: 'plaso-school', ossTargetName: 'tr' },
-        { projectConfigId: '694256738d26d9094922e82c', projectName: 'liveclassboard', projectType: 'frontend', version: '2.45.33', imageName: 'docker-yizhong.plaso.cn/liveclassboard', imageTag: '2.45.33', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.33/liveClassBoard', ossBucket: 'plaso-school', ossTargetName: 'liveClassBoard' },
-        { projectConfigId: '69425673976a74d41272a3b9', projectName: 'liveclass_live_robot', projectType: 'frontend', version: '2.45.25', imageName: 'docker-yizhong.plaso.cn/liveclass_live_robot', imageTag: '2.45.25', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.25/liveclass_live_robot', ossBucket: 'plaso-school', ossTargetName: 'liveclass_live_robot' },
-        { projectConfigId: '69425673a54fbd9efbdf54df', projectName: 'tr_seminar_app', projectType: 'frontend', version: '2.45.0', imageName: 'docker-yizhong.plaso.cn/tr_seminar_app', imageTag: '2.45.0', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.0/tr_seminar_app', ossBucket: 'plaso-school', ossTargetName: 'tr_seminar_app' },
-        { projectConfigId: '6942604b4ba7ec327e3a0023', projectName: 'portal', projectType: 'frontend', version: '2.45.34', imageName: 'docker-yizhong.plaso.cn/portal', imageTag: '2.45.34', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.34/portal', ossBucket: 'plaso-school', ossTargetName: 'portal' }
-      ]
+      code: 0,
+      reqId: '507f1f77bcf86cd799439018',
+      reqTime: 1748505600000,
+      data: {
+        version: '2.45.35',
+        description: '',
+        buildTime: 1778739293835,
+        projects: [
+          { projectConfigId: '1', projectName: 'manage_service', projectType: 'backend', version: '2.45.35', imageName: 'docker-yizhong.plaso.cn/manage_service', imageTag: '2.45.35', deployType: 'k8s', k8sName: 'manage-service', k8sType: 'deployment', k8sContainerName: 'main' },
+          { projectConfigId: '69425673089280047a93ee4d', projectName: 'liveclass_service', projectType: 'backend', version: '2.45.28', imageName: 'docker-yizhong.plaso.cn/liveclass_service', imageTag: '2.45.28', deployType: 'k8s', k8sName: 'liveclass-service', k8sType: 'deployment', k8sContainerName: 'main' },
+          { projectConfigId: '694256731ff7424673f5a7ff', projectName: 'wxopen', projectType: 'backend', version: '2.45.1', imageName: 'docker-yizhong.plaso.cn/wxopen', imageTag: '2.45.1', deployType: 'k8s', k8sName: 'wxopen', k8sType: 'deployment', k8sContainerName: 'main' },
+          { projectConfigId: '694256736eef01ec444d065a', projectName: 'school_convert', projectType: 'backend', version: '2.45.9', imageName: 'docker-yizhong.plaso.cn/school_convert', imageTag: '2.45.9', deployType: 'k8s', k8sName: 'school-convert', k8sType: 'deployment', k8sContainerName: 'main' },
+          { projectConfigId: '694256739aad40b613fdf169', projectName: 'statistic_job', projectType: 'backend', version: '2.45.32', imageName: 'docker-yizhong.plaso.cn/statistic_service', imageTag: '2.45.32', deployType: 'k8s', k8sName: 'statistics-job', k8sType: 'cronjob', k8sContainerName: 'main' },
+          { projectConfigId: '69425673e19e8d7acb196dab', projectName: 'statistic_service', projectType: 'backend', version: '2.45.32', imageName: 'docker-yizhong.plaso.cn/statistic_service', imageTag: '2.45.32', deployType: 'k8s', k8sName: 'statistic-service', k8sType: 'deployment', k8sContainerName: 'main' },
+          { projectConfigId: '693d7c31c3666ea79b418289', projectName: 'manageweb', projectType: 'frontend', version: '2.45.34', imageName: 'docker-yizhong.plaso.cn/manageweb', imageTag: '2.45.34', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.34/manage', ossBucket: 'plaso-school', ossTargetName: 'manage' },
+          { projectConfigId: '693d7c31c3666ea79b4182aa', projectName: 'operations_console', projectType: 'frontend', version: '2.45.29', imageName: 'docker-yizhong.plaso.cn/operations_console', imageTag: '2.45.29', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.29/operations_console', ossBucket: 'plaso-school', ossTargetName: 'operations_console' },
+          { projectConfigId: '6942567333c40776fad6c548', projectName: 'board', projectType: 'frontend', version: '2.45.33', imageName: 'docker-yizhong.plaso.cn/board', imageTag: '2.45.33', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.33/board', ossBucket: 'plaso-school', ossTargetName: 'board' },
+          { projectConfigId: '69425673785b55d9d0eb6e19', projectName: 'trweb', projectType: 'frontend', version: '2.45.21', imageName: 'docker-yizhong.plaso.cn/trweb', imageTag: '2.45.21', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.21/tr', ossBucket: 'plaso-school', ossTargetName: 'tr' },
+          { projectConfigId: '694256738d26d9094922e82c', projectName: 'liveclassboard', projectType: 'frontend', version: '2.45.33', imageName: 'docker-yizhong.plaso.cn/liveclassboard', imageTag: '2.45.33', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.33/liveClassBoard', ossBucket: 'plaso-school', ossTargetName: 'liveClassBoard' },
+          { projectConfigId: '69425673976a74d41272a3b9', projectName: 'liveclass_live_robot', projectType: 'frontend', version: '2.45.25', imageName: 'docker-yizhong.plaso.cn/liveclass_live_robot', imageTag: '2.45.25', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.25/liveclass_live_robot', ossBucket: 'plaso-school', ossTargetName: 'liveclass_live_robot' },
+          { projectConfigId: '69425673a54fbd9efbdf54df', projectName: 'tr_seminar_app', projectType: 'frontend', version: '2.45.0', imageName: 'docker-yizhong.plaso.cn/tr_seminar_app', imageTag: '2.45.0', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.0/tr_seminar_app', ossBucket: 'plaso-school', ossTargetName: 'tr_seminar_app' },
+          { projectConfigId: '6942604b4ba7ec327e3a0023', projectName: 'portal', projectType: 'frontend', version: '2.45.34', imageName: 'docker-yizhong.plaso.cn/portal', imageTag: '2.45.34', deployType: 'ossutil', k8sContainerName: 'main', ossPath: 'static/build/2.45.34/portal', ossBucket: 'plaso-school', ossTargetName: 'portal' }
+        ]
+      },
     }, null, 2)
   },
   example: JSON.stringify({
@@ -2149,6 +2282,27 @@ export const docList: DocItem[] = [
         title: '鉴权机制',
         apiType: 'markdown',
         fileName: 'build-agent/authentication.md',
+      },
+      {
+        id: 'buildAgent-http-apis',
+        title: 'HTTP API',
+        isCategory: true,
+        children: [
+          {
+            id: 'buildAgent-preBuildCheck',
+            title: '触发预构建检查',
+            description: 'POST /nc/buildAgent/preBuildCheck',
+            apiType: 'httpApi',
+            httpApiData: buildAgentPreBuildCheckApiData,
+          },
+          {
+            id: 'buildAgent-build',
+            title: '触发构建',
+            description: 'POST /nc/buildAgent/build',
+            apiType: 'httpApi',
+            httpApiData: buildAgentTriggerBuildApiData,
+          },
+        ],
       },
       {
         id: 'buildAgent-events',
