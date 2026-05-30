@@ -21,9 +21,18 @@ export namespace BuildAgentApi {
     memoryTotal: number;
     diskTotal: number;
     publicIp: string;
+    privateIps: string; // 逗号分隔的内网IP
     cpuUsage: number;
+    cpuUsagePercent: number;
     memoryUsage: number;
+    memoryUsagePercent: number;
     diskUsage: number;
+    diskUsagePercent: number;
+    networkBytesSent: number;
+    networkBytesRecv: number;
+    loadAvg1: number;
+    loadAvg5: number;
+    loadAvg15: number;
     maxConcurrentTasks: number;
     currentTasks: number;
     totalTasks: number;
@@ -46,7 +55,42 @@ export namespace BuildAgentApi {
     createdAt: number;
   }
 
+  export interface UpgradeAgentResult {
+    status: 'success' | 'upgrading';
+    message: string;
+    stdout?: string;
+  }
 }
+
+export interface BuildAgentStats {
+  id: string;
+  agentId: string;
+  timestamp: number;
+  cpuUsage: number;
+  cpuCores: number;
+  cpuUsagePercent: number;
+  memTotal: number;
+  memUsed: number;
+  memUsedPct: number;
+  diskJson: string; // JSON 序列化的磁盘列表
+  netBytesSent: number;
+  netBytesRecv: number;
+  load1: number;
+  load5: number;
+  load15: number;
+  currentTasks: number;
+  maxConcurrent: number;
+  createdAt: number;
+}
+
+  // 磁盘分区信息
+  export interface DiskInfo {
+    path: string;
+    total: number;
+    used: number;
+    free: number;
+    usedPercent: number;
+  }
 
 /**
  * 获取 Build Agent 列表数据
@@ -132,10 +176,54 @@ async function getBuildAgentDetail(id: number | string) {
   );
 }
 
+/**
+ * 升级 Build Agent
+ *
+ * @param agentId Build Agent ID
+ */
+async function upgradeBuildAgent(agentId: string) {
+  return requestClient.post<BuildAgentApi.UpgradeAgentResult>(
+    '/buildAgent/upgradeAgent',
+    { agentId },
+  );
+}
+
+/**
+ * 获取 Build Agent 最新状态
+ *
+ * @param agentId Build Agent ID
+ */
+async function getBuildAgentStats(agentId: string) {
+  return requestClient.post<BuildAgentApi.BuildAgentStats>(
+    '/buildAgent/getStats',
+    { agentId },
+  );
+}
+
+/**
+ * 获取 Build Agent 状态历史趋势
+ *
+ * @param params 查询参数
+ */
+async function getBuildAgentStatsHistory(params: {
+  agentId: string;
+  startMs?: number;
+  endMs?: number;
+  limit?: number;
+}) {
+  return requestClient.post<BuildAgentApi.BuildAgentStats[]>(
+    '/buildAgent/getStatsHistory',
+    params,
+  );
+}
+
 export {
   createBuildAgent,
   deleteBuildAgent,
   getBuildAgentDetail,
   getBuildAgentList,
+  getBuildAgentStats,
+  getBuildAgentStatsHistory,
+  upgradeBuildAgent,
   updateBuildAgent,
 };
