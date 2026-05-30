@@ -28,6 +28,7 @@ import {
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
 import { copyToClipboard } from '#/utils/clipboard';
+import { ServerCrash, Monitor, Package, FolderOpen } from 'lucide-vue-next';
 
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
@@ -46,6 +47,7 @@ const activeKeys = ref<string[]>([]); // 展开的版本面板
 
 // 排序模式：version=版本内项目按类型排序，name=版本内项目按名称升序（版本列表本身始终按版本号降序）
 const sortMode = ref<'version' | 'name'>('version');
+const showImageName = ref(false);
 
 // 版本列表始终按语义化版本号降序，排序模式只影响版本内的项目顺序
 const sortedVersionList = computed(() => {
@@ -267,7 +269,7 @@ async function handleRefresh() {
   loading.value = true;
   try {
     await loadVersionList();
-    message.success('刷新成功');
+    message.success($t('deploy.packageDeployManagement.projectPackage.refreshSuccess'));
   } finally {
     loading.value = false;
   }
@@ -294,10 +296,10 @@ async function handleShowAll() {
 
     const res = await getBuildTaskList(queryParams);
     versionList.value = res.items || [];
-    message.success('全量获取成功');
+    message.success($t('deploy.packageDeployManagement.projectPackage.showAllSuccess'));
   } catch (error) {
     console.error('[项目打包] 全量获取失败:', error);
-    message.error('全量获取失败');
+    message.error($t('deploy.packageDeployManagement.projectPackage.showAllFailed'));
   } finally {
     loading.value = false;
   }
@@ -327,7 +329,7 @@ async function handleBuild() {
   }
 
   try {
-    await confirm('确定要开始构建吗？构建过程可能需要几分钟时间。', '开始构建');
+    await confirm($t('deploy.packageDeployManagement.projectPackage.startBuildConfirm'), $t('deploy.packageDeployManagement.projectPackage.startBuild'));
 
     const queryParams: any = {
       branchId: selectedBranchId.value,
@@ -339,7 +341,7 @@ async function handleBuild() {
     }
 
     await startBuildTask(queryParams);
-    message.success('构建任务已启动，请查看实时日志');
+    message.success($t('deploy.packageDeployManagement.projectPackage.buildStarted'));
 
     // 打开全局日志查看器（taskType=1 表示构建日志）
     wsStore.openGlobalLogViewer(1);
@@ -353,7 +355,7 @@ async function handleBuild() {
   } catch (error) {
     if (error instanceof Error && error.message !== '已取消') {
       console.error('启动构建失败:', error);
-      message.error('启动构建失败');
+      message.error($t('deploy.packageDeployManagement.projectPackage.buildStartFailed'));
     }
   }
 }
@@ -367,8 +369,8 @@ async function handleForceBuild() {
 
   try {
     await confirm(
-      '⚠️ 强制构建将跳过 tag 和镜像检查，强制重新构建所有项目。确定要继续吗？',
-      '强制构建',
+      $t('deploy.packageDeployManagement.projectPackage.forceBuildConfirm'),
+      $t('deploy.packageDeployManagement.projectPackage.forceBuild'),
     );
 
     const queryParams: any = {
@@ -382,7 +384,7 @@ async function handleForceBuild() {
     }
 
     await startBuildTask(queryParams);
-    message.success('强制构建任务已启动，请查看实时日志');
+    message.success($t('deploy.packageDeployManagement.projectPackage.forceBuildStarted'));
 
     // 打开全局日志查看器（taskType=1 表示构建日志）
     wsStore.openGlobalLogViewer(1);
@@ -396,7 +398,7 @@ async function handleForceBuild() {
   } catch (error) {
     if (error instanceof Error && error.message !== '已取消') {
       console.error('启动强制构建失败:', error);
-      message.error('启动强制构建失败');
+      message.error($t('deploy.packageDeployManagement.projectPackage.forceBuildStartFailed'));
     }
   }
 }
@@ -434,22 +436,23 @@ function formatTime(timestamp: number) {
 
 // 获取项目类型名称
 function getProjectTypeName(type: string) {
-  const typeMap: Record<string, string> = {
-    backend: '服务端',
-    frontend: '前端',
-    submodule: '子模块',
+  const keyMap: Record<string, string> = {
+    backend: 'deploy.packageDeployManagement.projectPackage.projectTypeBackend',
+    frontend: 'deploy.packageDeployManagement.projectPackage.projectTypeFrontend',
+    submodule: 'deploy.packageDeployManagement.projectPackage.projectTypeSubmodule',
   };
-  return typeMap[type] || type || '-';
+  const key = keyMap[type];
+  return key ? $t(key) : (type || $t('deploy.packageDeployManagement.projectPackage.projectTypeDefault'));
 }
 
 // 获取项目类型图标
 function getProjectTypeIcon(type: string) {
-  const iconMap: Record<string, string> = {
-    backend: '⚙️',
-    frontend: '🎨',
-    submodule: '📦',
+  const iconMap: Record<string, any> = {
+    backend: ServerCrash,
+    frontend: Monitor,
+    submodule: Package,
   };
-  return iconMap[type] || '📁';
+  return iconMap[type] || FolderOpen;
 }
 
 // 格式化构建耗时为 hh:mm:ss
@@ -712,6 +715,7 @@ onDeactivated(() => {
     <div class="flex h-full flex-col gap-4">
     <!-- 筛选条件区 -->
     <Card class="flex-shrink-0">
+      <!-- 第一行：分支筛选 + 版本号排序、刷新、全量获取 -->
       <div class="flex w-full items-center justify-between gap-4">
         <div class="flex flex-wrap items-center gap-4">
           <!-- 业务线筛选(仅超级管理员) -->
@@ -747,11 +751,8 @@ onDeactivated(() => {
           </div>
         </div>
 
-        <!-- 操作按钮组 -->
+        <!-- 右侧：版本号排序、刷新、全量获取 -->
         <div class="flex flex-shrink-0 items-center gap-3">
-          <Button style="background-color: #fff7e6; border-color: #ffd591; color: #d46b08;" @click="handlePreBuildCheck">
-            {{ $t('deploy.packageDeployManagement.projectPackage.preBuildCheck') }}
-          </Button>
           <Select
             v-model:value="sortMode"
             class="w-36"
@@ -760,15 +761,26 @@ onDeactivated(() => {
               { label: $t('deploy.packageDeployManagement.projectPackage.sortOrderName'), value: 'name' },
             ]"
           />
-          <Button @click="handleRefresh">刷新</Button>
+          <Button @click="handleRefresh">{{ $t('deploy.packageDeployManagement.projectPackage.refresh') }}</Button>
           <Button @click="handleShowAll">
             {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
           </Button>
-          <Button type="primary" @click="handleBuild">开始构建</Button>
-          <Button danger type="primary" @click="handleForceBuild">
-            ⚡ 强制构建
-          </Button>
+          <Button :type="showImageName ? 'primary' : 'default'" @click="showImageName = !showImageName">{{ $t('deploy.packageDeployManagement.projectDeploy.showImageName') }}</Button>
         </div>
+      </div>
+
+    </Card>
+
+    <!-- 构建操作区 -->
+    <Card class="flex-shrink-0">
+      <div class="flex justify-end gap-3">
+        <Button style="background-color: #fff7e6; border-color: #ffd591; color: #d46b08;" @click="handlePreBuildCheck">
+          {{ $t('deploy.packageDeployManagement.projectPackage.preBuildCheck') }}
+        </Button>
+        <Button type="primary" @click="handleBuild">{{ $t('deploy.packageDeployManagement.projectPackage.startBuild') }}</Button>
+        <Button danger type="primary" @click="handleForceBuild">
+          {{ $t('deploy.packageDeployManagement.projectPackage.forceBuild') }}
+        </Button>
       </div>
     </Card>
 
@@ -888,20 +900,27 @@ onDeactivated(() => {
                           <span
                             v-if="!!(project.version && project.version === version.version)"
                             class="new-badge"
-                          >NEW</span>
+                          >{{ $t('deploy.packageDeployManagement.projectPackage.newBadge') }}</span>
                         </div>
-                        <span v-if="project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
+                        <span v-if="showImageName && project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
                       </div>
                       <span
                         v-if="project.duration && project.duration > 0"
                         class="duration-text"
                       >
-                        ⏱️ {{ formatDuration(project.duration) }}
+                        {{ formatDuration(project.duration) }}
                       </span>
                       <span v-else class="duration-text" />
                       <Tag color="blue" class="project-type-tag">
-                        {{ getProjectTypeIcon(project.projectType || '') }}
-                        {{ getProjectTypeName(project.projectType || '') }}
+                        <span class="project-type-tag-inner">
+                          <component
+                            :is="getProjectTypeIcon(project.projectType || '')"
+                            :size="15"
+                            class="project-type-icon"
+                            :class="`project-type-icon--${project.projectType || 'default'}`"
+                          />
+                          {{ getProjectTypeName(project.projectType || '') }}
+                        </span>
                       </Tag>
                       <Tag color="red" class="version-tag">
                         {{ project.version || '-' }}
@@ -930,7 +949,7 @@ onDeactivated(() => {
                           <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
                             <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
                           </svg>
-                          提交记录
+                          {{ $t('deploy.packageDeployManagement.projectPackage.commitLog') }}
                         </span>
                       </div>
                     </div>
@@ -961,20 +980,27 @@ onDeactivated(() => {
                           <span
                             v-if="!!(project.version && project.version === version.version)"
                             class="new-badge"
-                          >NEW</span>
+                          >{{ $t('deploy.packageDeployManagement.projectPackage.newBadge') }}</span>
                         </div>
-                        <span v-if="project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
+                        <span v-if="showImageName && project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
                       </div>
                       <span
                         v-if="project.duration && project.duration > 0"
                         class="duration-text"
                       >
-                        ⏱️ {{ formatDuration(project.duration) }}
+                        {{ formatDuration(project.duration) }}
                       </span>
                       <span v-else class="duration-text" />
                       <Tag color="blue" class="project-type-tag">
-                        {{ getProjectTypeIcon(project.projectType || '') }}
-                        {{ getProjectTypeName(project.projectType || '') }}
+                        <span class="project-type-tag-inner">
+                          <component
+                            :is="getProjectTypeIcon(project.projectType || '')"
+                            :size="15"
+                            class="project-type-icon"
+                            :class="`project-type-icon--${project.projectType || 'default'}`"
+                          />
+                          {{ getProjectTypeName(project.projectType || '') }}
+                        </span>
                       </Tag>
                       <Tag color="red" class="version-tag">
                         {{ project.version || '-' }}
@@ -1003,7 +1029,7 @@ onDeactivated(() => {
                           <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
                             <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
                           </svg>
-                          提交记录
+                          {{ $t('deploy.packageDeployManagement.projectPackage.commitLog') }}
                         </span>
                       </div>
                     </div>
@@ -1156,6 +1182,62 @@ onDeactivated(() => {
   color: hsl(var(--muted-foreground));
   white-space: nowrap;
   cursor: default;
+}
+
+.project-type-tag-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+:deep(.project-type-icon--backend) { color: #69b1ff; }
+:deep(.project-type-icon--frontend) { color: #95de64; }
+:deep(.project-type-icon--submodule) { color: #ffd666; }
+:deep(.project-type-icon--default) { color: #d9d9d9; }
+
+/* Changelog Modal 样式 */
+.changelog-list {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.changelog-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.changelog-item:last-child {
+  border-bottom: none;
+}
+
+.commit-title {
+  flex: 1;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+  line-height: 1.4;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commit-meta {
+  display: grid;
+  grid-template-columns: 90px 110px 140px;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.commit-id-tag,
+.commit-author-tag,
+.commit-time-tag {
+  font-size: 11px;
+  justify-self: start;
 }
 
 /* Changelog Modal 样式 */

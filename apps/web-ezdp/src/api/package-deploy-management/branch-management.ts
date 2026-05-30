@@ -8,7 +8,10 @@ export namespace BranchManagementApi {
     businessLineId: number;
     name: string;
     parentBranchId: string;
+    parentBranchName: string; // 服务端填充的继承分支名称
     versionTemplate: string;
+    initialVersion: string;
+    defaultVersion: string; // 初始版本号（无配置时由模板推算）
     description: string;
     enabled: boolean;
     sortOrder: number;

@@ -324,7 +324,7 @@
     },
     "projectRelease": {
       "title": "Project Release",
-      "deployedVersions": "Deployed Versions",
+      "deployedVersions": "Has Deployed Versions",
       "viewDeployedVersions": "View Deployed Versions",
       "selectEnvironmentFirst": "Please select deploy environment first"
     }
@@ -376,7 +376,15 @@
       "commitProject": "Project",
       "sortOrder": "Sort",
       "sortOrderVersion": "Sort by version",
-      "sortOrderName": "Sort by name"
+      "sortOrderName": "Sort by name",
+      "showImageName": "Get Image Version",
+      "refresh": "Refresh",
+      "commitLog": "Commits",
+      "projectTypeBackend": "Backend",
+      "projectTypeFrontend": "Frontend",
+      "projectTypeSubmodule": "Submodule",
+      "projectTypeDefault": "Unknown",
+      "currentVersion": "Current Version"
     },
     "projectPackage": {
       "title": "Project Package",
@@ -439,7 +447,25 @@
       "sortOrder": "Sort",
       "sortOrderVersion": "Sort by version",
       "sortOrderName": "Sort by name",
-      "preBuildCheck": "Build Pre-check"
+      "preBuildCheck": "Build Pre-check",
+      "refresh": "Refresh",
+      "startBuild": "Start Build",
+      "forceBuild": "Force Build",
+      "forceBuildConfirm": "Force build will skip tag and image checks and rebuild all projects. Are you sure?",
+      "startBuildConfirm": "Are you sure you want to start building? The build process may take a few minutes.",
+      "commitLog": "Commits",
+      "newBadge": "NEW",
+      "projectTypeBackend": "Backend",
+      "projectTypeFrontend": "Frontend",
+      "projectTypeSubmodule": "Submodule",
+      "projectTypeDefault": "Unknown",
+      "refreshSuccess": "Refresh successful",
+      "showAllSuccess": "Show all successful",
+      "showAllFailed": "Show all failed",
+      "buildStarted": "Build task started, please check real-time logs",
+      "buildStartFailed": "Failed to start build",
+      "forceBuildStarted": "Force build task started, please check real-time logs",
+      "forceBuildStartFailed": "Failed to start force build"
     },
     "deployHistory": {
       "title": "Deploy History",
@@ -477,6 +503,10 @@
       "versionTemplate": "Version Template",
       "versionTemplatePlaceholder": "Optional: e.g. 5.66.4{{number:3}}",
       "versionTemplateHelp": "Only {{number:N}} is supported. Template mode starts from 1 and zero-pads to width N",
+      "initialVersion": "Initial Version",
+      "initialVersionPlaceholder": "Optional: specify the starting version number",
+      "initialVersionHelp": "With template: enter only the placeholder part (e.g. for 5.66.4{{number:3}}, enter 001); without template: format is branchName.number",
+      "defaultVersion": "Default Version",
       "sortOrder": "Sort Order",
       "sortOrderPlaceholder": "Please enter sort order (lower number comes first)",
       "projectName": "Project Name",

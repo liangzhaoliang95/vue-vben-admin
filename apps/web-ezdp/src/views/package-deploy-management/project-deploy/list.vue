@@ -26,12 +26,31 @@ import {
   deployByVersionIncremental,
   getEnvironmentVersion,
 } from '#/api/package-deploy-management/deploy';
+import { getBuildTaskList } from '#/api/package-deploy-management/project-package';
 import {
-  getBuildTaskList,
-} from '#/api/package-deploy-management/project-package';
-import { getDeployEnvironmentList, getEnvironmentProjectVersions } from '#/api/project-management/deploy-environment';
+  getDeployEnvironmentList,
+  getEnvironmentProjectVersions,
+} from '#/api/project-management/deploy-environment';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
+import {
+  GitCompareArrows,
+  ArrowUp10,
+  Hammer,
+  ServerCrash,
+  Monitor,
+  Package,
+  FolderOpen,
+} from 'lucide-vue-next';
+
+function getProjectTypeIcon(type: string) {
+  const iconMap: Record<string, any> = {
+    backend: ServerCrash,
+    frontend: Monitor,
+    submodule: Package,
+  };
+  return iconMap[type] || FolderOpen;
+}
 
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
@@ -54,6 +73,7 @@ const activeKeys = ref<string[]>([]); // 展开的版本面板
 
 // 排序模式：version=版本内项目按类型排序，name=版本内项目按名称升序（版本列表本身始终按版本号降序）
 const sortMode = ref<'version' | 'name'>('version');
+const showImageName = ref(false);
 
 // 版本列表始终按语义化版本号降序，排序模式只影响版本内的项目顺序
 const sortedVersionList = computed(() => {
@@ -131,25 +151,33 @@ const versionColumns = computed(() => [
   {
     dataIndex: 'projectName',
     key: 'projectName',
-    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.projectName'),
+    title: $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.projectName',
+    ),
     width: 200,
   },
   {
     dataIndex: 'projectType',
     key: 'projectType',
-    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.projectType'),
+    title: $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.projectType',
+    ),
     width: 120,
   },
   {
     dataIndex: 'version',
     key: 'version',
-    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.version'),
+    title: $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.version',
+    ),
     width: 150,
   },
   {
     dataIndex: 'deployedAt',
     key: 'deployedAt',
-    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.deployedAt'),
+    title: $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.deployedAt',
+    ),
     width: 180,
   },
 ]);
@@ -179,7 +207,10 @@ async function loadDeployEnvironments(force: boolean = false) {
 }
 
 // 加载指定业务线的分支数据（懒加载）
-async function loadBranchesForBusinessLine(businessLineId: number, force: boolean = false) {
+async function loadBranchesForBusinessLine(
+  businessLineId: number,
+  force: boolean = false,
+) {
   if (!businessLineId) {
     return;
   }
@@ -440,7 +471,9 @@ function sortDeployedVersions(versions: any[]) {
 // 显示部署版本模态框
 async function handleShowDeployedVersions() {
   if (!selectedEnvironmentId.value) {
-    message.warning($t('deploy.projectManagement.projectRelease.selectEnvironmentFirst'));
+    message.warning(
+      $t('deploy.projectManagement.projectRelease.selectEnvironmentFirst'),
+    );
     return;
   }
 
@@ -448,7 +481,9 @@ async function handleShowDeployedVersions() {
   versionModalLoading.value = true;
 
   try {
-    const res = await getEnvironmentProjectVersions(selectedEnvironmentId.value);
+    const res = await getEnvironmentProjectVersions(
+      selectedEnvironmentId.value,
+    );
     // 对版本列表进行排序
     deployedVersions.value = sortDeployedVersions(res.list || []);
   } catch (error: any) {
@@ -484,7 +519,9 @@ function confirm(content: string, title: string) {
 // 全量部署版本（原逻辑）
 async function handleFullDeploy(version: any) {
   if (!selectedEnvironmentId.value) {
-    message.warning($t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'));
+    message.warning(
+      $t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'),
+    );
     return;
   }
 
@@ -495,7 +532,10 @@ async function handleFullDeploy(version: any) {
 
   try {
     await confirm(
-      $t('deploy.packageDeployManagement.projectDeploy.fullDeployConfirm', [version.version, environmentName]),
+      $t('deploy.packageDeployManagement.projectDeploy.fullDeployConfirm', [
+        version.version,
+        environmentName,
+      ]),
       $t('deploy.packageDeployManagement.projectDeploy.fullDeploy'),
     );
 
@@ -511,7 +551,9 @@ async function handleFullDeploy(version: any) {
     });
 
     message.destroy('deploying');
-    message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
+    message.success(
+      $t('deploy.packageDeployManagement.projectDeploy.deploySuccess'),
+    );
 
     // 打开全局日志查看器（taskType=2 表示部署日志）
     wsStore.openGlobalLogViewer(2);
@@ -535,7 +577,9 @@ async function handleFullDeploy(version: any) {
 // 增量部署版本（对比上一次发布，只部署变更的项目）
 async function handleIncrementalDeploy(version: any) {
   if (!selectedEnvironmentId.value) {
-    message.warning($t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'));
+    message.warning(
+      $t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'),
+    );
     return;
   }
 
@@ -546,7 +590,10 @@ async function handleIncrementalDeploy(version: any) {
 
   try {
     await confirm(
-      $t('deploy.packageDeployManagement.projectDeploy.incrementalDeployConfirm', [version.version, environmentName]),
+      $t(
+        'deploy.packageDeployManagement.projectDeploy.incrementalDeployConfirm',
+        [version.version, environmentName],
+      ),
       $t('deploy.packageDeployManagement.projectDeploy.incrementalDeploy'),
     );
 
@@ -562,7 +609,9 @@ async function handleIncrementalDeploy(version: any) {
     });
 
     message.destroy('deploying');
-    message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
+    message.success(
+      $t('deploy.packageDeployManagement.projectDeploy.deploySuccess'),
+    );
 
     // 打开全局日志查看器（taskType=2 表示部署日志）
     wsStore.openGlobalLogViewer(2);
@@ -586,7 +635,9 @@ async function handleIncrementalDeploy(version: any) {
 // 部署单个项目
 async function handleDeployProject(project: any) {
   if (!selectedEnvironmentId.value) {
-    message.warning($t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'));
+    message.warning(
+      $t('deploy.packageDeployManagement.projectDeploy.selectEnvironmentFirst'),
+    );
     return;
   }
 
@@ -597,7 +648,10 @@ async function handleDeployProject(project: any) {
 
   try {
     await confirm(
-      $t('deploy.packageDeployManagement.projectDeploy.deployConfirm', [project.version, environmentName]),
+      $t('deploy.packageDeployManagement.projectDeploy.deployConfirm', [
+        project.version,
+        environmentName,
+      ]),
       $t('deploy.packageDeployManagement.projectDeploy.deploy'),
     );
 
@@ -613,7 +667,9 @@ async function handleDeployProject(project: any) {
     });
 
     message.destroy('deploying');
-    message.success($t('deploy.packageDeployManagement.projectDeploy.deploySuccess'));
+    message.success(
+      $t('deploy.packageDeployManagement.projectDeploy.deploySuccess'),
+    );
 
     // 打开全局日志查看器（taskType=2 表示部署日志）
     wsStore.openGlobalLogViewer(2);
@@ -654,12 +710,13 @@ function formatDeployedAt(timestamp: number) {
 
 // 获取项目类型名称
 function getProjectTypeName(type: string) {
-  const typeMap: Record<string, string> = {
-    backend: '服务端',
-    frontend: '前端',
-    submodule: '子模块',
+  const keyMap: Record<string, string> = {
+    backend: 'deploy.packageDeployManagement.projectDeploy.projectTypeBackend',
+    frontend: 'deploy.packageDeployManagement.projectDeploy.projectTypeFrontend',
+    submodule: 'deploy.packageDeployManagement.projectDeploy.projectTypeSubmodule',
   };
-  return typeMap[type] || type || '-';
+  const key = keyMap[type];
+  return key ? $t(key) : (type || $t('deploy.packageDeployManagement.projectDeploy.projectTypeDefault'));
 }
 
 // 获取项目类型标签颜色(模态框使用)
@@ -672,22 +729,16 @@ function getProjectTypeColor(type: string) {
 // 获取项目类型文本(模态框使用)
 function getProjectTypeText(type: string) {
   if (type === 'frontend') {
-    return $t('deploy.packageDeployManagement.environmentConfig.versionModal.frontend');
+    return $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.frontend',
+    );
   }
   if (type === 'backend') {
-    return $t('deploy.packageDeployManagement.environmentConfig.versionModal.backend');
+    return $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.backend',
+    );
   }
   return type;
-}
-
-// 获取项目类型图标
-function getProjectTypeIcon(type: string) {
-  const iconMap: Record<string, string> = {
-    backend: '⚙️',
-    frontend: '🎨',
-    submodule: '📦',
-  };
-  return iconMap[type] || '📁';
 }
 
 // 排序项目列表
@@ -798,19 +849,13 @@ function handleWebSocketMessage(message: any) {
     const { eventType } = message.data;
 
     // 处理构建完成事件（刷新版本列表）
-    if (
-      eventType === 'build_completed' &&
-      isComponentActive.value
-    ) {
+    if (eventType === 'build_completed' && isComponentActive.value) {
       loadVersionList();
       message.success('构建已完成，版本列表已更新');
     }
 
     // 处理部署完成事件（刷新版本列表）
-    if (
-      eventType === 'deploy_completed' &&
-      isComponentActive.value
-    ) {
+    if (eventType === 'deploy_completed' && isComponentActive.value) {
       loadVersionList();
       message.success(`部署已完成: ${message.data.version || ''}`);
     }
@@ -831,7 +876,6 @@ onActivated(async () => {
     console.error('onActivated 初始化失败:', error);
   }
 });
-
 
 // changelog modal 状态
 const changelogModalOpen = ref(false);
@@ -903,351 +947,488 @@ onDeactivated(() => {
 <template>
   <Page auto-content-height>
     <div class="flex h-full flex-col gap-4">
-    <!-- 筛选条件区 -->
-    <Card class="flex-shrink-0">
-      <div class="flex w-full items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-4">
-          <!-- 业务线筛选(仅超级管理员) -->
-          <div v-if="isSuperAdmin" class="flex items-center gap-2">
-            <span class="filter-label">
-              {{ $t('system.businessLine.name') }}:
-            </span>
-            <Select
-              v-model:value="selectedBusinessLineId"
-              :options="businessLineOptions"
-              :placeholder="$t('system.businessLine.name')"
-              class="w-48"
-              @change="handleBusinessLineChange"
-            />
-          </div>
-
-          <!-- 分支筛选 -->
-          <div class="flex items-center gap-2">
-            <span class="filter-label">
-              {{ $t('deploy.packageDeployManagement.projectDeploy.branch') }}:
-            </span>
-            <Select
-              v-model:value="selectedBranchId"
-              :options="currentBranchOptions"
-              :placeholder="
-                $t(
-                  'deploy.packageDeployManagement.projectDeploy.branchPlaceholder',
-                )
-              "
-              class="w-48"
-              @change="handleBranchChange"
-            />
-          </div>
-
-          <!-- 发布环境选择 -->
-          <div class="flex items-center gap-2">
-            <span class="filter-label">
-              {{
-                $t(
-                  'deploy.packageDeployManagement.projectDeploy.deployEnvironment',
-                )
-              }}:
-            </span>
-            <Select
-              v-model:value="selectedEnvironmentId"
-              :options="environmentOptions"
-              :placeholder="
-                $t(
-                  'deploy.packageDeployManagement.projectDeploy.deployEnvironmentPlaceholder',
-                )
-              "
-              class="w-48"
-              @change="handleEnvironmentChange"
-            />
-          </div>
-        </div>
-
-        <!-- 操作按钮组 -->
-        <div class="flex flex-shrink-0 items-center gap-3">
-          <Button type="primary" @click="handleShowDeployedVersions">
-            📋 {{ $t('deploy.projectManagement.projectRelease.deployedVersions') }}
-          </Button>
-          <Select
-            v-model:value="sortMode"
-            class="w-36"
-            :options="[
-              { label: $t('deploy.packageDeployManagement.projectDeploy.sortOrderVersion'), value: 'version' },
-              { label: $t('deploy.packageDeployManagement.projectDeploy.sortOrderName'), value: 'name' },
-            ]"
-          />
-          <Button @click="handleRefresh">刷新</Button>
-          <Button @click="handleShowAll">
-            {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
-          </Button>
-        </div>
-      </div>
-    </Card>
-
-    <!-- 版本列表 -->
-    <Card class="flex-1 overflow-y-auto">
-      <Spin :spinning="loading">
-        <div
-          v-if="versionList.length === 0"
-          class="flex items-center justify-center py-20"
-        >
-          <Empty :description="$t('common.noData')" />
-        </div>
-
-        <Collapse
-          v-else
-          v-model:active-key="activeKeys"
-          :bordered="false"
-          expand-icon-position="start"
-          class="version-collapse"
-        >
-          <CollapsePanel v-for="version in sortedVersionList" :key="version.id">
-            <template #header>
-              <div class="flex w-full items-center justify-between pr-4">
-                <div class="flex items-center gap-4">
-                  <Badge
-                    :count="version.children?.length || 0"
-                    :overflow-count="99"
-                    :number-style="{ backgroundColor: '#52c41a' }"
-                  >
-                    <div class="version-title">
-                      {{ version.version }}
-                    </div>
-                  </Badge>
-                  <Tag
-                    :color="
-                      getVersionStatusConfig(
-                        (version && version.status) || 'building',
-                      ).color
-                    "
-                    class="version-status-tag"
-                  >
-                    {{
-                      getVersionStatusConfig(
-                        (version && version.status) || 'building',
-                      ).text
-                    }}
-                  </Tag>
-                  <span class="version-time">
-                    {{ formatTime(version.buildTime) }}
-                  </span>
-                  <!-- 当前版本标记 -->
-                  <Tag
-                    v-if="version.id === currentEnvironmentVersionId"
-                    color="green"
-                    class="current-version-tag"
-                  >
-                    ✓ 当前版本
-                  </Tag>
-                </div>
-
-                <div class="flex items-center gap-2">
-                  <!-- 变更日志按钮 -->
-                  <span
-                    v-if="version.changelog"
-                    class="changelog-btn"
-                    @click.stop="openChangelog(version)"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
-                      <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
-                    </svg>
-                    提交记录
-                  </span>
-                  <Button
-                    type="primary"
-                    size="large"
-                    :disabled="version.status !== 'success'"
-                    @click.stop="handleIncrementalDeploy(version)"
-                  >
-                    📦 {{ $t('deploy.packageDeployManagement.projectDeploy.incrementalDeploy') }}
-                  </Button>
-                  <Button
-                    danger
-                    type="primary"
-                    size="large"
-                    :disabled="version.status !== 'success'"
-                    @click.stop="handleFullDeploy(version)"
-                  >
-                    🚀 {{ $t('deploy.packageDeployManagement.projectDeploy.fullDeploy') }}
-                  </Button>
-                </div>
-              </div>
-            </template>
-
-            <!-- 项目列表两列布局 -->
-            <div
-              class="project-list-columns"
-              :class="{
-                'project-list-columns--single': getSortedProjects(version.children).filter((p) => p.projectType !== 'frontend').length === 0 || getSortedProjects(version.children).filter((p) => p.projectType === 'frontend').length === 0,
-              }"
-            >
-              <!-- 服务端列 -->
-              <div
-                v-if="getSortedProjects(version.children).filter((p) => p.projectType !== 'frontend').length > 0"
-                class="project-column"
-              >
-                <div class="project-column-body">
-                  <template
-                    v-for="project in getSortedProjects(version.children)"
-                    :key="project.id"
-                  >
-                    <div
-                      v-if="project.projectType !== 'frontend'"
-                      class="project-item"
-                      :class="[`project-type-${project.projectType || 'default'}`]"
-                    >
-                      <div class="project-name-col">
-                        <div class="project-name-wrapper">
-                          <span class="project-name">{{
-                            project.projectName || '-'
-                          }}</span>
-                          <span
-                            v-if="!!(project.version && project.version === version.version)"
-                            class="new-badge"
-                          >NEW</span>
-                        </div>
-                        <span v-if="project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
-                      </div>
-                      <span
-                        v-if="project.duration && project.duration > 0"
-                        class="duration-text"
-                      >
-                        ⏱️ {{ formatDuration(project.duration) }}
-                      </span>
-                      <span v-else class="duration-text" />
-                      <Tag color="blue" class="project-type-tag">
-                        {{ getProjectTypeIcon(project.projectType || '') }}
-                        {{ getProjectTypeName(project.projectType || '') }}
-                      </Tag>
-                      <Tag color="red" class="version-tag">
-                        {{ project.version || '-' }}
-                      </Tag>
-                      <span
-                        class="changelog-btn"
-                        :class="{ 'changelog-btn--empty': !project.changelog }"
-                        @click.stop="project.changelog && openChangelog(project)"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
-                          <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
-                        </svg>
-                        提交记录
-                      </span>
-                      <div class="project-actions">
-                        <Tag
-                          v-if="(project && project.status) !== 'success'"
-                          :color="
-                            getStatusConfig((project && project.status) || 'pending')
-                              .color
-                          "
-                          class="status-tag"
-                        >
-                          {{
-                            getStatusConfig((project && project.status) || 'pending')
-                              .text
-                          }}
-                        </Tag>
-                        <Button
-                          type="primary"
-                          size="small"
-                          :disabled="project.status !== 'success'"
-                          @click.stop="handleDeployProject(project)"
-                        >
-                          {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
-                        </Button>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </div>
-              <!-- 前端列 -->
-              <div
-                v-if="getSortedProjects(version.children).filter((p) => p.projectType === 'frontend').length > 0"
-                class="project-column"
-              >
-                <div class="project-column-body">
-                  <template
-                    v-for="project in getSortedProjects(version.children)"
-                    :key="project.id"
-                  >
-                    <div
-                      v-if="project.projectType === 'frontend'"
-                      class="project-item"
-                      :class="[`project-type-${project.projectType || 'default'}`]"
-                    >
-                      <div class="project-name-col">
-                        <div class="project-name-wrapper">
-                          <span class="project-name">{{
-                            project.projectName || '-'
-                          }}</span>
-                          <span
-                            v-if="!!(project.version && project.version === version.version)"
-                            class="new-badge"
-                          >NEW</span>
-                        </div>
-                        <span v-if="project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
-                      </div>
-                      <span
-                        v-if="project.duration && project.duration > 0"
-                        class="duration-text"
-                      >
-                        ⏱️ {{ formatDuration(project.duration) }}
-                      </span>
-                      <span v-else class="duration-text" />
-                      <Tag color="blue" class="project-type-tag">
-                        {{ getProjectTypeIcon(project.projectType || '') }}
-                        {{ getProjectTypeName(project.projectType || '') }}
-                      </Tag>
-                      <Tag color="red" class="version-tag">
-                        {{ project.version || '-' }}
-                      </Tag>
-                      <span
-                        class="changelog-btn"
-                        :class="{ 'changelog-btn--empty': !project.changelog }"
-                        @click.stop="project.changelog && openChangelog(project)"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
-                          <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
-                        </svg>
-                        提交记录
-                      </span>
-                      <div class="project-actions">
-                        <Tag
-                          v-if="(project && project.status) !== 'success'"
-                          :color="
-                            getStatusConfig((project && project.status) || 'pending')
-                              .color
-                          "
-                          class="status-tag"
-                        >
-                          {{
-                            getStatusConfig((project && project.status) || 'pending')
-                              .text
-                          }}
-                        </Tag>
-                        <Button
-                          type="primary"
-                          size="small"
-                          :disabled="project.status !== 'success'"
-                          @click.stop="handleDeployProject(project)"
-                        >
-                          {{ $t('deploy.packageDeployManagement.projectDeploy.deploy') }}
-                        </Button>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </div>
+      <!-- 筛选条件区 -->
+      <Card class="flex-shrink-0">
+        <div class="flex w-full items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-4">
+            <!-- 业务线筛选(仅超级管理员) -->
+            <div v-if="isSuperAdmin" class="flex items-center gap-2">
+              <span class="filter-label">
+                {{ $t('system.businessLine.name') }}:
+              </span>
+              <Select
+                v-model:value="selectedBusinessLineId"
+                :options="businessLineOptions"
+                :placeholder="$t('system.businessLine.name')"
+                class="w-48"
+                @change="handleBusinessLineChange"
+              />
             </div>
-          </CollapsePanel>
-        </Collapse>
-      </Spin>
-    </Card>
 
-    </div><!-- end flex container -->
+            <!-- 分支筛选 -->
+            <div class="flex items-center gap-2">
+              <span class="filter-label">
+                {{ $t('deploy.packageDeployManagement.projectDeploy.branch') }}:
+              </span>
+              <Select
+                v-model:value="selectedBranchId"
+                :options="currentBranchOptions"
+                :placeholder="
+                  $t(
+                    'deploy.packageDeployManagement.projectDeploy.branchPlaceholder',
+                  )
+                "
+                class="w-48"
+                @change="handleBranchChange"
+              />
+            </div>
+
+            <!-- 发布环境选择 -->
+            <div class="flex items-center gap-2">
+              <span class="filter-label">
+                {{
+                  $t(
+                    'deploy.packageDeployManagement.projectDeploy.deployEnvironment',
+                  )
+                }}:
+              </span>
+              <Select
+                v-model:value="selectedEnvironmentId"
+                :options="environmentOptions"
+                :placeholder="
+                  $t(
+                    'deploy.packageDeployManagement.projectDeploy.deployEnvironmentPlaceholder',
+                  )
+                "
+                class="w-48"
+                @change="handleEnvironmentChange"
+              />
+            </div>
+          </div>
+
+          <!-- 操作按钮组 -->
+          <div class="flex flex-shrink-0 items-center gap-3">
+            <Button type="primary" @click="handleShowDeployedVersions">
+              <GitCompareArrows class="mr-1 size-4" />
+              {{
+                $t('deploy.projectManagement.projectRelease.deployedVersions')
+              }}
+            </Button>
+            <Select
+              v-model:value="sortMode"
+              class="w-36"
+              :options="[
+                {
+                  label: $t(
+                    'deploy.packageDeployManagement.projectDeploy.sortOrderVersion',
+                  ),
+                  value: 'version',
+                },
+                {
+                  label: $t(
+                    'deploy.packageDeployManagement.projectDeploy.sortOrderName',
+                  ),
+                  value: 'name',
+                },
+              ]"
+            />
+            <Button @click="handleRefresh">{{ $t('deploy.packageDeployManagement.projectDeploy.refresh') }}</Button>
+            <Button @click="handleShowAll">
+              {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
+            </Button>
+            <Button :type="showImageName ? 'primary' : 'default'" @click="showImageName = !showImageName">{{ $t('deploy.packageDeployManagement.projectDeploy.showImageName') }}</Button>
+          </div>
+        </div>
+      </Card>
+
+      <!-- 版本列表 -->
+      <Card class="flex-1 overflow-y-auto">
+        <Spin :spinning="loading">
+          <div
+            v-if="versionList.length === 0"
+            class="flex items-center justify-center py-20"
+          >
+            <Empty :description="$t('common.noData')" />
+          </div>
+
+          <Collapse
+            v-else
+            v-model:active-key="activeKeys"
+            :bordered="false"
+            expand-icon-position="start"
+            class="version-collapse"
+          >
+            <CollapsePanel
+              v-for="version in sortedVersionList"
+              :key="version.id"
+            >
+              <template #header>
+                <div class="flex w-full items-center justify-between pr-4">
+                  <div class="flex items-center gap-4">
+                    <Badge
+                      :count="version.children?.length || 0"
+                      :overflow-count="99"
+                      :number-style="{ backgroundColor: '#52c41a' }"
+                    >
+                      <div class="version-title">
+                        {{ version.version }}
+                      </div>
+                    </Badge>
+                    <Tag
+                      :color="
+                        getVersionStatusConfig(
+                          (version && version.status) || 'building',
+                        ).color
+                      "
+                      class="version-status-tag"
+                    >
+                      {{
+                        getVersionStatusConfig(
+                          (version && version.status) || 'building',
+                        ).text
+                      }}
+                    </Tag>
+                    <span class="version-time">
+                      {{ formatTime(version.buildTime) }}
+                    </span>
+                    <!-- 当前版本标记 -->
+                    <Tag
+                      v-if="version.id === currentEnvironmentVersionId"
+                      color="green"
+                      class="current-version-tag"
+                    >
+                      ✓ {{ $t('deploy.packageDeployManagement.projectDeploy.currentVersion') }}
+                    </Tag>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <!-- 变更日志按钮 -->
+                    <span
+                      v-if="version.changelog"
+                      class="changelog-btn"
+                      @click.stop="openChangelog(version)"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="13"
+                        height="13"
+                        viewBox="0 0 92 92"
+                        fill="currentColor"
+                        style="flex-shrink: 0"
+                      >
+                        <path
+                          d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"
+                        />
+                      </svg>
+                      提交记录
+                    </span>
+                    <Button
+                      type="primary"
+                      size="large"
+                      :disabled="version.status !== 'success'"
+                      @click.stop="handleIncrementalDeploy(version)"
+                    >
+                      <ArrowUp10 />
+                      {{
+                        $t(
+                          'deploy.packageDeployManagement.projectDeploy.incrementalDeploy',
+                        )
+                      }}
+                    </Button>
+                    <Button
+                      danger
+                      type="primary"
+                      size="large"
+                      :disabled="version.status !== 'success'"
+                      @click.stop="handleFullDeploy(version)"
+                    >
+                      <Hammer />
+                      {{
+                        $t(
+                          'deploy.packageDeployManagement.projectDeploy.fullDeploy',
+                        )
+                      }}
+                    </Button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 项目列表两列布局 -->
+              <div
+                class="project-list-columns"
+                :class="{
+                  'project-list-columns--single':
+                    getSortedProjects(version.children).filter(
+                      (p) => p.projectType !== 'frontend',
+                    ).length === 0 ||
+                    getSortedProjects(version.children).filter(
+                      (p) => p.projectType === 'frontend',
+                    ).length === 0,
+                }"
+              >
+                <!-- 服务端列 -->
+                <div
+                  v-if="
+                    getSortedProjects(version.children).filter(
+                      (p) => p.projectType !== 'frontend',
+                    ).length > 0
+                  "
+                  class="project-column"
+                >
+                  <div class="project-column-body">
+                    <template
+                      v-for="project in getSortedProjects(version.children)"
+                      :key="project.id"
+                    >
+                      <div
+                        v-if="project.projectType !== 'frontend'"
+                        class="project-item"
+                        :class="[
+                          `project-type-${project.projectType || 'default'}`,
+                        ]"
+                      >
+                        <div class="project-name-col">
+                          <div class="project-name-wrapper">
+                            <span class="project-name">{{
+                              project.projectName || '-'
+                            }}</span>
+                            <span
+                              v-if="
+                                !!(
+                                  project.version &&
+                                  project.version === version.version
+                                )
+                              "
+                              class="new-badge"
+                              >NEW</span
+                            >
+                          </div>
+                          <span
+                            v-if="showImageName && project.imageName"
+                            class="project-image-name"
+                            >{{ project.imageName
+                            }}{{
+                              project.imageTag ? `:${project.imageTag}` : ''
+                            }}</span
+                          >
+                        </div>
+                        <span
+                          v-if="project.duration && project.duration > 0"
+                          class="duration-text"
+                        >
+                          ⏱️ {{ formatDuration(project.duration) }}
+                        </span>
+                        <span v-else class="duration-text" />
+                        <Tag color="blue" class="project-type-tag">
+                          <span class="project-type-tag-inner">
+                            <component
+                              :is="getProjectTypeIcon(project.projectType || '')"
+                              :size="15"
+                              class="project-type-icon"
+                              :class="`project-type-icon--${project.projectType || 'default'}`"
+                            />
+                            {{ getProjectTypeName(project.projectType || '') }}
+                          </span>
+                        </Tag>
+                        <Tag color="red" class="version-tag">
+                          {{ project.version || '-' }}
+                        </Tag>
+                        <span
+                          class="changelog-btn"
+                          :class="{
+                            'changelog-btn--empty': !project.changelog,
+                          }"
+                          @click.stop="
+                            project.changelog && openChangelog(project)
+                          "
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="11"
+                            height="11"
+                            viewBox="0 0 92 92"
+                            fill="currentColor"
+                            style="flex-shrink: 0"
+                          >
+                            <path
+                              d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"
+                            />
+                          </svg>
+                          {{ $t('deploy.packageDeployManagement.projectDeploy.commitLog') }}
+                        </span>
+                        <div class="project-actions">
+                          <Tag
+                            v-if="(project && project.status) !== 'success'"
+                            :color="
+                              getStatusConfig(
+                                (project && project.status) || 'pending',
+                              ).color
+                            "
+                            class="status-tag"
+                          >
+                            {{
+                              getStatusConfig(
+                                (project && project.status) || 'pending',
+                              ).text
+                            }}
+                          </Tag>
+                          <Button
+                            type="primary"
+                            size="small"
+                            :disabled="project.status !== 'success'"
+                            @click.stop="handleDeployProject(project)"
+                          >
+                            {{
+                              $t(
+                                'deploy.packageDeployManagement.projectDeploy.deploy',
+                              )
+                            }}
+                          </Button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+                <!-- 前端列 -->
+                <div
+                  v-if="
+                    getSortedProjects(version.children).filter(
+                      (p) => p.projectType === 'frontend',
+                    ).length > 0
+                  "
+                  class="project-column"
+                >
+                  <div class="project-column-body">
+                    <template
+                      v-for="project in getSortedProjects(version.children)"
+                      :key="project.id"
+                    >
+                      <div
+                        v-if="project.projectType === 'frontend'"
+                        class="project-item"
+                        :class="[
+                          `project-type-${project.projectType || 'default'}`,
+                        ]"
+                      >
+                        <div class="project-name-col">
+                          <div class="project-name-wrapper">
+                            <span class="project-name">{{
+                              project.projectName || '-'
+                            }}</span>
+                            <span
+                              v-if="
+                                !!(
+                                  project.version &&
+                                  project.version === version.version
+                                )
+                              "
+                              class="new-badge"
+                              >NEW</span
+                            >
+                          </div>
+                          <span
+                            v-if="showImageName && project.imageName"
+                            class="project-image-name"
+                            >{{ project.imageName
+                            }}{{
+                              project.imageTag ? `:${project.imageTag}` : ''
+                            }}</span
+                          >
+                        </div>
+                        <span
+                          v-if="project.duration && project.duration > 0"
+                          class="duration-text"
+                        >
+                          ⏱️ {{ formatDuration(project.duration) }}
+                        </span>
+                        <span v-else class="duration-text" />
+                        <Tag color="blue" class="project-type-tag">
+                          <span class="project-type-tag-inner">
+                            <component
+                              :is="getProjectTypeIcon(project.projectType || '')"
+                              :size="15"
+                              class="project-type-icon"
+                              :class="`project-type-icon--${project.projectType || 'default'}`"
+                            />
+                            {{ getProjectTypeName(project.projectType || '') }}
+                          </span>
+                        </Tag>
+                        <Tag color="red" class="version-tag">
+                          {{ project.version || '-' }}
+                        </Tag>
+                        <span
+                          class="changelog-btn"
+                          :class="{
+                            'changelog-btn--empty': !project.changelog,
+                          }"
+                          @click.stop="
+                            project.changelog && openChangelog(project)
+                          "
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="11"
+                            height="11"
+                            viewBox="0 0 92 92"
+                            fill="currentColor"
+                            style="flex-shrink: 0"
+                          >
+                            <path
+                              d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"
+                            />
+                          </svg>
+                          {{ $t('deploy.packageDeployManagement.projectDeploy.commitLog') }}
+                        </span>
+                        <div class="project-actions">
+                          <Tag
+                            v-if="(project && project.status) !== 'success'"
+                            :color="
+                              getStatusConfig(
+                                (project && project.status) || 'pending',
+                              ).color
+                            "
+                            class="status-tag"
+                          >
+                            {{
+                              getStatusConfig(
+                                (project && project.status) || 'pending',
+                              ).text
+                            }}
+                          </Tag>
+                          <Button
+                            type="primary"
+                            size="small"
+                            :disabled="project.status !== 'success'"
+                            @click.stop="handleDeployProject(project)"
+                          >
+                            {{
+                              $t(
+                                'deploy.packageDeployManagement.projectDeploy.deploy',
+                              )
+                            }}
+                          </Button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </CollapsePanel>
+          </Collapse>
+        </Spin>
+      </Card>
+    </div>
+    <!-- end flex container -->
 
     <!-- 部署版本模态框 -->
     <Modal
       v-model:open="versionModalOpen"
-      :title="$t('deploy.packageDeployManagement.environmentConfig.versionModal.title', [currentEnvironmentName])"
+      :title="
+        $t(
+          'deploy.packageDeployManagement.environmentConfig.versionModal.title',
+          [currentEnvironmentName],
+        )
+      "
       width="800px"
       :footer="null"
       @cancel="handleCloseVersionModal"
@@ -1272,8 +1453,12 @@ onDeactivated(() => {
           </template>
         </template>
         <template #emptyText>
-          <div style="padding: 40px 0; text-align: center; color: #999;">
-            {{ $t('deploy.packageDeployManagement.environmentConfig.versionModal.noData') }}
+          <div style="padding: 40px 0; text-align: center; color: #999">
+            {{
+              $t(
+                'deploy.packageDeployManagement.environmentConfig.versionModal.noData',
+              )
+            }}
           </div>
         </template>
       </Table>
@@ -1282,11 +1467,18 @@ onDeactivated(() => {
     <!-- Changelog Modal -->
     <Modal
       v-model:open="changelogModalOpen"
-      :title="$t('deploy.packageDeployManagement.projectDeploy.changelogTitle', [changelogVersion?.version])"
+      :title="
+        $t('deploy.packageDeployManagement.projectDeploy.changelogTitle', [
+          changelogVersion?.version,
+        ])
+      "
       :footer="null"
       width="800px"
     >
-      <div v-if="changelogCommits.length === 0" class="py-8 text-center text-gray-400">
+      <div
+        v-if="changelogCommits.length === 0"
+        class="py-8 text-center text-gray-400"
+      >
         {{ $t('deploy.packageDeployManagement.projectDeploy.changelogEmpty') }}
       </div>
       <div v-else class="changelog-list">
@@ -1297,14 +1489,19 @@ onDeactivated(() => {
         >
           <span class="commit-title">{{ commit.title }}</span>
           <div class="commit-meta">
-            <Tag color="warning" class="commit-id-tag">{{ commit.shortId }}</Tag>
-            <Tag color="blue" class="commit-author-tag">{{ commit.authorName }}</Tag>
-            <Tag class="commit-time-tag">{{ formatCommitTime(commit.committedAt) }}</Tag>
+            <Tag color="warning" class="commit-id-tag">{{
+              commit.shortId
+            }}</Tag>
+            <Tag color="blue" class="commit-author-tag">{{
+              commit.authorName
+            }}</Tag>
+            <Tag class="commit-time-tag">{{
+              formatCommitTime(commit.committedAt)
+            }}</Tag>
           </div>
         </div>
       </div>
     </Modal>
-
   </Page>
 </template>
 
@@ -1354,6 +1551,17 @@ onDeactivated(() => {
   padding: 0 12px;
   font-size: 13px;
 }
+
+.project-type-tag-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+:deep(.project-type-icon--backend) { color: #69b1ff; }
+:deep(.project-type-icon--frontend) { color: #95de64; }
+:deep(.project-type-icon--submodule) { color: #ffd666; }
+:deep(.project-type-icon--default) { color: #d9d9d9; }
 
 .current-version-tag {
   flex-shrink: 0;
@@ -1417,7 +1625,9 @@ onDeactivated(() => {
   font-size: 12px;
   cursor: pointer;
   opacity: 0.85;
-  transition: opacity 0.15s, background-color 0.15s;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
   vertical-align: middle;
   line-height: 1;
 }
@@ -1510,5 +1720,4 @@ onDeactivated(() => {
   font-size: 11px;
   justify-self: start;
 }
-
 </style>

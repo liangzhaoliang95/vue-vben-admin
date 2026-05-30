@@ -324,7 +324,7 @@
     },
     "projectRelease": {
       "title": "项目Release",
-      "deployedVersions": "部署版本",
+      "deployedVersions": "已部署版本",
       "viewDeployedVersions": "查看部署版本",
       "selectEnvironmentFirst": "请先选择发布环境"
     }
@@ -376,7 +376,15 @@
       "commitProject": "所属项目",
       "sortOrder": "排序",
       "sortOrderVersion": "按版本号排序",
-      "sortOrderName": "按名称排序"
+      "sortOrderName": "按名称排序",
+      "showImageName": "获取镜像版本",
+      "refresh": "刷新",
+      "commitLog": "提交记录",
+      "projectTypeBackend": "服务端",
+      "projectTypeFrontend": "前端",
+      "projectTypeSubmodule": "子模块",
+      "projectTypeDefault": "未知",
+      "currentVersion": "当前版本"
     },
     "projectPackage": {
       "title": "项目打包",
@@ -439,7 +447,25 @@
       "sortOrder": "排序",
       "sortOrderVersion": "按版本号排序",
       "sortOrderName": "按名称排序",
-      "preBuildCheck": "构建预检查"
+      "preBuildCheck": "构建预检查",
+      "refresh": "刷新",
+      "startBuild": "开始构建",
+      "forceBuild": "强制构建",
+      "forceBuildConfirm": "强制构建将跳过 tag 和镜像检查，强制重新构建所有项目。确定要继续吗？",
+      "startBuildConfirm": "确定要开始构建吗？构建过程可能需要几分钟时间。",
+      "commitLog": "提交记录",
+      "newBadge": "NEW",
+      "projectTypeBackend": "服务端",
+      "projectTypeFrontend": "前端",
+      "projectTypeSubmodule": "子模块",
+      "projectTypeDefault": "未知",
+      "refreshSuccess": "刷新成功",
+      "showAllSuccess": "全量获取成功",
+      "showAllFailed": "全量获取失败",
+      "buildStarted": "构建任务已启动，请查看实时日志",
+      "buildStartFailed": "启动构建失败",
+      "forceBuildStarted": "强制构建任务已启动，请查看实时日志",
+      "forceBuildStartFailed": "启动强制构建失败"
     },
     "deployHistory": {
       "projectName": "项目名称",
@@ -476,6 +502,10 @@
       "versionTemplate": "版本号模板",
       "versionTemplatePlaceholder": "可选：如 5.66.4{{number:3}}",
       "versionTemplateHelp": "仅支持 {{number:N}}，首个版本从 1 开始并按位数自动补0（如 001）",
+      "initialVersion": "起始版本号",
+      "initialVersionPlaceholder": "可选：指定构建起始版本号",
+      "initialVersionHelp": "有模板时只需输入占位符部分（如模板为 5.66.4{{number:3}}，则输入 001）；无模板时格式为 分支名.数字",
+      "defaultVersion": "初始版本号",
       "sortOrder": "排序",
       "sortOrderPlaceholder": "请输入排序数字（数字越小越靠前）",
       "projectName": "项目名称",

@@ -31,14 +31,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
 const businessStore = useBusinessStore();
 
-// 全量分支 id -> name 映射，供父分支列显示用
-const parentBranchMap = ref<Record<string, string>>({});
-
 // 拓扑预览
 const topologyOpen = ref(false);
 const allBranches = ref<BranchManagementApi.BranchManagement[]>([]);
 
-async function loadParentBranchMap() {
+async function loadAllBranches() {
   const isSuperAdmin = businessStore.currentRole?.isSuper === true;
   const params: any = { page: 1, pageSize: 1000 };
   if (!isSuperAdmin) {
@@ -47,11 +44,6 @@ async function loadParentBranchMap() {
       businessStore.currentBusinessLineId;
   }
   const res = await getBranchManagementList(params);
-  const map: Record<string, string> = {};
-  for (const item of res.items || []) {
-    map[item.id] = item.name;
-  }
-  parentBranchMap.value = map;
   allBranches.value = res.items || [];
 }
 
@@ -61,7 +53,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     submitOnChange: true,
   },
   gridOptions: {
-    columns: useColumns(onActionClick, onToggleEnabled, parentBranchMap),
+    columns: useColumns(onActionClick, onToggleEnabled),
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -74,9 +66,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...formValues,
           };
 
-          // 业务线筛选逻辑：
-          // 1. 超级管理员：如果前端筛选条件中有businessLineId，则使用；否则不传，后端会查所有业务线
-          // 2. 非超级管理员：不传businessLineId，让后端使用token中的
           if (!isSuperAdmin) {
             delete queryParams.businessLineId;
           }
@@ -98,21 +87,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<BranchManagementApi.BranchManagement>,
 });
 
-// 路由激活时刷新数据
 onMounted(() => {
-  loadParentBranchMap();
+  loadAllBranches();
 });
 
 onActivated(() => {
-  loadParentBranchMap();
+  loadAllBranches();
   gridApi.query();
 });
 
-// 监听业务线ID变化,自动刷新数据
 watch(
   () => businessStore.currentBusinessLineId,
   () => {
-    loadParentBranchMap();
+    loadAllBranches();
     gridApi.query();
   },
 );
@@ -132,7 +119,6 @@ function onEdit(row: BranchManagementApi.BranchManagement) {
   formDrawerApi.setData(row).open();
 }
 
-// 切换分支启用状态
 async function onToggleEnabled(row: BranchManagementApi.BranchManagement) {
   const newStatus = !row.enabled;
   const actionText = newStatus
@@ -150,18 +136,12 @@ async function onToggleEnabled(row: BranchManagementApi.BranchManagement) {
     );
     gridApi.query();
   } catch {
-    message.error(
-      $t('deploy.packageDeployManagement.branchManagement.toggleFailed', [
-        actionText,
-      ]),
-    );
-    // 恢复开关状态
     gridApi.query();
   }
 }
 
 function onRefresh() {
-  loadParentBranchMap();
+  loadAllBranches();
   gridApi.query();
 }
 
