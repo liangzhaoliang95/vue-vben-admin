@@ -328,6 +328,16 @@ async function handleBuild() {
     return;
   }
 
+  // 检查该分支下是否有进行中的任务
+  if (hasRunningTaskInBranch()) {
+    message.warning(
+      $t(
+        'deploy.packageDeployManagement.projectPackage.branchHasRunningTask',
+      ),
+    );
+    return;
+  }
+
   try {
     await confirm($t('deploy.packageDeployManagement.projectPackage.startBuildConfirm'), $t('deploy.packageDeployManagement.projectPackage.startBuild'));
 
@@ -367,6 +377,16 @@ async function handleForceBuild() {
     return;
   }
 
+  // 检查该分支下是否有进行中的任务
+  if (hasRunningTaskInBranch()) {
+    message.warning(
+      $t(
+        'deploy.packageDeployManagement.projectPackage.branchHasRunningTask',
+      ),
+    );
+    return;
+  }
+
   try {
     await confirm(
       $t('deploy.packageDeployManagement.projectPackage.forceBuildConfirm'),
@@ -403,6 +423,20 @@ async function handleForceBuild() {
   }
 }
 
+// 检查当前分支是否有进行中的任务（pending 或 running）
+function hasRunningTaskInBranch(): boolean {
+  for (const version of versionList.value) {
+    if (version.children && version.children.length > 0) {
+      for (const task of version.children) {
+        if (task.status === 'pending' || task.status === 'running') {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 // 预构建检查
 async function handlePreBuildCheck() {
   if (!selectedBranchId.value) {
@@ -410,14 +444,28 @@ async function handlePreBuildCheck() {
     return;
   }
 
+  // 检查该分支下是否有进行中的任务
+  if (hasRunningTaskInBranch()) {
+    message.warning(
+      $t(
+        'deploy.packageDeployManagement.projectPackage.branchHasRunningTask',
+      ),
+    );
+    return;
+  }
+
   try {
     await triggerPreBuildCheck({ branchId: selectedBranchId.value });
-    message.success('预检查任务已启动，请查看实时日志');
+    message.success(
+      $t('deploy.packageDeployManagement.projectPackage.preBuildCheckStarted'),
+    );
     // 打开全局日志查看器（commandId=3 表示预检查日志）
     wsStore.openGlobalLogViewer(3);
   } catch (error) {
     console.error('启动预检查失败:', error);
-    message.error('启动预检查失败');
+    message.error(
+      $t('deploy.packageDeployManagement.projectPackage.preBuildCheckStartFailed'),
+    );
   }
 }
 
