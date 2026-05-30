@@ -89,6 +89,27 @@
     "keyword": "搜索关键词",
     "enableLocalBuild": "是否启用本地构建"
   },
+  "auditLog": {
+    "title": "日志审计",
+    "name": "审计日志",
+    "loginName": "登录名",
+    "loginNamePlaceholder": "请输入登录名",
+    "userName": "用户名",
+    "description": "操作描述",
+    "actionDesc": "行为描述",
+    "auditKey": "操作类型",
+    "auditKeyPlaceholder": "请选择操作类型",
+    "businessLineId": "业务线",
+    "startTime": "开始时间",
+    "endTime": "结束时间",
+    "timeRange": "时间范围",
+    "responseCode": "响应码",
+    "duration": "耗时(ms)",
+    "clientIp": "客户端IP",
+    "createdAt": "操作时间",
+    "auditKeyBuild": "构建操作",
+    "auditKeyDeploy": "发布操作"
+  },
   "role": {
     "title": "角色管理",
     "list": "角色列表",

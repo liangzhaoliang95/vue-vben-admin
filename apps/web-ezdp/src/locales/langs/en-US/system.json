@@ -89,6 +89,27 @@
     "keyword": "Keyword",
     "enableLocalBuild": "Enable Local Build"
   },
+  "auditLog": {
+    "title": "Audit Log",
+    "name": "Audit Log",
+    "loginName": "Login Name",
+    "loginNamePlaceholder": "Enter login name",
+    "userName": "User Name",
+    "description": "Operation",
+    "actionDesc": "Action Description",
+    "auditKey": "Operation Type",
+    "auditKeyPlaceholder": "Select operation type",
+    "businessLineId": "Business Line",
+    "startTime": "Start Time",
+    "endTime": "End Time",
+    "timeRange": "Time Range",
+    "responseCode": "Response Code",
+    "duration": "Duration(ms)",
+    "clientIp": "Client IP",
+    "createdAt": "Operation Time",
+    "auditKeyBuild": "Build",
+    "auditKeyDeploy": "Deploy"
+  },
   "role": {
     "title": "Role Management",
     "list": "Role List",

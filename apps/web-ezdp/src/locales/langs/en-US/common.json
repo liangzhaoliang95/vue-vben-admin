@@ -29,5 +29,7 @@
   "confirmDelete": "Confirm Delete",
   "pleaseSelect": "Please select",
   "yes": "Yes",
-  "no": "No"
+  "no": "No",
+  "search": "Search",
+  "reset": "Reset"
 }
