@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { useBusinessStore } from '@vben/stores';
@@ -34,13 +34,28 @@ const initialVersionPrefix = ref<string>(''); // 模板前缀 或 分支名.
 const initialVersionSuffix = ref<string>(''); // 模板后缀
 const initialVersionWidth = ref<number>(0);
 const hasVersionTemplate = ref<boolean>(false);
+const isInitializingForm = ref(false);
+
+const currentBranchName = computed(() =>
+  String(formApi.form.values?.name || '').trim(),
+);
+
+const resolvedInitialVersionPrefix = computed(() => {
+  if (initialVersionPrefix.value) {
+    return initialVersionPrefix.value;
+  }
+  if (!hasVersionTemplate.value && currentBranchName.value) {
+    return `${currentBranchName.value}.`;
+  }
+  return '';
+});
 
 // 解析版本号模板
 function parseVersionTemplate(template: string): {
   prefix: string;
   suffix: string;
-  width: number;
   valid: boolean;
+  width: number;
 } {
   if (!template) return { prefix: '', suffix: '', width: 0, valid: false };
   const match = template.match(/^(.*?)\{\{number:([1-9]\d*)\}\}(.*)$/);
@@ -48,14 +63,19 @@ function parseVersionTemplate(template: string): {
   const prefix = match[1] ?? '';
   const width = Number.parseInt(match[2] ?? '0', 10);
   const suffix = match[3] ?? '';
-  if (!prefix && !suffix) return { prefix: '', suffix: '', width: 0, valid: false };
+  if (!prefix && !suffix)
+    return { prefix: '', suffix: '', width: 0, valid: false };
   return { prefix, suffix, width, valid: true };
 }
 
 // 完整起始版本号
 const fullInitialVersion = computed(() => {
   if (!initialVersionInput.value) return '';
-  return initialVersionPrefix.value + initialVersionInput.value + initialVersionSuffix.value;
+  return (
+    resolvedInitialVersionPrefix.value +
+    initialVersionInput.value +
+    initialVersionSuffix.value
+  );
 });
 
 // 占位符 placeholder
@@ -97,6 +117,30 @@ async function loadBranchOptions() {
   }));
 }
 
+function extractInitialVersionInput(savedInitialVersion: string) {
+  if (!savedInitialVersion) {
+    return '';
+  }
+
+  let numPart = savedInitialVersion;
+  if (
+    resolvedInitialVersionPrefix.value &&
+    numPart.startsWith(resolvedInitialVersionPrefix.value)
+  ) {
+    numPart = numPart.slice(resolvedInitialVersionPrefix.value.length);
+  }
+  if (
+    initialVersionSuffix.value &&
+    numPart.endsWith(initialVersionSuffix.value)
+  ) {
+    numPart = numPart.slice(
+      0,
+      numPart.length - initialVersionSuffix.value.length,
+    );
+  }
+  return numPart;
+}
+
 const [Form, formApi] = useVbenForm({
   schema: [
     {
@@ -130,8 +174,12 @@ const [Form, formApi] = useVbenForm({
         ),
       },
       fieldName: 'versionTemplate',
-      help: $t('deploy.packageDeployManagement.branchManagement.versionTemplateHelp'),
-      label: $t('deploy.packageDeployManagement.branchManagement.versionTemplate'),
+      help: $t(
+        'deploy.packageDeployManagement.branchManagement.versionTemplateHelp',
+      ),
+      label: $t(
+        'deploy.packageDeployManagement.branchManagement.versionTemplate',
+      ),
     },
     {
       component: 'Textarea',
@@ -147,16 +195,22 @@ const [Form, formApi] = useVbenForm({
     },
   ],
   showDefaultActions: false,
-});
-
-// 监听 form 中 versionTemplate 和 name 的变化，实时更新前缀
-watch(
-  () => [formApi.form.values?.versionTemplate, formApi.form.values?.name],
-  ([template, name]) => {
-    syncTemplateState(template as string || '', name as string || '');
-    initialVersionInput.value = '';
+  handleValuesChange: async (values, fieldsChanged) => {
+    if (isInitializingForm.value) {
+      return;
+    }
+    if (
+      fieldsChanged.includes('name') ||
+      fieldsChanged.includes('versionTemplate')
+    ) {
+      syncTemplateState(
+        String(values.versionTemplate || ''),
+        String(values.name || ''),
+      );
+      initialVersionInput.value = '';
+    }
   },
-);
+});
 
 const [Drawer, drawerApi] = useVbenDrawer({
   async onConfirm() {
@@ -165,6 +219,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
   async onOpenChange(isOpen) {
     if (isOpen) {
+      isInitializingForm.value = true;
       const data = drawerApi.getData<any>();
       formApi.resetForm();
       parentBranchId.value = undefined;
@@ -183,38 +238,18 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
         const template = data.versionTemplate || '';
         const branchName = data.name || '';
-        const parsed = parseVersionTemplate(template);
-        hasVersionTemplate.value = parsed.valid;
-        if (parsed.valid) {
-          initialVersionPrefix.value = parsed.prefix;
-          initialVersionSuffix.value = parsed.suffix;
-          initialVersionWidth.value = parsed.width;
-        } else {
-          initialVersionPrefix.value = branchName ? `${branchName}.` : '';
-          initialVersionSuffix.value = '';
-          initialVersionWidth.value = 0;
-        }
 
-        // 回填起始版本号：提取用户输入部分
-        const savedInitialVersion = data.initialVersion || '';
-        if (savedInitialVersion) {
-          let numPart = savedInitialVersion;
-          if (initialVersionPrefix.value && numPart.startsWith(initialVersionPrefix.value)) {
-            numPart = numPart.slice(initialVersionPrefix.value.length);
-          }
-          if (initialVersionSuffix.value && numPart.endsWith(initialVersionSuffix.value)) {
-            numPart = numPart.slice(0, numPart.length - initialVersionSuffix.value.length);
-          }
-          initialVersionInput.value = numPart;
-        }
-
-        formApi.setValues({
+        await formApi.setValues({
           name: branchName,
           versionTemplate: template,
           sortOrder: data.sortOrder || 0,
           description: data.description || '',
           businessLineId: data.businessLineId,
         });
+        syncTemplateState(template, branchName);
+        initialVersionInput.value = extractInitialVersionInput(
+          data.initialVersion || '',
+        );
       } else {
         id.value = undefined;
         const defaultBusinessLineId =
@@ -223,6 +258,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
           formApi.setValues({ businessLineId: defaultBusinessLineId });
         }
       }
+      await nextTick();
+      isInitializingForm.value = false;
     }
   },
 });
@@ -238,12 +275,15 @@ const title = computed(() =>
 );
 
 // 校验起始版本号输入
-function validateInitialVersionInput(): string | null {
+function validateInitialVersionInput(): null | string {
   const input = initialVersionInput.value;
   if (!input) return null;
 
   if (hasVersionTemplate.value) {
-    if (initialVersionWidth.value > 0 && input.length !== initialVersionWidth.value) {
+    if (
+      initialVersionWidth.value > 0 &&
+      input.length !== initialVersionWidth.value
+    ) {
       return `占位符部分长度应为 ${initialVersionWidth.value} 位`;
     }
     if (!/^\d+$/.test(input)) {
@@ -311,18 +351,28 @@ async function handleConfirm() {
     <!-- 起始版本号输入框（在版本号模板下方） -->
     <div class="mb-5 flex items-start gap-2 px-2">
       <label class="w-[100px] shrink-0 pt-1 text-right text-sm">
-        {{ $t('deploy.packageDeployManagement.branchManagement.initialVersion') }}
+        {{
+          $t('deploy.packageDeployManagement.branchManagement.initialVersion')
+        }}
       </label>
       <div class="flex-1">
         <Input
           v-model:value="initialVersionInput"
-          :addon-before="initialVersionPrefix || undefined"
+          :addon-before="resolvedInitialVersionPrefix || undefined"
           :addon-after="initialVersionSuffix || undefined"
           :placeholder="initialVersionInputPlaceholder"
-          :maxlength="hasVersionTemplate && initialVersionWidth > 0 ? initialVersionWidth : undefined"
+          :maxlength="
+            hasVersionTemplate && initialVersionWidth > 0
+              ? initialVersionWidth
+              : undefined
+          "
         />
         <div class="mt-1 text-xs text-gray-400">
-          {{ $t('deploy.packageDeployManagement.branchManagement.initialVersionHelp') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.initialVersionHelp',
+            )
+          }}
         </div>
       </div>
     </div>
@@ -335,14 +385,25 @@ async function handleConfirm() {
         <Select
           v-model:value="parentBranchId"
           :options="branchOptions"
-          :placeholder="$t('deploy.packageDeployManagement.branchManagement.parentBranchPlaceholder')"
+          :placeholder="
+            $t(
+              'deploy.packageDeployManagement.branchManagement.parentBranchPlaceholder',
+            )
+          "
           :allow-clear="true"
           :show-search="true"
-          :filter-option="(input: string, option: any) => option.label.toLowerCase().includes(input.toLowerCase())"
+          :filter-option="
+            (input: string, option: any) =>
+              option.label.toLowerCase().includes(input.toLowerCase())
+          "
           class="w-full"
         />
         <div class="mt-1 text-xs text-gray-400">
-          {{ $t('deploy.packageDeployManagement.branchManagement.parentBranchHelp') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.parentBranchHelp',
+            )
+          }}
         </div>
       </div>
     </div>
