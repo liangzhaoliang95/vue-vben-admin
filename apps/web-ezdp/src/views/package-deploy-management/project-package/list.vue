@@ -1019,7 +1019,9 @@ onDeactivated(() => {
                             stroke-linecap="round"
                             stroke-linejoin="round"
                           >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <path
+                              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                            />
                             <polyline points="14 2 14 8 20 8" />
                             <line x1="8" y1="13" x2="10" y2="11" />
                             <polyline points="8 17 10 15 12 17 14 15 16 17" />
@@ -1053,8 +1055,12 @@ onDeactivated(() => {
                             stroke-linecap="round"
                             stroke-linejoin="round"
                           >
-                            <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1" />
-                            <path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1" />
+                            <path
+                              d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"
+                            />
+                            <path
+                              d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"
+                            />
                           </svg>
                         </template>
                       </Button>
@@ -1144,14 +1150,17 @@ onDeactivated(() => {
                                 )
                               "
                               class="new-badge"
-                              >NEW</span>
+                              >NEW</span
+                            >
                           </div>
                           <span
                             v-if="showImageName && project.imageName"
                             class="project-image-name"
-                            >{{ project.imageName }}{{
+                            >{{ project.imageName
+                            }}{{
                               project.imageTag ? `:${project.imageTag}` : ''
-                            }}</span>
+                            }}</span
+                          >
                         </div>
                         <span
                           v-if="project.duration && project.duration > 0"
@@ -1271,14 +1280,17 @@ onDeactivated(() => {
                                 )
                               "
                               class="new-badge"
-                              >NEW</span>
+                              >NEW</span
+                            >
                           </div>
                           <span
                             v-if="showImageName && project.imageName"
                             class="project-image-name"
-                            >{{ project.imageName }}{{
+                            >{{ project.imageName
+                            }}{{
                               project.imageTag ? `:${project.imageTag}` : ''
-                            }}</span>
+                            }}</span
+                          >
                         </div>
                         <span
                           v-if="project.duration && project.duration > 0"
