@@ -18,6 +18,7 @@ import {
   Tag,
   Tooltip,
 } from 'ant-design-vue';
+import { FolderOpen, Monitor, Package, ServerCrash } from 'lucide-vue-next';
 
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
 import {
@@ -28,7 +29,6 @@ import {
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
 import { copyToClipboard } from '#/utils/clipboard';
-import { ServerCrash, Monitor, Package, FolderOpen } from 'lucide-vue-next';
 
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
@@ -46,7 +46,7 @@ const loading = ref(false);
 const activeKeys = ref<string[]>([]); // 展开的版本面板
 
 // 排序模式：version=版本内项目按类型排序，name=版本内项目按名称升序（版本列表本身始终按版本号降序）
-const sortMode = ref<'version' | 'name'>('version');
+const sortMode = ref<'name' | 'version'>('version');
 const showImageName = ref(false);
 
 // 版本列表始终按语义化版本号降序，排序模式只影响版本内的项目顺序
@@ -127,16 +127,12 @@ async function loadBranchesForBusinessLine(
 
 // 加载版本列表
 async function loadVersionList() {
-  console.log('[项目打包] loadVersionList 被调用');
-
   // 检查组件是否仍然激活
   if (!isComponentActive.value) {
-    console.log('[项目打包] 组件未激活，跳过加载');
     return;
   }
 
   if (!selectedBranchId.value) {
-    console.log('[项目打包] 未选择分支，清空版本列表');
     versionList.value = [];
     loading.value = false;
     return;
@@ -157,9 +153,7 @@ async function loadVersionList() {
       queryParams.businessLineId = selectedBusinessLineId.value;
     }
 
-    console.log('[项目打包] 正在加载版本列表，参数:', queryParams);
     const res = await getBuildTaskList(queryParams);
-    console.log('[项目打包] 版本列表加载完成，数据:', res);
     versionList.value = res.items || [];
   } catch (error) {
     console.error('[项目打包] 加载版本列表失败:', error);
@@ -269,7 +263,9 @@ async function handleRefresh() {
   loading.value = true;
   try {
     await loadVersionList();
-    message.success($t('deploy.packageDeployManagement.projectPackage.refreshSuccess'));
+    message.success(
+      $t('deploy.packageDeployManagement.projectPackage.refreshSuccess'),
+    );
   } finally {
     loading.value = false;
   }
@@ -296,10 +292,14 @@ async function handleShowAll() {
 
     const res = await getBuildTaskList(queryParams);
     versionList.value = res.items || [];
-    message.success($t('deploy.packageDeployManagement.projectPackage.showAllSuccess'));
+    message.success(
+      $t('deploy.packageDeployManagement.projectPackage.showAllSuccess'),
+    );
   } catch (error) {
     console.error('[项目打包] 全量获取失败:', error);
-    message.error($t('deploy.packageDeployManagement.projectPackage.showAllFailed'));
+    message.error(
+      $t('deploy.packageDeployManagement.projectPackage.showAllFailed'),
+    );
   } finally {
     loading.value = false;
   }
@@ -331,15 +331,16 @@ async function handleBuild() {
   // 检查该分支下是否有进行中的任务
   if (hasRunningTaskInBranch()) {
     message.warning(
-      $t(
-        'deploy.packageDeployManagement.projectPackage.branchHasRunningTask',
-      ),
+      $t('deploy.packageDeployManagement.projectPackage.branchHasRunningTask'),
     );
     return;
   }
 
   try {
-    await confirm($t('deploy.packageDeployManagement.projectPackage.startBuildConfirm'), $t('deploy.packageDeployManagement.projectPackage.startBuild'));
+    await confirm(
+      $t('deploy.packageDeployManagement.projectPackage.startBuildConfirm'),
+      $t('deploy.packageDeployManagement.projectPackage.startBuild'),
+    );
 
     const queryParams: any = {
       branchId: selectedBranchId.value,
@@ -351,7 +352,9 @@ async function handleBuild() {
     }
 
     await startBuildTask(queryParams);
-    message.success($t('deploy.packageDeployManagement.projectPackage.buildStarted'));
+    message.success(
+      $t('deploy.packageDeployManagement.projectPackage.buildStarted'),
+    );
 
     // 打开全局日志查看器（taskType=1 表示构建日志）
     wsStore.openGlobalLogViewer(1);
@@ -365,7 +368,9 @@ async function handleBuild() {
   } catch (error) {
     if (error instanceof Error && error.message !== '已取消') {
       console.error('启动构建失败:', error);
-      message.error($t('deploy.packageDeployManagement.projectPackage.buildStartFailed'));
+      message.error(
+        $t('deploy.packageDeployManagement.projectPackage.buildStartFailed'),
+      );
     }
   }
 }
@@ -380,9 +385,7 @@ async function handleForceBuild() {
   // 检查该分支下是否有进行中的任务
   if (hasRunningTaskInBranch()) {
     message.warning(
-      $t(
-        'deploy.packageDeployManagement.projectPackage.branchHasRunningTask',
-      ),
+      $t('deploy.packageDeployManagement.projectPackage.branchHasRunningTask'),
     );
     return;
   }
@@ -404,7 +407,9 @@ async function handleForceBuild() {
     }
 
     await startBuildTask(queryParams);
-    message.success($t('deploy.packageDeployManagement.projectPackage.forceBuildStarted'));
+    message.success(
+      $t('deploy.packageDeployManagement.projectPackage.forceBuildStarted'),
+    );
 
     // 打开全局日志查看器（taskType=1 表示构建日志）
     wsStore.openGlobalLogViewer(1);
@@ -418,7 +423,11 @@ async function handleForceBuild() {
   } catch (error) {
     if (error instanceof Error && error.message !== '已取消') {
       console.error('启动强制构建失败:', error);
-      message.error($t('deploy.packageDeployManagement.projectPackage.forceBuildStartFailed'));
+      message.error(
+        $t(
+          'deploy.packageDeployManagement.projectPackage.forceBuildStartFailed',
+        ),
+      );
     }
   }
 }
@@ -447,9 +456,7 @@ async function handlePreBuildCheck() {
   // 检查该分支下是否有进行中的任务
   if (hasRunningTaskInBranch()) {
     message.warning(
-      $t(
-        'deploy.packageDeployManagement.projectPackage.branchHasRunningTask',
-      ),
+      $t('deploy.packageDeployManagement.projectPackage.branchHasRunningTask'),
     );
     return;
   }
@@ -464,7 +471,9 @@ async function handlePreBuildCheck() {
   } catch (error) {
     console.error('启动预检查失败:', error);
     message.error(
-      $t('deploy.packageDeployManagement.projectPackage.preBuildCheckStartFailed'),
+      $t(
+        'deploy.packageDeployManagement.projectPackage.preBuildCheckStartFailed',
+      ),
     );
   }
 }
@@ -486,11 +495,16 @@ function formatTime(timestamp: number) {
 function getProjectTypeName(type: string) {
   const keyMap: Record<string, string> = {
     backend: 'deploy.packageDeployManagement.projectPackage.projectTypeBackend',
-    frontend: 'deploy.packageDeployManagement.projectPackage.projectTypeFrontend',
-    submodule: 'deploy.packageDeployManagement.projectPackage.projectTypeSubmodule',
+    frontend:
+      'deploy.packageDeployManagement.projectPackage.projectTypeFrontend',
+    submodule:
+      'deploy.packageDeployManagement.projectPackage.projectTypeSubmodule',
   };
   const key = keyMap[type];
-  return key ? $t(key) : (type || $t('deploy.packageDeployManagement.projectPackage.projectTypeDefault'));
+  return key
+    ? $t(key)
+    : type ||
+        $t('deploy.packageDeployManagement.projectPackage.projectTypeDefault');
 }
 
 // 获取项目类型图标
@@ -619,24 +633,15 @@ function getVersionStatusConfig(status: string) {
 
 // WebSocket 消息处理器
 function handleWebSocketMessage(message: any) {
-  console.log('[项目打包] 收到 WebSocket 消息:', message);
-
   // 只处理事件类型的消息
   if (message.commandType === 'event' && message.commandId === 1) {
     const { eventType } = message.data;
-    console.log(
-      '[项目打包] 事件类型:',
-      eventType,
-      '组件激活状态:',
-      isComponentActive.value,
-    );
 
     // 处理构建完成事件
     if (
       eventType === 'build_completed' && // 刷新版本列表
       isComponentActive.value
     ) {
-      console.log('[项目打包] 触发刷新版本列表');
       loadVersionList();
       message.success('构建已完成，版本列表已更新');
     }
@@ -701,7 +706,6 @@ async function copyVersionAsMarkdown(version: any) {
   }
 }
 
-
 // changelog modal 状态
 const changelogModalOpen = ref(false);
 const changelogVersion = ref<any>(null);
@@ -761,345 +765,486 @@ onDeactivated(() => {
 <template>
   <Page auto-content-height>
     <div class="flex h-full flex-col gap-4">
-    <!-- 筛选条件区 -->
-    <Card class="flex-shrink-0">
-      <!-- 第一行：分支筛选 + 版本号排序、刷新、全量获取 -->
-      <div class="flex w-full items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-4">
-          <!-- 业务线筛选(仅超级管理员) -->
-          <div v-if="isSuperAdmin" class="flex items-center gap-2">
-            <span class="filter-label">
-              {{ $t('system.businessLine.name') }}:
-            </span>
-            <Select
-              v-model:value="selectedBusinessLineId"
-              :options="businessLineOptions"
-              :placeholder="$t('system.businessLine.name')"
-              class="w-48"
-              @change="handleBusinessLineChange"
-            />
-          </div>
-
-          <!-- 分支筛选 -->
-          <div class="flex items-center gap-2">
-            <span class="filter-label">
-              {{ $t('deploy.packageDeployManagement.projectPackage.branch') }}:
-            </span>
-            <Select
-              v-model:value="selectedBranchId"
-              :options="currentBranchOptions"
-              :placeholder="
-                $t(
-                  'deploy.packageDeployManagement.projectPackage.branchPlaceholder',
-                )
-              "
-              class="w-48"
-              @change="handleBranchChange"
-            />
-          </div>
-        </div>
-
-        <!-- 右侧：版本号排序、刷新、全量获取 -->
-        <div class="flex flex-shrink-0 items-center gap-3">
-          <Select
-            v-model:value="sortMode"
-            class="w-36"
-            :options="[
-              { label: $t('deploy.packageDeployManagement.projectPackage.sortOrderVersion'), value: 'version' },
-              { label: $t('deploy.packageDeployManagement.projectPackage.sortOrderName'), value: 'name' },
-            ]"
-          />
-          <Button @click="handleRefresh">{{ $t('deploy.packageDeployManagement.projectPackage.refresh') }}</Button>
-          <Button @click="handleShowAll">
-            {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
-          </Button>
-          <Button :type="showImageName ? 'primary' : 'default'" @click="showImageName = !showImageName">{{ $t('deploy.packageDeployManagement.projectDeploy.showImageName') }}</Button>
-        </div>
-      </div>
-
-    </Card>
-
-    <!-- 构建操作区 -->
-    <Card class="flex-shrink-0">
-      <div class="flex justify-end gap-3">
-        <Button style="background-color: #fff7e6; border-color: #ffd591; color: #d46b08;" @click="handlePreBuildCheck">
-          {{ $t('deploy.packageDeployManagement.projectPackage.preBuildCheck') }}
-        </Button>
-        <Button type="primary" @click="handleBuild">{{ $t('deploy.packageDeployManagement.projectPackage.startBuild') }}</Button>
-        <Button danger type="primary" @click="handleForceBuild">
-          {{ $t('deploy.packageDeployManagement.projectPackage.forceBuild') }}
-        </Button>
-      </div>
-    </Card>
-
-    <!-- 版本列表 -->
-    <Card class="flex-1 overflow-y-auto">
-      <Spin :spinning="loading">
-        <div
-          v-if="versionList.length === 0"
-          class="flex items-center justify-center py-20"
-        >
-          <Empty :description="$t('common.noData')" />
-        </div>
-
-        <Collapse
-          v-else
-          v-model:active-key="activeKeys"
-          :bordered="false"
-          expand-icon-position="start"
-          class="version-collapse"
-        >
-          <CollapsePanel v-for="version in sortedVersionList" :key="version.id">
-            <template #header>
-              <div class="flex w-full items-center justify-between pr-4">
-                <div class="flex items-center gap-4">
-                  <Badge
-                    :count="version.children?.length || 0"
-                    :overflow-count="99"
-                    :number-style="{ backgroundColor: '#52c41a' }"
-                  >
-                    <div class="version-title">
-                      {{ version.version }}
-                    </div>
-                  </Badge>
-                  <Tag
-                    :color="
-                      getVersionStatusConfig(
-                        (version && version.status) || 'building',
-                      ).color
-                    "
-                    class="version-status-tag"
-                  >
-                    {{
-                      getVersionStatusConfig(
-                        (version && version.status) || 'building',
-                      ).text
-                    }}
-                  </Tag>
-                  <span class="version-time">
-                    {{ formatTime(version.buildTime) }}
-                  </span>
-                </div>
-                <!-- 复制按钮 -->
-                <Tooltip title="复制为 Markdown 表格">
-                  <Button
-                    size="small"
-                    type="text"
-                    @click.stop="copyVersionAsMarkdown(version)"
-                  >
-                    <template #icon>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <rect
-                          x="9"
-                          y="9"
-                          width="13"
-                          height="13"
-                          rx="2"
-                          ry="2"
-                        />
-                        <path
-                          d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                        />
-                      </svg>
-                    </template>
-                  </Button>
-                </Tooltip>
-              </div>
-            </template>
-
-            <!-- 项目列表（两列：左服务端，右前端） -->
-            <div
-              class="project-list-columns"
-              :class="{
-                'project-list-columns--single': getSortedProjects(version.children).filter((p) => p.projectType !== 'frontend').length === 0 || getSortedProjects(version.children).filter((p) => p.projectType === 'frontend').length === 0,
-              }"
-            >
-              <!-- 服务端列 -->
-              <div
-                v-if="getSortedProjects(version.children).filter((p) => p.projectType !== 'frontend').length > 0"
-                class="project-column"
-              >
-                <div class="project-column-body">
-                  <template
-                    v-for="project in getSortedProjects(version.children).filter(
-                      (p) => p.projectType !== 'frontend',
-                    )"
-                    :key="project.id"
-                  >
-                    <div
-                      class="project-item"
-                      :class="[`project-type-${project.projectType || 'default'}`]"
-                    >
-                      <div class="project-name-col">
-                        <div class="project-name-wrapper">
-                          <span class="project-name">{{
-                            project.projectName || '-'
-                          }}</span>
-                          <span
-                            v-if="!!(project.version && project.version === version.version)"
-                            class="new-badge"
-                          >{{ $t('deploy.packageDeployManagement.projectPackage.newBadge') }}</span>
-                        </div>
-                        <span v-if="showImageName && project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
-                      </div>
-                      <span
-                        v-if="project.duration && project.duration > 0"
-                        class="duration-text"
-                      >
-                        {{ formatDuration(project.duration) }}
-                      </span>
-                      <span v-else class="duration-text" />
-                      <Tag color="blue" class="project-type-tag">
-                        <span class="project-type-tag-inner">
-                          <component
-                            :is="getProjectTypeIcon(project.projectType || '')"
-                            :size="15"
-                            class="project-type-icon"
-                            :class="`project-type-icon--${project.projectType || 'default'}`"
-                          />
-                          {{ getProjectTypeName(project.projectType || '') }}
-                        </span>
-                      </Tag>
-                      <Tag color="red" class="version-tag">
-                        {{ project.version || '-' }}
-                      </Tag>
-                      <div class="project-actions">
-                        <Tag
-                          v-if="(project && project.status) !== 'success'"
-                          :color="
-                            getStatusConfig(
-                              (project && project.status) || 'pending',
-                            ).color
-                          "
-                          class="status-tag"
-                        >
-                          {{
-                            getStatusConfig(
-                              (project && project.status) || 'pending',
-                            ).text
-                          }}
-                        </Tag>
-                        <span
-                          class="changelog-btn"
-                          :class="{ 'changelog-btn--empty': !project.changelog }"
-                          @click.stop="project.changelog && openChangelog(project)"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
-                            <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
-                          </svg>
-                          {{ $t('deploy.packageDeployManagement.projectPackage.commitLog') }}
-                        </span>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </div>
-              <!-- 前端列 -->
-              <div
-                v-if="getSortedProjects(version.children).filter((p) => p.projectType === 'frontend').length > 0"
-                class="project-column"
-              >
-                <div class="project-column-body">
-                  <template
-                    v-for="project in getSortedProjects(version.children).filter(
-                      (p) => p.projectType === 'frontend',
-                    )"
-                    :key="project.id"
-                  >
-                    <div
-                      class="project-item"
-                      :class="[`project-type-${project.projectType || 'default'}`]"
-                    >
-                      <div class="project-name-col">
-                        <div class="project-name-wrapper">
-                          <span class="project-name">{{
-                            project.projectName || '-'
-                          }}</span>
-                          <span
-                            v-if="!!(project.version && project.version === version.version)"
-                            class="new-badge"
-                          >{{ $t('deploy.packageDeployManagement.projectPackage.newBadge') }}</span>
-                        </div>
-                        <span v-if="showImageName && project.imageName" class="project-image-name">{{ project.imageName }}{{ project.imageTag ? `:${project.imageTag}` : '' }}</span>
-                      </div>
-                      <span
-                        v-if="project.duration && project.duration > 0"
-                        class="duration-text"
-                      >
-                        {{ formatDuration(project.duration) }}
-                      </span>
-                      <span v-else class="duration-text" />
-                      <Tag color="blue" class="project-type-tag">
-                        <span class="project-type-tag-inner">
-                          <component
-                            :is="getProjectTypeIcon(project.projectType || '')"
-                            :size="15"
-                            class="project-type-icon"
-                            :class="`project-type-icon--${project.projectType || 'default'}`"
-                          />
-                          {{ getProjectTypeName(project.projectType || '') }}
-                        </span>
-                      </Tag>
-                      <Tag color="red" class="version-tag">
-                        {{ project.version || '-' }}
-                      </Tag>
-                      <div class="project-actions">
-                        <Tag
-                          v-if="(project && project.status) !== 'success'"
-                          :color="
-                            getStatusConfig(
-                              (project && project.status) || 'pending',
-                            ).color
-                          "
-                          class="status-tag"
-                        >
-                          {{
-                            getStatusConfig(
-                              (project && project.status) || 'pending',
-                            ).text
-                          }}
-                        </Tag>
-                        <span
-                          class="changelog-btn"
-                          :class="{ 'changelog-btn--empty': !project.changelog }"
-                          @click.stop="project.changelog && openChangelog(project)"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 92 92" fill="currentColor" style="flex-shrink:0">
-                            <path d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"/>
-                          </svg>
-                          {{ $t('deploy.packageDeployManagement.projectPackage.commitLog') }}
-                        </span>
-                      </div>
-                    </div>
-                  </template>
-                </div>
-              </div>
+      <!-- 筛选条件区 -->
+      <Card class="flex-shrink-0">
+        <!-- 第一行：分支筛选 + 版本号排序、刷新、全量获取 -->
+        <div class="flex w-full items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-4">
+            <!-- 业务线筛选(仅超级管理员) -->
+            <div v-if="isSuperAdmin" class="flex items-center gap-2">
+              <span class="filter-label">
+                {{ $t('system.businessLine.name') }}:
+              </span>
+              <Select
+                v-model:value="selectedBusinessLineId"
+                :options="businessLineOptions"
+                :placeholder="$t('system.businessLine.name')"
+                class="w-48"
+                @change="handleBusinessLineChange"
+              />
             </div>
-          </CollapsePanel>
-        </Collapse>
-      </Spin>
-    </Card>
 
-    </div><!-- end flex container -->
+            <!-- 分支筛选 -->
+            <div class="flex items-center gap-2">
+              <span class="filter-label">
+                {{
+                  $t('deploy.packageDeployManagement.projectPackage.branch')
+                }}:
+              </span>
+              <Select
+                v-model:value="selectedBranchId"
+                :options="currentBranchOptions"
+                :placeholder="
+                  $t(
+                    'deploy.packageDeployManagement.projectPackage.branchPlaceholder',
+                  )
+                "
+                class="w-48"
+                @change="handleBranchChange"
+              />
+            </div>
+          </div>
+
+          <!-- 右侧：版本号排序、刷新、全量获取 -->
+          <div class="flex flex-shrink-0 items-center gap-3">
+            <Select
+              v-model:value="sortMode"
+              class="w-36"
+              :options="[
+                {
+                  label: $t(
+                    'deploy.packageDeployManagement.projectPackage.sortOrderVersion',
+                  ),
+                  value: 'version',
+                },
+                {
+                  label: $t(
+                    'deploy.packageDeployManagement.projectPackage.sortOrderName',
+                  ),
+                  value: 'name',
+                },
+              ]"
+            />
+            <Button @click="handleRefresh">
+              {{ $t('deploy.packageDeployManagement.projectPackage.refresh') }}
+            </Button>
+            <Button @click="handleShowAll">
+              {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
+            </Button>
+            <Button
+              :type="showImageName ? 'primary' : 'default'"
+              @click="showImageName = !showImageName"
+            >
+              {{
+                $t('deploy.packageDeployManagement.projectDeploy.showImageName')
+              }}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <!-- 构建操作区 -->
+      <Card class="flex-shrink-0">
+        <div class="flex justify-end gap-3">
+          <Button
+            style="
+              color: #d46b08;
+              background-color: #fff7e6;
+              border-color: #ffd591;
+            "
+            @click="handlePreBuildCheck"
+          >
+            {{
+              $t('deploy.packageDeployManagement.projectPackage.preBuildCheck')
+            }}
+          </Button>
+          <Button type="primary" @click="handleBuild">
+            {{ $t('deploy.packageDeployManagement.projectPackage.startBuild') }}
+          </Button>
+          <Button danger type="primary" @click="handleForceBuild">
+            {{ $t('deploy.packageDeployManagement.projectPackage.forceBuild') }}
+          </Button>
+        </div>
+      </Card>
+
+      <!-- 版本列表 -->
+      <Card class="flex-1 overflow-y-auto">
+        <Spin :spinning="loading">
+          <div
+            v-if="versionList.length === 0"
+            class="flex items-center justify-center py-20"
+          >
+            <Empty :description="$t('common.noData')" />
+          </div>
+
+          <Collapse
+            v-else
+            v-model:active-key="activeKeys"
+            :bordered="false"
+            expand-icon-position="start"
+            class="version-collapse"
+          >
+            <CollapsePanel
+              v-for="version in sortedVersionList"
+              :key="version.id"
+            >
+              <template #header>
+                <div class="flex w-full items-center justify-between pr-4">
+                  <div class="flex items-center gap-4">
+                    <Badge
+                      :count="version.children?.length || 0"
+                      :overflow-count="99"
+                      :number-style="{ backgroundColor: '#52c41a' }"
+                    >
+                      <div class="version-title">
+                        {{ version.version }}
+                      </div>
+                    </Badge>
+                    <Tag
+                      :color="
+                        getVersionStatusConfig(
+                          (version && version.status) || 'building',
+                        ).color
+                      "
+                      class="version-status-tag"
+                    >
+                      {{
+                        getVersionStatusConfig(
+                          (version && version.status) || 'building',
+                        ).text
+                      }}
+                    </Tag>
+                    <span class="version-time">
+                      {{ formatTime(version.buildTime) }}
+                    </span>
+                  </div>
+                  <!-- 复制按钮 -->
+                  <Tooltip title="复制为 Markdown 表格">
+                    <Button
+                      size="small"
+                      type="text"
+                      @click.stop="copyVersionAsMarkdown(version)"
+                    >
+                      <template #icon>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <rect
+                            x="9"
+                            y="9"
+                            width="13"
+                            height="13"
+                            rx="2"
+                            ry="2"
+                          />
+                          <path
+                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                          />
+                        </svg>
+                      </template>
+                    </Button>
+                  </Tooltip>
+                </div>
+              </template>
+
+              <!-- 项目列表（两列：左服务端，右前端） -->
+              <div
+                class="project-list-columns"
+                :class="{
+                  'project-list-columns--single':
+                    getSortedProjects(version.children).filter(
+                      (p) => p.projectType !== 'frontend',
+                    ).length === 0 ||
+                    getSortedProjects(version.children).filter(
+                      (p) => p.projectType === 'frontend',
+                    ).length === 0,
+                }"
+              >
+                <!-- 服务端列 -->
+                <div
+                  v-if="
+                    getSortedProjects(version.children).some(
+                      (p) => p.projectType !== 'frontend',
+                    )
+                  "
+                  class="project-column"
+                >
+                  <div class="project-column-body">
+                    <template
+                      v-for="project in getSortedProjects(
+                        version.children,
+                      ).filter((p) => p.projectType !== 'frontend')"
+                      :key="project.id"
+                    >
+                      <div
+                        class="project-item"
+                        :class="[
+                          `project-type-${project.projectType || 'default'}`,
+                        ]"
+                      >
+                        <div class="project-name-col">
+                          <div class="project-name-wrapper">
+                            <span class="project-name">{{
+                              project.projectName || '-'
+                            }}</span>
+                            <span
+                              v-if="
+                                !!(
+                                  project.version &&
+                                  project.version === version.version
+                                )
+                              "
+                              class="new-badge"
+                              >NEW</span>
+                          </div>
+                          <span
+                            v-if="showImageName && project.imageName"
+                            class="project-image-name"
+                            >{{ project.imageName }}{{
+                              project.imageTag ? `:${project.imageTag}` : ''
+                            }}</span>
+                        </div>
+                        <span
+                          v-if="project.duration && project.duration > 0"
+                          class="duration-text"
+                        >
+                          {{ formatDuration(project.duration) }}
+                        </span>
+                        <span v-else class="duration-text"></span>
+                        <Tag color="blue" class="project-type-tag">
+                          <span class="project-type-tag-inner">
+                            <component
+                              :is="
+                                getProjectTypeIcon(project.projectType || '')
+                              "
+                              :size="15"
+                              class="project-type-icon"
+                              :class="`project-type-icon--${project.projectType || 'default'}`"
+                            />
+                            {{ getProjectTypeName(project.projectType || '') }}
+                          </span>
+                        </Tag>
+                        <Tag
+                          color="red"
+                          class="version-tag version-tag--copyable"
+                          :title="
+                            project.version ? '点击复制版本号' : undefined
+                          "
+                          @click.stop="
+                            project.version &&
+                            copyToClipboard(project.version).then(() =>
+                              message.success(`已复制：${project.version}`),
+                            )
+                          "
+                        >
+                          {{ project.version || '-' }}
+                        </Tag>
+                        <div class="project-actions">
+                          <Tag
+                            v-if="(project && project.status) !== 'success'"
+                            :color="
+                              getStatusConfig(
+                                (project && project.status) || 'pending',
+                              ).color
+                            "
+                            class="status-tag"
+                          >
+                            {{
+                              getStatusConfig(
+                                (project && project.status) || 'pending',
+                              ).text
+                            }}
+                          </Tag>
+                          <span
+                            class="changelog-btn"
+                            :class="{
+                              'changelog-btn--empty': !project.changelog,
+                            }"
+                            @click.stop="
+                              project.changelog && openChangelog(project)
+                            "
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="11"
+                              height="11"
+                              viewBox="0 0 92 92"
+                              fill="currentColor"
+                              style="flex-shrink: 0"
+                            >
+                              <path
+                                d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"
+                              />
+                            </svg>
+                            {{
+                              $t(
+                                'deploy.packageDeployManagement.projectPackage.commitLog',
+                              )
+                            }}
+                          </span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+                <!-- 前端列 -->
+                <div
+                  v-if="
+                    getSortedProjects(version.children).some(
+                      (p) => p.projectType === 'frontend',
+                    )
+                  "
+                  class="project-column"
+                >
+                  <div class="project-column-body">
+                    <template
+                      v-for="project in getSortedProjects(
+                        version.children,
+                      ).filter((p) => p.projectType === 'frontend')"
+                      :key="project.id"
+                    >
+                      <div
+                        class="project-item"
+                        :class="[
+                          `project-type-${project.projectType || 'default'}`,
+                        ]"
+                      >
+                        <div class="project-name-col">
+                          <div class="project-name-wrapper">
+                            <span class="project-name">{{
+                              project.projectName || '-'
+                            }}</span>
+                            <span
+                              v-if="
+                                !!(
+                                  project.version &&
+                                  project.version === version.version
+                                )
+                              "
+                              class="new-badge"
+                              >NEW</span>
+                          </div>
+                          <span
+                            v-if="showImageName && project.imageName"
+                            class="project-image-name"
+                            >{{ project.imageName }}{{
+                              project.imageTag ? `:${project.imageTag}` : ''
+                            }}</span>
+                        </div>
+                        <span
+                          v-if="project.duration && project.duration > 0"
+                          class="duration-text"
+                        >
+                          {{ formatDuration(project.duration) }}
+                        </span>
+                        <span v-else class="duration-text"></span>
+                        <Tag color="blue" class="project-type-tag">
+                          <span class="project-type-tag-inner">
+                            <component
+                              :is="
+                                getProjectTypeIcon(project.projectType || '')
+                              "
+                              :size="15"
+                              class="project-type-icon"
+                              :class="`project-type-icon--${project.projectType || 'default'}`"
+                            />
+                            {{ getProjectTypeName(project.projectType || '') }}
+                          </span>
+                        </Tag>
+                        <Tag
+                          color="red"
+                          class="version-tag version-tag--copyable"
+                          :title="
+                            project.version ? '点击复制版本号' : undefined
+                          "
+                          @click.stop="
+                            project.version &&
+                            copyToClipboard(project.version).then(() =>
+                              message.success(`已复制：${project.version}`),
+                            )
+                          "
+                        >
+                          {{ project.version || '-' }}
+                        </Tag>
+                        <div class="project-actions">
+                          <Tag
+                            v-if="(project && project.status) !== 'success'"
+                            :color="
+                              getStatusConfig(
+                                (project && project.status) || 'pending',
+                              ).color
+                            "
+                            class="status-tag"
+                          >
+                            {{
+                              getStatusConfig(
+                                (project && project.status) || 'pending',
+                              ).text
+                            }}
+                          </Tag>
+                          <span
+                            class="changelog-btn"
+                            :class="{
+                              'changelog-btn--empty': !project.changelog,
+                            }"
+                            @click.stop="
+                              project.changelog && openChangelog(project)
+                            "
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="11"
+                              height="11"
+                              viewBox="0 0 92 92"
+                              fill="currentColor"
+                              style="flex-shrink: 0"
+                            >
+                              <path
+                                d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"
+                              />
+                            </svg>
+                            {{
+                              $t(
+                                'deploy.packageDeployManagement.projectPackage.commitLog',
+                              )
+                            }}
+                          </span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </CollapsePanel>
+          </Collapse>
+        </Spin>
+      </Card>
+    </div>
+    <!-- end flex container -->
 
     <!-- Changelog Modal -->
     <Modal
       v-model:open="changelogModalOpen"
-      :title="$t('deploy.packageDeployManagement.projectPackage.changelogTitle', [changelogVersion?.projectName || changelogVersion?.version])"
+      :title="
+        $t('deploy.packageDeployManagement.projectPackage.changelogTitle', [
+          changelogVersion?.projectName || changelogVersion?.version,
+        ])
+      "
       :footer="null"
       width="800px"
     >
-      <div v-if="changelogCommits.length === 0" class="py-8 text-center text-gray-400">
+      <div
+        v-if="changelogCommits.length === 0"
+        class="py-8 text-center text-gray-400"
+      >
         {{ $t('deploy.packageDeployManagement.projectPackage.changelogEmpty') }}
       </div>
       <div v-else class="changelog-list">
@@ -1110,14 +1255,19 @@ onDeactivated(() => {
         >
           <span class="commit-title">{{ commit.title }}</span>
           <div class="commit-meta">
-            <Tag color="warning" class="commit-id-tag">{{ commit.shortId }}</Tag>
-            <Tag color="blue" class="commit-author-tag">{{ commit.authorName }}</Tag>
-            <Tag class="commit-time-tag">{{ formatCommitTime(commit.committedAt) }}</Tag>
+            <Tag color="warning" class="commit-id-tag">
+              {{ commit.shortId }}
+            </Tag>
+            <Tag color="blue" class="commit-author-tag">
+              {{ commit.authorName }}
+            </Tag>
+            <Tag class="commit-time-tag">
+              {{ formatCommitTime(commit.committedAt) }}
+            </Tag>
           </div>
         </div>
       </div>
     </Modal>
-
   </Page>
 </template>
 
@@ -1144,11 +1294,20 @@ onDeactivated(() => {
   justify-self: end;
 }
 
+.version-tag--copyable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.version-tag--copyable:hover {
+  opacity: 0.8;
+}
+
 .project-actions {
   display: flex;
+  gap: 6px;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
   justify-self: end;
 }
 
@@ -1164,31 +1323,33 @@ onDeactivated(() => {
 
 .changelog-btn {
   display: inline-flex;
+  flex-shrink: 0;
+  gap: 5px;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 0 10px;
   height: 26px;
-  flex-shrink: 0;
+  padding: 0 10px;
+  font-size: 12px;
   color: #f05033;
+  white-space: nowrap;
+  cursor: pointer;
   border: 1px solid #f05033;
   border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
   opacity: 0.85;
-  transition: opacity 0.15s, background-color 0.15s;
-  white-space: nowrap;
+  transition:
+    opacity 0.15s,
+    background-color 0.15s;
 }
 
 .changelog-btn:hover {
+  background-color: rgb(240 80 51 / 8%);
   opacity: 1;
-  background-color: rgba(240, 80, 51, 0.08);
 }
 
 .changelog-btn--empty {
   color: hsl(var(--muted-foreground));
-  border-color: hsl(var(--border));
   cursor: default;
+  border-color: hsl(var(--border));
   opacity: 0.4;
 }
 
@@ -1203,26 +1364,26 @@ onDeactivated(() => {
 
 .project-name-wrapper {
   display: inline-flex;
-  align-items: center;
   gap: 5px;
+  align-items: center;
   min-width: 0;
   overflow: hidden;
 }
 
 .new-badge {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  padding: 0 5px;
   height: 16px;
+  padding: 0 5px;
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.5px;
   color: #fff;
+  letter-spacing: 0.5px;
   background: #52c41a;
   border-radius: 3px;
-  flex-shrink: 0;
 }
 
 .project-item .duration-text {
@@ -1234,58 +1395,24 @@ onDeactivated(() => {
 
 .project-type-tag-inner {
   display: inline-flex;
-  align-items: center;
   gap: 5px;
-}
-
-:deep(.project-type-icon--backend) { color: #69b1ff; }
-:deep(.project-type-icon--frontend) { color: #95de64; }
-:deep(.project-type-icon--submodule) { color: #ffd666; }
-:deep(.project-type-icon--default) { color: #d9d9d9; }
-
-/* Changelog Modal 样式 */
-.changelog-list {
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.changelog-item {
-  display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 9px 0;
-  border-bottom: 1px solid hsl(var(--border));
 }
 
-.changelog-item:last-child {
-  border-bottom: none;
+:deep(.project-type-icon--backend) {
+  color: #69b1ff;
 }
 
-.commit-title {
-  flex: 1;
-  font-size: 13px;
-  color: hsl(var(--foreground));
-  line-height: 1.4;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+:deep(.project-type-icon--frontend) {
+  color: #95de64;
 }
 
-.commit-meta {
-  display: grid;
-  grid-template-columns: 90px 110px 140px;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
+:deep(.project-type-icon--submodule) {
+  color: #ffd666;
 }
 
-.commit-id-tag,
-.commit-author-tag,
-.commit-time-tag {
-  font-size: 11px;
-  justify-self: start;
+:deep(.project-type-icon--default) {
+  color: #d9d9d9;
 }
 
 /* Changelog Modal 样式 */
@@ -1296,9 +1423,9 @@ onDeactivated(() => {
 
 .changelog-item {
   display: flex;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   padding: 9px 0;
   border-bottom: 1px solid hsl(var(--border));
 }
@@ -1309,28 +1436,27 @@ onDeactivated(() => {
 
 .commit-title {
   flex: 1;
-  font-size: 13px;
-  color: hsl(var(--foreground));
-  line-height: 1.4;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 13px;
+  line-height: 1.4;
+  color: hsl(var(--foreground));
   white-space: nowrap;
 }
 
 .commit-meta {
   display: grid;
-  grid-template-columns: 90px 110px 140px;
-  align-items: center;
-  gap: 6px;
   flex-shrink: 0;
+  grid-template-columns: 90px 110px 140px;
+  gap: 6px;
+  align-items: center;
 }
 
 .commit-id-tag,
 .commit-author-tag,
 .commit-time-tag {
-  font-size: 11px;
   justify-self: start;
+  font-size: 11px;
 }
-
 </style>

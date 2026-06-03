@@ -18,6 +18,15 @@ import {
   Table,
   Tag,
 } from 'ant-design-vue';
+import {
+  ArrowUp10,
+  FolderOpen,
+  GitCompareArrows,
+  Hammer,
+  Monitor,
+  Package,
+  ServerCrash,
+} from 'lucide-vue-next';
 
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
 import {
@@ -33,15 +42,7 @@ import {
 } from '#/api/project-management/deploy-environment';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
-import {
-  GitCompareArrows,
-  ArrowUp10,
-  Hammer,
-  ServerCrash,
-  Monitor,
-  Package,
-  FolderOpen,
-} from 'lucide-vue-next';
+import { copyToClipboard } from '#/utils/clipboard';
 
 function getProjectTypeIcon(type: string) {
   const iconMap: Record<string, any> = {
@@ -72,7 +73,7 @@ const loading = ref(false);
 const activeKeys = ref<string[]>([]); // 展开的版本面板
 
 // 排序模式：version=版本内项目按类型排序，name=版本内项目按名称升序（版本列表本身始终按版本号降序）
-const sortMode = ref<'version' | 'name'>('version');
+const sortMode = ref<'name' | 'version'>('version');
 const showImageName = ref(false);
 
 // 版本列表始终按语义化版本号降序，排序模式只影响版本内的项目顺序
@@ -91,7 +92,7 @@ const sortedVersionList = computed(() => {
 });
 
 // 当前环境正在使用的版本ID
-const currentEnvironmentVersionId = ref<string | null>(null);
+const currentEnvironmentVersionId = ref<null | string>(null);
 
 // 组件是否已激活的标记
 const isComponentActive = ref(true);
@@ -712,11 +713,16 @@ function formatDeployedAt(timestamp: number) {
 function getProjectTypeName(type: string) {
   const keyMap: Record<string, string> = {
     backend: 'deploy.packageDeployManagement.projectDeploy.projectTypeBackend',
-    frontend: 'deploy.packageDeployManagement.projectDeploy.projectTypeFrontend',
-    submodule: 'deploy.packageDeployManagement.projectDeploy.projectTypeSubmodule',
+    frontend:
+      'deploy.packageDeployManagement.projectDeploy.projectTypeFrontend',
+    submodule:
+      'deploy.packageDeployManagement.projectDeploy.projectTypeSubmodule',
   };
   const key = keyMap[type];
-  return key ? $t(key) : (type || $t('deploy.packageDeployManagement.projectDeploy.projectTypeDefault'));
+  return key
+    ? $t(key)
+    : type ||
+        $t('deploy.packageDeployManagement.projectDeploy.projectTypeDefault');
 }
 
 // 获取项目类型标签颜色(模态框使用)
@@ -1032,11 +1038,20 @@ onDeactivated(() => {
                 },
               ]"
             />
-            <Button @click="handleRefresh">{{ $t('deploy.packageDeployManagement.projectDeploy.refresh') }}</Button>
+            <Button @click="handleRefresh">
+              {{ $t('deploy.packageDeployManagement.projectDeploy.refresh') }}
+            </Button>
             <Button @click="handleShowAll">
               {{ $t('deploy.packageDeployManagement.projectPackage.showAll') }}
             </Button>
-            <Button :type="showImageName ? 'primary' : 'default'" @click="showImageName = !showImageName">{{ $t('deploy.packageDeployManagement.projectDeploy.showImageName') }}</Button>
+            <Button
+              :type="showImageName ? 'primary' : 'default'"
+              @click="showImageName = !showImageName"
+            >
+              {{
+                $t('deploy.packageDeployManagement.projectDeploy.showImageName')
+              }}
+            </Button>
           </div>
         </div>
       </Card>
@@ -1097,7 +1112,12 @@ onDeactivated(() => {
                       color="green"
                       class="current-version-tag"
                     >
-                      ✓ {{ $t('deploy.packageDeployManagement.projectDeploy.currentVersion') }}
+                      ✓
+                      {{
+                        $t(
+                          'deploy.packageDeployManagement.projectDeploy.currentVersion',
+                        )
+                      }}
                     </Tag>
                   </div>
 
@@ -1169,9 +1189,9 @@ onDeactivated(() => {
                 <!-- 服务端列 -->
                 <div
                   v-if="
-                    getSortedProjects(version.children).filter(
+                    getSortedProjects(version.children).some(
                       (p) => p.projectType !== 'frontend',
-                    ).length > 0
+                    )
                   "
                   class="project-column"
                 >
@@ -1200,17 +1220,14 @@ onDeactivated(() => {
                                 )
                               "
                               class="new-badge"
-                              >NEW</span
-                            >
+                              >NEW</span>
                           </div>
                           <span
                             v-if="showImageName && project.imageName"
                             class="project-image-name"
-                            >{{ project.imageName
-                            }}{{
+                            >{{ project.imageName }}{{
                               project.imageTag ? `:${project.imageTag}` : ''
-                            }}</span
-                          >
+                            }}</span>
                         </div>
                         <span
                           v-if="project.duration && project.duration > 0"
@@ -1218,11 +1235,13 @@ onDeactivated(() => {
                         >
                           ⏱️ {{ formatDuration(project.duration) }}
                         </span>
-                        <span v-else class="duration-text" />
+                        <span v-else class="duration-text"></span>
                         <Tag color="blue" class="project-type-tag">
                           <span class="project-type-tag-inner">
                             <component
-                              :is="getProjectTypeIcon(project.projectType || '')"
+                              :is="
+                                getProjectTypeIcon(project.projectType || '')
+                              "
                               :size="15"
                               class="project-type-icon"
                               :class="`project-type-icon--${project.projectType || 'default'}`"
@@ -1230,7 +1249,19 @@ onDeactivated(() => {
                             {{ getProjectTypeName(project.projectType || '') }}
                           </span>
                         </Tag>
-                        <Tag color="red" class="version-tag">
+                        <Tag
+                          color="red"
+                          class="version-tag version-tag--copyable"
+                          :title="
+                            project.version ? '点击复制版本号' : undefined
+                          "
+                          @click.stop="
+                            project.version &&
+                            copyToClipboard(project.version).then(() =>
+                              message.success(`已复制：${project.version}`),
+                            )
+                          "
+                        >
                           {{ project.version || '-' }}
                         </Tag>
                         <span
@@ -1254,7 +1285,11 @@ onDeactivated(() => {
                               d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"
                             />
                           </svg>
-                          {{ $t('deploy.packageDeployManagement.projectDeploy.commitLog') }}
+                          {{
+                            $t(
+                              'deploy.packageDeployManagement.projectDeploy.commitLog',
+                            )
+                          }}
                         </span>
                         <div class="project-actions">
                           <Tag
@@ -1292,9 +1327,9 @@ onDeactivated(() => {
                 <!-- 前端列 -->
                 <div
                   v-if="
-                    getSortedProjects(version.children).filter(
+                    getSortedProjects(version.children).some(
                       (p) => p.projectType === 'frontend',
-                    ).length > 0
+                    )
                   "
                   class="project-column"
                 >
@@ -1323,17 +1358,14 @@ onDeactivated(() => {
                                 )
                               "
                               class="new-badge"
-                              >NEW</span
-                            >
+                              >NEW</span>
                           </div>
                           <span
                             v-if="showImageName && project.imageName"
                             class="project-image-name"
-                            >{{ project.imageName
-                            }}{{
+                            >{{ project.imageName }}{{
                               project.imageTag ? `:${project.imageTag}` : ''
-                            }}</span
-                          >
+                            }}</span>
                         </div>
                         <span
                           v-if="project.duration && project.duration > 0"
@@ -1341,11 +1373,13 @@ onDeactivated(() => {
                         >
                           ⏱️ {{ formatDuration(project.duration) }}
                         </span>
-                        <span v-else class="duration-text" />
+                        <span v-else class="duration-text"></span>
                         <Tag color="blue" class="project-type-tag">
                           <span class="project-type-tag-inner">
                             <component
-                              :is="getProjectTypeIcon(project.projectType || '')"
+                              :is="
+                                getProjectTypeIcon(project.projectType || '')
+                              "
                               :size="15"
                               class="project-type-icon"
                               :class="`project-type-icon--${project.projectType || 'default'}`"
@@ -1353,7 +1387,19 @@ onDeactivated(() => {
                             {{ getProjectTypeName(project.projectType || '') }}
                           </span>
                         </Tag>
-                        <Tag color="red" class="version-tag">
+                        <Tag
+                          color="red"
+                          class="version-tag version-tag--copyable"
+                          :title="
+                            project.version ? '点击复制版本号' : undefined
+                          "
+                          @click.stop="
+                            project.version &&
+                            copyToClipboard(project.version).then(() =>
+                              message.success(`已复制：${project.version}`),
+                            )
+                          "
+                        >
                           {{ project.version || '-' }}
                         </Tag>
                         <span
@@ -1377,7 +1423,11 @@ onDeactivated(() => {
                               d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"
                             />
                           </svg>
-                          {{ $t('deploy.packageDeployManagement.projectDeploy.commitLog') }}
+                          {{
+                            $t(
+                              'deploy.packageDeployManagement.projectDeploy.commitLog',
+                            )
+                          }}
                         </span>
                         <div class="project-actions">
                           <Tag
@@ -1453,7 +1503,7 @@ onDeactivated(() => {
           </template>
         </template>
         <template #emptyText>
-          <div style="padding: 40px 0; text-align: center; color: #999">
+          <div style="padding: 40px 0; color: #999; text-align: center">
             {{
               $t(
                 'deploy.packageDeployManagement.environmentConfig.versionModal.noData',
@@ -1489,15 +1539,15 @@ onDeactivated(() => {
         >
           <span class="commit-title">{{ commit.title }}</span>
           <div class="commit-meta">
-            <Tag color="warning" class="commit-id-tag">{{
-              commit.shortId
-            }}</Tag>
-            <Tag color="blue" class="commit-author-tag">{{
-              commit.authorName
-            }}</Tag>
-            <Tag class="commit-time-tag">{{
-              formatCommitTime(commit.committedAt)
-            }}</Tag>
+            <Tag color="warning" class="commit-id-tag">
+              {{ commit.shortId }}
+            </Tag>
+            <Tag color="blue" class="commit-author-tag">
+              {{ commit.authorName }}
+            </Tag>
+            <Tag class="commit-time-tag">
+              {{ formatCommitTime(commit.committedAt) }}
+            </Tag>
           </div>
         </div>
       </div>
@@ -1507,6 +1557,17 @@ onDeactivated(() => {
 
 <style scoped>
 @import '../project-list-shared.css';
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
 
 /* project-deploy 独有：项目列表列宽 */
 .project-item {
@@ -1528,20 +1589,29 @@ onDeactivated(() => {
   justify-self: end;
 }
 
+.version-tag--copyable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.version-tag--copyable:hover {
+  opacity: 0.8;
+}
+
 .project-actions {
   display: flex;
+  gap: 6px;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
   justify-self: end;
 }
 
 .project-item .duration-text {
+  justify-self: end;
   font-size: 13px;
   color: hsl(var(--muted-foreground));
   white-space: nowrap;
   cursor: default;
-  justify-self: end;
 }
 
 /* 发布按钮样式 */
@@ -1554,31 +1624,31 @@ onDeactivated(() => {
 
 .project-type-tag-inner {
   display: inline-flex;
-  align-items: center;
   gap: 5px;
+  align-items: center;
 }
 
-:deep(.project-type-icon--backend) { color: #69b1ff; }
-:deep(.project-type-icon--frontend) { color: #95de64; }
-:deep(.project-type-icon--submodule) { color: #ffd666; }
-:deep(.project-type-icon--default) { color: #d9d9d9; }
+:deep(.project-type-icon--backend) {
+  color: #69b1ff;
+}
+
+:deep(.project-type-icon--frontend) {
+  color: #95de64;
+}
+
+:deep(.project-type-icon--submodule) {
+  color: #ffd666;
+}
+
+:deep(.project-type-icon--default) {
+  color: #d9d9d9;
+}
 
 .current-version-tag {
   flex-shrink: 0;
-  font-weight: 600;
   font-size: 14px;
+  font-weight: 600;
   animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.7;
-  }
 }
 
 /* 版本模态框表格样式 */
@@ -1587,60 +1657,60 @@ onDeactivated(() => {
 }
 
 :deep(.ant-modal .ant-table-thead > tr > th) {
-  background-color: #fafafa;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
+  color: rgb(0 0 0 / 85%);
+  background-color: #fafafa;
   border-bottom: 1px solid #f0f0f0;
 }
 
 /* 深色模式 */
 :deep(.dark .ant-modal .ant-table-thead > tr > th) {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgb(255 255 255 / 85%);
+  background-color: rgb(255 255 255 / 8%);
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
 }
 
 :deep(.dark .ant-modal .ant-table) {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgb(255 255 255 / 85%);
 }
 
 :deep(.dark .ant-modal .ant-table-tbody > tr > td) {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgb(255 255 255 / 6%);
 }
 
 :deep(.dark .ant-modal .ant-table-tbody > tr:hover > td) {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgb(255 255 255 / 4%);
 }
 
 .changelog-btn {
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 7px;
-  height: 22px;
   flex-shrink: 0;
+  gap: 4px;
+  align-items: center;
+  height: 22px;
+  padding: 2px 7px;
+  font-size: 12px;
+  line-height: 1;
+  vertical-align: middle;
   color: #f05033;
+  cursor: pointer;
   border: 1px solid #f05033;
   border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
   opacity: 0.85;
   transition:
     opacity 0.15s,
     background-color 0.15s;
-  vertical-align: middle;
-  line-height: 1;
 }
 
 .changelog-btn:hover {
+  background-color: rgb(240 80 51 / 8%);
   opacity: 1;
-  background-color: rgba(240, 80, 51, 0.08);
 }
 
 .changelog-btn--empty {
   color: hsl(var(--muted-foreground));
-  border-color: hsl(var(--border));
   cursor: default;
+  border-color: hsl(var(--border));
   opacity: 0.4;
 }
 
@@ -1655,26 +1725,26 @@ onDeactivated(() => {
 
 .project-name-wrapper {
   display: inline-flex;
-  align-items: center;
   gap: 5px;
+  align-items: center;
   min-width: 0;
   overflow: hidden;
 }
 
 .new-badge {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  padding: 0 5px;
   height: 16px;
+  padding: 0 5px;
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.5px;
   color: #fff;
+  letter-spacing: 0.5px;
   background: #52c41a;
   border-radius: 3px;
-  flex-shrink: 0;
 }
 
 .changelog-list {
@@ -1684,9 +1754,9 @@ onDeactivated(() => {
 
 .changelog-item {
   display: flex;
+  gap: 12px;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
   padding: 9px 0;
   border-bottom: 1px solid hsl(var(--border));
 }
@@ -1697,27 +1767,27 @@ onDeactivated(() => {
 
 .commit-title {
   flex: 1;
-  font-size: 13px;
-  color: hsl(var(--foreground));
-  line-height: 1.4;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 13px;
+  line-height: 1.4;
+  color: hsl(var(--foreground));
   white-space: nowrap;
 }
 
 .commit-meta {
   display: grid;
-  grid-template-columns: 90px 110px 140px;
-  align-items: center;
-  gap: 6px;
   flex-shrink: 0;
+  grid-template-columns: 90px 110px 140px;
+  gap: 6px;
+  align-items: center;
 }
 
 .commit-id-tag,
 .commit-author-tag,
 .commit-time-tag {
-  font-size: 11px;
   justify-self: start;
+  font-size: 11px;
 }
 </style>
