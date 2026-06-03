@@ -93,7 +93,24 @@ async function getBranchManagementDetail(id: number | string) {
   );
 }
 
+/**
+ * 检查版本号模板和起始版本号是否存在冲突
+ */
+async function checkBranchVersionConflict(params: {
+  id?: string;
+  name: string;
+  versionTemplate?: string;
+  initialVersion?: string;
+  businessLineId?: number;
+}) {
+  return requestClient.post<{ hasConflict: boolean; message: string }>(
+    '/packageDeployManagement/branchManagement/checkVersion',
+    params,
+  );
+}
+
 export {
+  checkBranchVersionConflict,
   createBranchManagement,
   deleteBranchManagement,
   getBranchManagementDetail,

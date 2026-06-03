@@ -4,10 +4,11 @@ import { computed, nextTick, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { useBusinessStore } from '@vben/stores';
 
-import { Button, Input, message, Select } from 'ant-design-vue';
+import { Button, Input, message, Modal, Select } from 'ant-design-vue';
 
 import { useVbenForm } from '#/adapter/form';
 import {
+  checkBranchVersionConflict,
   createBranchManagement,
   getBranchManagementList,
   updateBranchManagement,
@@ -309,8 +310,6 @@ async function handleConfirm() {
 
   const values = await formApi.getValues();
 
-  loading.value = true;
-
   const submitData: any = {
     name: values.name,
     versionTemplate: values.versionTemplate?.trim() || '',
@@ -327,6 +326,36 @@ async function handleConfirm() {
     submitData.businessLineId = values.businessLineId;
   }
 
+  // 提交前调用检查接口
+  try {
+    const checkResult = await checkBranchVersionConflict({
+      id: id.value,
+      name: submitData.name,
+      versionTemplate: submitData.versionTemplate,
+      initialVersion: submitData.initialVersion,
+      businessLineId: submitData.businessLineId,
+    });
+
+    if (checkResult.hasConflict) {
+      // 有冲突，弹出确认框让用户决定
+      Modal.confirm({
+        title: '版本号冲突提示',
+        content: checkResult.message,
+        okText: '忽略冲突，继续提交',
+        cancelText: '取消',
+        onOk: () => doSubmit(submitData),
+      });
+      return;
+    }
+  } catch {
+    // 检查接口失败不阻断提交流程
+  }
+
+  await doSubmit(submitData);
+}
+
+async function doSubmit(submitData: any) {
+  loading.value = true;
   try {
     if (id.value) {
       await updateBranchManagement(id.value, submitData);
