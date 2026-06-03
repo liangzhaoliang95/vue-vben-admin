@@ -1,11 +1,10 @@
-import type { Recordable } from '@vben/types';
-
 import { requestClient } from '#/api/request';
 
 export namespace ProjectReleaseApi {
   export interface ExecuteReleaseParams {
     projectId: string;
     branch: string;
+    deleteBranchAfterRelease: boolean;
   }
 
   export interface ExecuteReleaseResult {

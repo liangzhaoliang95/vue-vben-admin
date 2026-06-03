@@ -4,10 +4,19 @@ import { computed, onMounted, ref } from 'vue';
 import { Page } from '@vben/common-ui';
 import { useBusinessStore } from '@vben/stores';
 
-import { Button, Card, Checkbox, Input, message, Modal, Select } from 'ant-design-vue';
+import {
+  AutoComplete,
+  Button,
+  Card,
+  Checkbox,
+  message,
+  Modal,
+  Select,
+} from 'ant-design-vue';
 
-import { executeRelease } from '#/api/project-management/project-release';
+import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
 import { getProjectConfigList } from '#/api/project-management/project-config';
+import { executeRelease } from '#/api/project-management/project-release';
 import LogViewer from '#/components/log-viewer/index.vue';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
@@ -20,10 +29,12 @@ interface Project {
 }
 
 const projectList = ref<Project[]>([]);
+const branchOptions = ref<{ value: string }[]>([]);
 const formData = ref({
   projectId: '',
   branch: '',
-  isFullRelease: true, // 默认全量Release
+  isFullRelease: true,
+  deleteBranchAfterRelease: false,
 });
 const loading = ref(false);
 const showLogViewer = ref(false);
@@ -31,15 +42,12 @@ const showLogViewer = ref(false);
 const wsStore = useWebSocketStore();
 const businessStore = useBusinessStore();
 
-// 当前业务线 ID（用于 WebSocket 订阅）
 const currentBusinessLineId = computed(
   () => wsStore.currentBusinessLineId ?? businessStore.currentBusinessLineId,
 );
 
-// 计算是否禁用项目选择
 const isProjectSelectDisabled = computed(() => formData.value.isFullRelease);
 
-// 加载项目列表
 async function loadProjects() {
   try {
     const res = await getProjectConfigList({
@@ -47,27 +55,44 @@ async function loadProjects() {
       pageSize: 1000,
     });
     projectList.value = res.items || [];
-  } catch (error) {
-    console.error('加载项目列表失败:', error);
+  } catch {
     message.error('加载项目列表失败');
   }
 }
 
-// 执行Release
+async function loadBranches() {
+  try {
+    const res = await getBranchManagementList({
+      pageIndex: 1,
+      pageSize: 1000,
+      onlyEnabled: true,
+    });
+    branchOptions.value = (res.items || []).map((b: { name: string }) => ({
+      value: b.name,
+    }));
+  } catch {
+    // 加载失败不影响主流程，用户仍可手动输入
+  }
+}
+
+function filterBranchOptions(input: string) {
+  if (!input) return branchOptions.value;
+  return branchOptions.value.filter((opt) =>
+    opt.value.toLowerCase().includes(input.toLowerCase()),
+  );
+}
+
 async function handleExecute() {
-  // 验证分支名称
   if (!formData.value.branch) {
     message.warning('请输入分支名称');
     return;
   }
 
-  // 如果是单个项目Release,验证项目ID
   if (!formData.value.isFullRelease && !formData.value.projectId) {
     message.warning('请选择项目');
     return;
   }
 
-  // 构建确认信息
   let confirmContent = '';
   if (formData.value.isFullRelease) {
     confirmContent = `确定要执行全量Release吗？\n分支: ${formData.value.branch}\n\n将会Release所有项目！`;
@@ -76,6 +101,9 @@ async function handleExecute() {
       projectList.value.find((p) => p.id === formData.value.projectId)?.name ||
       '';
     confirmContent = `确定要执行Release吗？\n项目: ${projectName}\n分支: ${formData.value.branch}`;
+  }
+  if (formData.value.deleteBranchAfterRelease) {
+    confirmContent += '\n\n⚠️ Release成功后将自动删除该分支！';
   }
 
   Modal.confirm({
@@ -87,23 +115,25 @@ async function handleExecute() {
       try {
         loading.value = true;
         const res = await executeRelease({
-          projectId: formData.value.isFullRelease ? '' : formData.value.projectId,
+          projectId: formData.value.isFullRelease
+            ? ''
+            : formData.value.projectId,
           branch: formData.value.branch,
+          deleteBranchAfterRelease: formData.value.deleteBranchAfterRelease,
         });
 
         message.success(res.message || 'Release已开始执行');
 
-        // 订阅业务线日志，再打开日志查看器
         if (currentBusinessLineId.value) {
           await wsStore.subscribeBusinessLine(currentBusinessLineId.value);
         }
         showLogViewer.value = true;
 
-        // 清空表单
         formData.value = {
           projectId: '',
           branch: '',
           isFullRelease: true,
+          deleteBranchAfterRelease: false,
         };
       } catch (error: any) {
         message.error(error.message || '执行失败');
@@ -114,29 +144,28 @@ async function handleExecute() {
   });
 }
 
-// 重置表单
 function handleReset() {
   formData.value = {
     projectId: '',
     branch: '',
     isFullRelease: true,
+    deleteBranchAfterRelease: false,
   };
 }
 
-// 切换全量/单个模式时清空项目选择
 function handleReleaseTypeChange() {
   if (formData.value.isFullRelease) {
     formData.value.projectId = '';
   }
 }
 
-// 关闭日志查看器
 function handleCloseLogViewer() {
   showLogViewer.value = false;
 }
 
 onMounted(() => {
   loadProjects();
+  loadBranches();
 });
 </script>
 
@@ -196,10 +225,20 @@ onMounted(() => {
             分支
             <span class="text-red-500">*</span>
           </div>
-          <Input
+          <AutoComplete
             v-model:value="formData.branch"
-            placeholder="请输入分支名称，如: dev-1.0"
+            :options="filterBranchOptions(formData.branch)"
+            placeholder="请输入或选择分支名称，如: dev-1.0"
+            allow-clear
+            class="w-full"
           />
+        </div>
+
+        <!-- 删除分支选项 -->
+        <div>
+          <Checkbox v-model:checked="formData.deleteBranchAfterRelease">
+            Release完成后删除分支
+          </Checkbox>
         </div>
 
         <!-- 操作按钮 -->
@@ -244,8 +283,9 @@ onMounted(() => {
                   <li>
                     <strong>单个项目Release</strong>: 仅对选中的项目执行Release
                   </li>
+                  <li>此操作可重复执行，如果已经release过，脚本会提示失败</li>
                   <li>
-                    此操作可重复执行，如果已经release过，脚本会提示失败
+                    勾选<strong>删除分支</strong>后，Release成功的分支将被自动删除
                   </li>
                 </ul>
               </div>
