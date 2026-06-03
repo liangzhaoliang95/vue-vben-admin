@@ -416,7 +416,15 @@
       "projectTypeFrontend": "Frontend",
       "projectTypeSubmodule": "Submodule",
       "projectTypeDefault": "Unknown",
-      "currentVersion": "Current Version"
+      "currentVersion": "Current Version",
+      "copyAsMarkdown": "Copy as Markdown",
+      "copyAsJson": "Copy as JSON",
+      "copyAsYaml": "Copy as YAML",
+      "copyAsMarkdownSuccess": "Copied as Markdown table",
+      "copyAsJsonSuccess": "Copied as JSON format",
+      "copyAsYamlSuccess": "Copied as YAML ConfigMap",
+      "copyFailed": "Copy failed",
+      "noProjectData": "No project data for this version"
     },
     "projectPackage": {
       "title": "Project Package",
@@ -501,7 +509,15 @@
       "buildStarted": "Build task started, please check real-time logs",
       "buildStartFailed": "Failed to start build",
       "forceBuildStarted": "Force build task started, please check real-time logs",
-      "forceBuildStartFailed": "Failed to start force build"
+      "forceBuildStartFailed": "Failed to start force build",
+      "copyAsMarkdown": "Copy as Markdown",
+      "copyAsJson": "Copy as JSON",
+      "copyAsYaml": "Copy as YAML",
+      "copyAsMarkdownSuccess": "Copied as Markdown table",
+      "copyAsJsonSuccess": "Copied as JSON format",
+      "copyAsYamlSuccess": "Copied as YAML ConfigMap",
+      "copyFailed": "Copy failed",
+      "noProjectData": "No project data for this version"
     },
     "deployHistory": {
       "title": "Deploy History",

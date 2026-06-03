@@ -416,7 +416,15 @@
       "projectTypeFrontend": "前端",
       "projectTypeSubmodule": "子模块",
       "projectTypeDefault": "未知",
-      "currentVersion": "当前版本"
+      "currentVersion": "当前版本",
+      "copyAsMarkdown": "复制为 Markdown",
+      "copyAsJson": "复制为 JSON",
+      "copyAsYaml": "复制为 YAML",
+      "copyAsMarkdownSuccess": "已复制为 Markdown 表格",
+      "copyAsJsonSuccess": "已复制为 JSON 格式",
+      "copyAsYamlSuccess": "已复制为 YAML ConfigMap",
+      "copyFailed": "复制失败",
+      "noProjectData": "该版本无项目数据"
     },
     "projectPackage": {
       "title": "项目打包",
@@ -501,7 +509,15 @@
       "buildStarted": "构建任务已启动，请查看实时日志",
       "buildStartFailed": "启动构建失败",
       "forceBuildStarted": "强制构建任务已启动，请查看实时日志",
-      "forceBuildStartFailed": "启动强制构建失败"
+      "forceBuildStartFailed": "启动强制构建失败",
+      "copyAsMarkdown": "复制为 Markdown",
+      "copyAsJson": "复制为 JSON",
+      "copyAsYaml": "复制为 YAML",
+      "copyAsMarkdownSuccess": "已复制为 Markdown 表格",
+      "copyAsJsonSuccess": "已复制为 JSON 格式",
+      "copyAsYamlSuccess": "已复制为 YAML ConfigMap",
+      "copyFailed": "复制失败",
+      "noProjectData": "该版本无项目数据"
     },
     "deployHistory": {
       "projectName": "项目名称",

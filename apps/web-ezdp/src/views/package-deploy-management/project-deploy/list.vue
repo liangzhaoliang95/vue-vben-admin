@@ -927,6 +927,116 @@ function formatCommitTime(ms: number) {
   });
 }
 
+// 复制版本为 Markdown 表格
+async function copyVersionAsMarkdown(version: any) {
+  if (!version.children || version.children.length === 0) {
+    message.warning(
+      $t('deploy.packageDeployManagement.projectDeploy.noProjectData'),
+    );
+    return;
+  }
+  try {
+    const versionHeader = `## 版本 ${version.version}\n\n`;
+    const versionInfo = `**构建时间:** ${formatTime(version.buildTime)}\n\n`;
+    const headers = ['项目名称', '项目类型', '版本号'];
+    const separator = ['---', '---', '---'];
+    const rows = getSortedProjects(version.children).map((project: any) => [
+      project.projectName || '-',
+      getProjectTypeName(project.projectType || ''),
+      project.version || '-',
+    ]);
+    const markdownTable = [
+      `| ${headers.join(' | ')} |`,
+      `| ${separator.join(' | ')} |`,
+      ...rows.map((row) => `| ${row.join(' | ')} |`),
+    ].join('\n');
+    await copyToClipboard(versionHeader + versionInfo + markdownTable);
+    message.success(
+      $t('deploy.packageDeployManagement.projectDeploy.copyAsMarkdownSuccess'),
+    );
+  } catch {
+    message.error(
+      $t('deploy.packageDeployManagement.projectDeploy.copyFailed'),
+    );
+  }
+}
+
+// 复制版本为 JSON
+async function copyVersionAsJson(version: any) {
+  if (!version.children || version.children.length === 0) {
+    message.warning(
+      $t('deploy.packageDeployManagement.projectDeploy.noProjectData'),
+    );
+    return;
+  }
+  try {
+    const obj: Record<string, string> = { version: version.version || '' };
+    for (const project of getSortedProjects(version.children)) {
+      if (project.projectName && project.version) {
+        obj[project.projectName] = project.version;
+      }
+    }
+    await copyToClipboard(JSON.stringify(obj, null, 4));
+    message.success(
+      $t('deploy.packageDeployManagement.projectDeploy.copyAsJsonSuccess'),
+    );
+  } catch {
+    message.error(
+      $t('deploy.packageDeployManagement.projectDeploy.copyFailed'),
+    );
+  }
+}
+
+// 复制版本为 YAML ConfigMap
+async function copyVersionAsYaml(version: any) {
+  if (!version.children || version.children.length === 0) {
+    message.warning(
+      $t('deploy.packageDeployManagement.projectDeploy.noProjectData'),
+    );
+    return;
+  }
+  try {
+    const backendProjects = getSortedProjects(version.children).filter(
+      (p) => p.projectType !== 'frontend',
+    );
+    const frontendProjects = getSortedProjects(version.children).filter(
+      (p) => p.projectType === 'frontend',
+    );
+    const lines: string[] = [
+      'apiVersion: v1',
+      'kind: ConfigMap',
+      'metadata:',
+      '  name: plaso-version',
+      'data:',
+      `  version: "${version.version || ''}"`,
+    ];
+    if (backendProjects.length > 0) {
+      lines.push('  # 后端项目');
+      for (const p of backendProjects) {
+        if (p.projectName && p.version) {
+          lines.push(`  ${p.projectName}: "${p.version}"`);
+        }
+      }
+    }
+    if (frontendProjects.length > 0) {
+      lines.push('  # 前端项目');
+      for (const p of frontendProjects) {
+        if (p.projectName && p.version) {
+          lines.push(`  ${p.projectName}: "${p.version}"`);
+        }
+      }
+    }
+    await copyToClipboard(lines.join('\n'));
+    message.success(
+      $t('deploy.packageDeployManagement.projectDeploy.copyAsYamlSuccess'),
+    );
+  } catch {
+    message.error(
+      $t('deploy.packageDeployManagement.projectDeploy.copyFailed'),
+    );
+  }
+}
+
 // 路由切换时清理资源
 onDeactivated(() => {
   try {
@@ -1122,6 +1232,107 @@ onDeactivated(() => {
                   </div>
 
                   <div class="flex items-center gap-2">
+                    <!-- 复制按钮组 -->
+                    <div class="flex items-center gap-1">
+                      <Tooltip
+                        :title="
+                          $t(
+                            'deploy.packageDeployManagement.projectDeploy.copyAsMarkdown',
+                          )
+                        "
+                      >
+                        <Button
+                          size="small"
+                          type="text"
+                          @click.stop="copyVersionAsMarkdown(version)"
+                        >
+                          <template #icon>
+                            <!-- MD icon -->
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <line x1="8" y1="13" x2="10" y2="11" />
+                              <polyline points="8 17 10 15 12 17 14 15 16 17" />
+                              <line x1="16" y1="13" x2="14" y2="11" />
+                            </svg>
+                          </template>
+                        </Button>
+                      </Tooltip>
+                      <Tooltip
+                        :title="
+                          $t(
+                            'deploy.packageDeployManagement.projectDeploy.copyAsJson',
+                          )
+                        "
+                      >
+                        <Button
+                          size="small"
+                          type="text"
+                          @click.stop="copyVersionAsJson(version)"
+                        >
+                          <template #icon>
+                            <!-- JSON icon (curly braces) -->
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1" />
+                              <path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1" />
+                            </svg>
+                          </template>
+                        </Button>
+                      </Tooltip>
+                      <Tooltip
+                        :title="
+                          $t(
+                            'deploy.packageDeployManagement.projectDeploy.copyAsYaml',
+                          )
+                        "
+                      >
+                        <Button
+                          size="small"
+                          type="text"
+                          @click.stop="copyVersionAsYaml(version)"
+                        >
+                          <template #icon>
+                            <!-- YAML icon (indented lines) -->
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <line x1="4" y1="6" x2="20" y2="6" />
+                              <line x1="8" y1="10" x2="20" y2="10" />
+                              <line x1="8" y1="14" x2="20" y2="14" />
+                              <line x1="4" y1="18" x2="20" y2="18" />
+                            </svg>
+                          </template>
+                        </Button>
+                      </Tooltip>
+                    </div>
                     <!-- 变更日志按钮 -->
                     <span
                       v-if="version.changelog"
