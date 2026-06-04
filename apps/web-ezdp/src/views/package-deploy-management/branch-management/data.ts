@@ -70,6 +70,14 @@ export function useColumns(
       formatter: ({ cellValue }) => cellValue || '-',
     },
     {
+      field: 'lastReleaseAt',
+      title: $t(
+        'deploy.packageDeployManagement.branchManagement.lastReleaseAt',
+      ),
+      minWidth: 180,
+      slots: { default: 'lastReleaseAt' },
+    },
+    {
       field: 'description',
       title: $t('deploy.packageDeployManagement.branchManagement.description'),
       minWidth: 250,

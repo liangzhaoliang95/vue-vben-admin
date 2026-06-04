@@ -183,6 +183,12 @@ function onTopologyPreview() {
           >{{ row.name }}</a
         >
       </template>
+      <template #lastReleaseAt="{ row }">
+        <span v-if="row.lastReleaseAt" class="release-badge">
+          {{ new Date(row.lastReleaseAt).toLocaleString('zh-CN') }}
+        </span>
+        <span v-else class="text-gray-400">-</span>
+      </template>
       <template #toolbar-tools>
         <Button style="margin-right: 8px" @click="onTopologyPreview">
           {{
@@ -214,5 +220,20 @@ function onTopologyPreview() {
 /* 深色模式下的悬浮效果 */
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
   background-color: rgb(24 144 255 / 15%) !important;
+}
+
+.release-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: #fff;
+  background: #52c41a;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 </style>

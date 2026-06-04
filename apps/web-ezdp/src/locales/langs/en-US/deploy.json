@@ -581,6 +581,7 @@
         "hotfix": "Hotfix Branch"
       },
       "lastVersion": "Last Version",
+      "lastReleaseAt": "Last Release Time",
       "buildModal": {
         "title": "Project Build - {name}"
       },

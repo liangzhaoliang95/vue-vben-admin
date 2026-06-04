@@ -580,6 +580,7 @@
         "hotfix": "热修复分支"
       },
       "lastVersion": "最后版本号",
+      "lastReleaseAt": "最近 Release 时间",
       "buildModal": {
         "title": "项目构建 - {name}"
       },
