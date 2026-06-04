@@ -21,9 +21,12 @@ const emit = defineEmits<{
 
 const modalTitle = computed(() => {
   if (!props.branch) return '';
-  return $t('deploy.packageDeployManagement.branchManagement.buildModal.title', {
-    name: props.branch.name,
-  });
+  return $t(
+    'deploy.packageDeployManagement.branchManagement.buildModal.title',
+    {
+      name: props.branch.name,
+    },
+  );
 });
 
 function handleClose() {
@@ -41,6 +44,11 @@ function handleClose() {
     destroy-on-close
     @cancel="handleClose"
   >
-    <ProjectPackageList v-if="open && branch" :initial-branch-id="branch.id" :initial-branch-name="branch.name" :initial-business-line-id="branch.businessLineId" />
+    <ProjectPackageList
+      v-if="open && branch"
+      :initial-branch-id="branch.id"
+      :initial-branch-name="branch.name"
+      :initial-business-line-id="branch.businessLineId"
+    />
   </Modal>
 </template>

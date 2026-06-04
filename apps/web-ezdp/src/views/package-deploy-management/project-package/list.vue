@@ -34,11 +34,14 @@ const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
 
 // 嵌入模式 props（从 build-modal 传入时使用）
-const props = withDefaults(defineProps<{
-  initialBranchId?: string;
-  initialBranchName?: string;
-  initialBusinessLineId?: number;
-}>(), {});
+const props = withDefaults(
+  defineProps<{
+    initialBranchId?: string;
+    initialBranchName?: string;
+    initialBusinessLineId?: number;
+  }>(),
+  {},
+);
 
 // 是否嵌入模式（有 props 传入时）
 const isEmbedded = computed(() => !!props.initialBranchId);
@@ -211,8 +214,13 @@ async function init() {
     }
 
     // 嵌入模式：先预注入传入的分支，确保 Select 立刻能显示名称
-    if (props.initialBranchId && props.initialBranchName && selectedBusinessLineId.value) {
-      const existing = allBranchesMap.value.get(selectedBusinessLineId.value) || [];
+    if (
+      props.initialBranchId &&
+      props.initialBranchName &&
+      selectedBusinessLineId.value
+    ) {
+      const existing =
+        allBranchesMap.value.get(selectedBusinessLineId.value) || [];
       if (!existing.some((b: any) => b.id === props.initialBranchId)) {
         allBranchesMap.value.set(selectedBusinessLineId.value, [
           { id: props.initialBranchId, name: props.initialBranchName },
@@ -233,7 +241,8 @@ async function init() {
       } else if (selectedBusinessLineId.value) {
         const branches =
           allBranchesMap.value.get(selectedBusinessLineId.value) || [];
-        selectedBranchId.value = branches.length > 0 ? branches[0].id : undefined;
+        selectedBranchId.value =
+          branches.length > 0 ? branches[0].id : undefined;
       }
     }
 
@@ -697,7 +706,10 @@ onMounted(async () => {
   isComponentActive.value = true;
   try {
     await init();
-    await wsStore.subscribe('build-event-listener-modal', handleWebSocketMessage);
+    await wsStore.subscribe(
+      'build-event-listener-modal',
+      handleWebSocketMessage,
+    );
   } catch (error) {
     console.error('onMounted (embedded) 初始化失败:', error);
   }
@@ -877,7 +889,10 @@ onDeactivated(() => {
 </script>
 
 <template>
-  <component :is="isEmbedded ? 'div' : Page" v-bind="isEmbedded ? {} : { 'auto-content-height': true }">
+  <component
+    :is="isEmbedded ? 'div' : Page"
+    v-bind="isEmbedded ? {} : { 'auto-content-height': true }"
+  >
     <div class="flex h-full flex-col gap-4">
       <!-- 筛选条件区 -->
       <Card class="flex-shrink-0">

@@ -76,13 +76,17 @@ export function useColumns(
     },
     {
       field: 'versionTemplate',
-      title: $t('deploy.packageDeployManagement.branchManagement.versionTemplate'),
+      title: $t(
+        'deploy.packageDeployManagement.branchManagement.versionTemplate',
+      ),
       minWidth: 220,
       formatter: ({ cellValue }) => cellValue || '-',
     },
     {
       field: 'defaultVersion',
-      title: $t('deploy.packageDeployManagement.branchManagement.defaultVersion'),
+      title: $t(
+        'deploy.packageDeployManagement.branchManagement.defaultVersion',
+      ),
       minWidth: 180,
       formatter: ({ cellValue }) => cellValue || '-',
     },
@@ -96,8 +100,12 @@ export function useColumns(
         props: {
           checkedValue: true,
           unCheckedValue: false,
-          checkedChildren: $t('deploy.packageDeployManagement.branchManagement.enable'),
-          unCheckedChildren: $t('deploy.packageDeployManagement.branchManagement.disable'),
+          checkedChildren: $t(
+            'deploy.packageDeployManagement.branchManagement.enable',
+          ),
+          unCheckedChildren: $t(
+            'deploy.packageDeployManagement.branchManagement.disable',
+          ),
         },
         attrs: {
           beforeChange: async (newVal: boolean, row: any) => {

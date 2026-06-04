@@ -167,7 +167,11 @@ function onTopologyPreview() {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <TopologyModal v-model:open="topologyOpen" :branches="allBranches" @refresh="onRefresh" />
+    <TopologyModal
+      v-model:open="topologyOpen"
+      :branches="allBranches"
+      @refresh="onRefresh"
+    />
     <BuildModal v-model:open="buildModalOpen" :branch="selectedBranch" />
     <Grid
       :table-title="$t('deploy.packageDeployManagement.branchManagement.title')"
@@ -176,11 +180,16 @@ function onTopologyPreview() {
         <a
           class="cursor-pointer text-blue-500 hover:text-blue-600"
           @click="onBranchNameClick(row)"
-        >{{ row.name }}</a>
+          >{{ row.name }}</a
+        >
       </template>
       <template #toolbar-tools>
         <Button style="margin-right: 8px" @click="onTopologyPreview">
-          {{ $t('deploy.packageDeployManagement.branchManagement.topologyPreview') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.topologyPreview',
+            )
+          }}
         </Button>
         <Button type="primary" @click="onCreate">
           <Plus class="size-5" />
@@ -198,12 +207,12 @@ function onTopologyPreview() {
 <style scoped>
 /* 表格行悬浮效果 */
 :deep(.vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.08) !important;
+  background-color: rgb(24 144 255 / 8%) !important;
   transition: background-color 0.2s ease;
 }
 
 /* 深色模式下的悬浮效果 */
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.15) !important;
+  background-color: rgb(24 144 255 / 15%) !important;
 }
 </style>
