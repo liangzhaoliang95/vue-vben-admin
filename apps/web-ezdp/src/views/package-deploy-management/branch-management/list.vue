@@ -22,6 +22,7 @@ import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
+import BuildModal from './modules/build-modal.vue';
 import TopologyModal from './modules/topology-modal.vue';
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -34,6 +35,10 @@ const businessStore = useBusinessStore();
 // 拓扑预览
 const topologyOpen = ref(false);
 const allBranches = ref<BranchManagementApi.BranchManagement[]>([]);
+
+// 构建弹窗
+const buildModalOpen = ref(false);
+const selectedBranch = ref<BranchManagementApi.BranchManagement | null>(null);
 
 async function loadAllBranches() {
   const isSuperAdmin = businessStore.currentRole?.isSuper === true;
@@ -140,6 +145,11 @@ async function onToggleEnabled(row: BranchManagementApi.BranchManagement) {
   }
 }
 
+function onBranchNameClick(row: BranchManagementApi.BranchManagement) {
+  selectedBranch.value = row;
+  buildModalOpen.value = true;
+}
+
 function onRefresh() {
   loadAllBranches();
   gridApi.query();
@@ -158,9 +168,16 @@ function onTopologyPreview() {
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
     <TopologyModal v-model:open="topologyOpen" :branches="allBranches" @refresh="onRefresh" />
+    <BuildModal v-model:open="buildModalOpen" :branch="selectedBranch" />
     <Grid
       :table-title="$t('deploy.packageDeployManagement.branchManagement.title')"
     >
+      <template #name="{ row }">
+        <a
+          class="cursor-pointer text-blue-500 hover:text-blue-600"
+          @click="onBranchNameClick(row)"
+        >{{ row.name }}</a>
+      </template>
       <template #toolbar-tools>
         <Button style="margin-right: 8px" @click="onTopologyPreview">
           {{ $t('deploy.packageDeployManagement.branchManagement.topologyPreview') }}

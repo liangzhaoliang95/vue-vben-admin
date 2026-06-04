@@ -55,10 +55,17 @@ export function useColumns(
       field: 'name',
       title: $t('deploy.packageDeployManagement.branchManagement.name'),
       minWidth: 200,
+      slots: { default: 'name' },
     },
     {
       field: 'parentBranchName',
       title: $t('deploy.packageDeployManagement.branchManagement.parentBranch'),
+      minWidth: 160,
+      formatter: ({ cellValue }) => cellValue || '-',
+    },
+    {
+      field: 'lastVersion',
+      title: $t('deploy.packageDeployManagement.branchManagement.lastVersion'),
       minWidth: 160,
       formatter: ({ cellValue }) => cellValue || '-',
     },

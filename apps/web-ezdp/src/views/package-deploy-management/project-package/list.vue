@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onActivated, onDeactivated, ref } from 'vue';
+import { computed, onActivated, onDeactivated, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 import { useBusinessStore } from '@vben/stores';
@@ -32,6 +32,16 @@ import { copyToClipboard } from '#/utils/clipboard';
 
 const businessStore = useBusinessStore();
 const wsStore = useWebSocketStore();
+
+// 嵌入模式 props（从 build-modal 传入时使用）
+const props = withDefaults(defineProps<{
+  initialBranchId?: string;
+  initialBranchName?: string;
+  initialBusinessLineId?: number;
+}>(), {});
+
+// 是否嵌入模式（有 props 传入时）
+const isEmbedded = computed(() => !!props.initialBranchId);
 
 // 筛选条件
 const selectedBusinessLineId = ref<number | undefined>();
@@ -115,7 +125,8 @@ async function loadBranchesForBusinessLine(
       page: 1,
       pageSize: 1000,
       businessLineId,
-      onlyEnabled: true, // 只查询启用的分支
+      // 嵌入模式下加载全部分支（含禁用），确保传入的分支能显示名称
+      ...(isEmbedded.value ? {} : { onlyEnabled: true }),
     });
     allBranchesMap.value.set(businessLineId, res.items || []);
   } catch (error) {
@@ -186,7 +197,9 @@ async function init() {
 
     // 步骤1: 设置默认业务线（仅首次）
     if (!selectedBusinessLineId.value) {
-      if (isSuperAdmin.value) {
+      if (props.initialBusinessLineId) {
+        selectedBusinessLineId.value = props.initialBusinessLineId;
+      } else if (isSuperAdmin.value) {
         const businessLines = businessStore.businessLines;
         if (businessLines && businessLines.length > 0) {
           selectedBusinessLineId.value = businessLines[0]?.businessLine.id;
@@ -197,16 +210,31 @@ async function init() {
       }
     }
 
+    // 嵌入模式：先预注入传入的分支，确保 Select 立刻能显示名称
+    if (props.initialBranchId && props.initialBranchName && selectedBusinessLineId.value) {
+      const existing = allBranchesMap.value.get(selectedBusinessLineId.value) || [];
+      if (!existing.some((b: any) => b.id === props.initialBranchId)) {
+        allBranchesMap.value.set(selectedBusinessLineId.value, [
+          { id: props.initialBranchId, name: props.initialBranchName },
+          ...existing,
+        ]);
+      }
+    }
+
     // 步骤2: 加载当前业务线的分支数据（懒加载策略）
     if (selectedBusinessLineId.value) {
       await loadBranchesForBusinessLine(selectedBusinessLineId.value);
     }
 
     // 步骤3: 设置默认分支（仅首次）
-    if (!selectedBranchId.value && selectedBusinessLineId.value) {
-      const branches =
-        allBranchesMap.value.get(selectedBusinessLineId.value) || [];
-      selectedBranchId.value = branches.length > 0 ? branches[0].id : undefined;
+    if (!selectedBranchId.value) {
+      if (props.initialBranchId) {
+        selectedBranchId.value = props.initialBranchId;
+      } else if (selectedBusinessLineId.value) {
+        const branches =
+          allBranchesMap.value.get(selectedBusinessLineId.value) || [];
+        selectedBranchId.value = branches.length > 0 ? branches[0].id : undefined;
+      }
     }
 
     // 步骤4: 只有在分支列表准备好后，才加载版本列表
@@ -663,6 +691,18 @@ onActivated(async () => {
   }
 });
 
+// 嵌入模式下（Modal 内）用 onMounted 初始化，因为没有 keep-alive
+onMounted(async () => {
+  if (!isEmbedded.value) return;
+  isComponentActive.value = true;
+  try {
+    await init();
+    await wsStore.subscribe('build-event-listener-modal', handleWebSocketMessage);
+  } catch (error) {
+    console.error('onMounted (embedded) 初始化失败:', error);
+  }
+});
+
 // 复制版本为 Markdown 表格
 async function copyVersionAsMarkdown(version: any) {
   if (!version.children || version.children.length === 0) {
@@ -837,7 +877,7 @@ onDeactivated(() => {
 </script>
 
 <template>
-  <Page auto-content-height>
+  <component :is="isEmbedded ? 'div' : Page" v-bind="isEmbedded ? {} : { 'auto-content-height': true }">
     <div class="flex h-full flex-col gap-4">
       <!-- 筛选条件区 -->
       <Card class="flex-shrink-0">
@@ -1421,7 +1461,7 @@ onDeactivated(() => {
         </div>
       </div>
     </Modal>
-  </Page>
+  </component>
 </template>
 
 <style scoped>

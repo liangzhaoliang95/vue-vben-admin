@@ -580,6 +580,10 @@
         "release": "Release Branch",
         "hotfix": "Hotfix Branch"
       },
+      "lastVersion": "Last Version",
+      "buildModal": {
+        "title": "Project Build - {name}"
+      },
       "topologyPreview": "Topology Preview",
       "topologyTitle": "Branch Inheritance Topology",
       "topologyRootBranch": "Root Branch",

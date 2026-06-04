@@ -579,6 +579,10 @@
         "release": "发布分支",
         "hotfix": "热修复分支"
       },
+      "lastVersion": "最后版本号",
+      "buildModal": {
+        "title": "项目构建 - {name}"
+      },
       "topologyPreview": "拓扑预览",
       "topologyTitle": "分支继承拓扑图",
       "topologyRootBranch": "根分支",

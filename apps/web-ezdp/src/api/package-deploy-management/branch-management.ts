@@ -12,6 +12,7 @@ export namespace BranchManagementApi {
     versionTemplate: string;
     initialVersion: string;
     defaultVersion: string; // 初始版本号（无配置时由模板推算）
+    lastVersion: string; // 最后一个构建版本号（服务端填充）
     description: string;
     enabled: boolean;
     sortOrder: number;
