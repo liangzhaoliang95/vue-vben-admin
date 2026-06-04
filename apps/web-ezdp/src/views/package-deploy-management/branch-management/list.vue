@@ -232,8 +232,8 @@ function onTopologyPreview() {
   font-weight: 500;
   line-height: 1.4;
   color: #fff;
+  white-space: nowrap;
   background: #52c41a;
   border-radius: 4px;
-  white-space: nowrap;
 }
 </style>
