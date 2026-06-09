@@ -893,12 +893,12 @@ onDeactivated(() => {
     :is="isEmbedded ? 'div' : Page"
     v-bind="isEmbedded ? {} : { 'auto-content-height': true }"
   >
-    <div class="flex h-full flex-col gap-4">
+    <div class="flex h-full flex-col gap-3">
       <!-- 筛选条件区 -->
-      <Card class="flex-shrink-0">
+      <Card class="compact-toolbar-card flex-shrink-0">
         <!-- 第一行：分支筛选 + 版本号排序、刷新、全量获取 -->
-        <div class="flex w-full items-center justify-between gap-4">
-          <div class="flex flex-wrap items-center gap-4">
+        <div class="flex w-full items-center justify-between gap-2.5">
+          <div class="flex flex-wrap items-center gap-2.5">
             <!-- 业务线筛选(仅超级管理员) -->
             <div v-if="isSuperAdmin" class="flex items-center gap-2">
               <span class="filter-label">
@@ -935,7 +935,7 @@ onDeactivated(() => {
           </div>
 
           <!-- 右侧：版本号排序、刷新、全量获取 -->
-          <div class="flex flex-shrink-0 items-center gap-3">
+          <div class="flex flex-shrink-0 items-center gap-2">
             <Select
               v-model:value="sortMode"
               class="w-36"
@@ -973,8 +973,8 @@ onDeactivated(() => {
       </Card>
 
       <!-- 构建操作区 -->
-      <Card class="flex-shrink-0">
-        <div class="flex justify-end gap-3">
+      <Card class="compact-toolbar-card flex-shrink-0">
+        <div class="flex justify-end gap-2">
           <Button
             style="
               color: #d46b08;
@@ -997,7 +997,7 @@ onDeactivated(() => {
       </Card>
 
       <!-- 版本列表 -->
-      <Card class="flex-1 overflow-y-auto">
+      <Card class="compact-list-card flex-1 overflow-y-auto">
         <Spin :spinning="loading">
           <div
             v-if="versionList.length === 0"
@@ -1482,6 +1482,27 @@ onDeactivated(() => {
 <style scoped>
 @import '../project-list-shared.css';
 
+.compact-toolbar-card :deep(.ant-card-body) {
+  padding: 10px 16px;
+}
+
+.compact-list-card :deep(.ant-card-body) {
+  padding: 14px 18px 16px;
+}
+
+.compact-toolbar-card :deep(.ant-select-selector),
+.compact-toolbar-card :deep(.ant-btn) {
+  min-height: 34px;
+}
+
+.compact-toolbar-card :deep(.ant-btn) {
+  padding-inline: 12px;
+}
+
+.compact-toolbar-card .filter-label {
+  font-size: 12px;
+}
+
 /* project-package 独有：项目列表列宽（含构建时长列） */
 .project-item {
   grid-template-columns: repeat(5, 1fr);
@@ -1513,7 +1534,7 @@ onDeactivated(() => {
 
 .project-actions {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
   justify-content: flex-end;
   justify-self: end;
@@ -1532,12 +1553,12 @@ onDeactivated(() => {
 .changelog-btn {
   display: inline-flex;
   flex-shrink: 0;
-  gap: 5px;
+  gap: 4px;
   align-items: center;
   justify-content: center;
-  height: 26px;
-  padding: 0 10px;
-  font-size: 12px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 11px;
   color: #f05033;
   white-space: nowrap;
   cursor: pointer;

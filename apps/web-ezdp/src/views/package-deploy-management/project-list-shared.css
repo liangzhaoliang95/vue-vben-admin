@@ -17,7 +17,7 @@
 }
 
 :deep(.ant-collapse > .ant-collapse-item) {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   overflow: hidden;
   background: hsl(var(--card));
   border: none;
@@ -33,7 +33,8 @@
 :deep(.ant-collapse > .ant-collapse-item > .ant-collapse-header) {
   display: flex !important;
   align-items: center !important;
-  padding: 16px 20px;
+  min-height: 63px;
+  padding: 12px 16px;
   font-weight: 600;
   color: hsl(var(--foreground));
   background: hsl(var(--muted));
@@ -100,17 +101,21 @@
 }
 
 .version-title {
-  padding: 8px 16px;
-  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 18px;
+  font-size: 19px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 32px;
   color: hsl(var(--primary-foreground));
   background: hsl(var(--primary));
   border-radius: calc(var(--radius) - 2px);
 }
 
 .version-time {
-  font-size: 14px;
+  font-size: 13px;
   color: hsl(var(--muted-foreground));
   white-space: nowrap;
 }
@@ -124,8 +129,8 @@
 .project-list-columns {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  padding: 8px 16px;
+  gap: 18px;
+  padding: 6px 14px;
 }
 
 .project-list-columns--single {
@@ -142,7 +147,7 @@
 .project-column-body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .project-column-empty {
@@ -156,7 +161,8 @@
   position: relative;
   display: grid;
   align-items: center;
-  padding: 4px 20px;
+  min-height: 52px;
+  padding: 3px 16px;
   cursor: default;
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
@@ -238,7 +244,7 @@
 .project-name {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: hsl(var(--foreground));
   white-space: nowrap;
@@ -247,19 +253,19 @@
 .project-name-col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  justify-self: start;
   min-width: 0;
   overflow: hidden;
-  justify-self: start;
 }
 
 .project-image-name {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 11px;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
+  font-size: 10px;
   color: hsl(var(--muted-foreground));
   white-space: nowrap;
-  font-family: Consolas, Monaco, 'Courier New', monospace;
   opacity: 0.8;
 }
 
@@ -272,14 +278,14 @@
 .version-tag {
   display: inline-block;
   justify-self: start;
-  max-width: 100%;
   min-width: 0;
+  max-width: 100%;
+  padding: 3px 8px;
   overflow: hidden;
+  text-overflow: ellipsis;
   font-family: Consolas, Monaco, 'Courier New', monospace;
   font-weight: 600;
-  text-overflow: ellipsis;
   white-space: nowrap;
-  padding: 4px 10px;
 }
 
 .status-tag {
@@ -293,26 +299,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 60px;
-  padding: 4px 12px;
-  font-size: 14px;
-  line-height: 20px;
+  min-width: 54px;
+  padding: 2px 10px;
+  font-size: 12px;
+  line-height: 18px;
   text-align: center;
 }
 
 .project-item .version-tag {
   min-width: 0;
   max-width: 100%;
-  padding: 4px 10px;
+  padding: 3px 8px;
 }
 
 /* 表格行悬浮效果 */
 :deep(.vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.08) !important;
+  background-color: rgb(24 144 255 / 8%) !important;
   transition: background-color 0.2s ease;
 }
 
 /* 深色模式下的悬浮效果 */
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.15) !important;
+  background-color: rgb(24 144 255 / 15%) !important;
 }

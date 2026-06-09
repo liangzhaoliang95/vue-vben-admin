@@ -409,7 +409,7 @@
       "sortOrder": "Sort",
       "sortOrderVersion": "Sort by version",
       "sortOrderName": "Sort by name",
-      "showImageName": "Get Image Version",
+      "showImageName": "Show Image Version",
       "refresh": "Refresh",
       "commitLog": "Commits",
       "projectTypeBackend": "Backend",

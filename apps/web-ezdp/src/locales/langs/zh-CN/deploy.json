@@ -409,7 +409,7 @@
       "sortOrder": "排序",
       "sortOrderVersion": "按版本号排序",
       "sortOrderName": "按名称排序",
-      "showImageName": "获取镜像版本",
+      "showImageName": "展示镜像版本",
       "refresh": "刷新",
       "commitLog": "提交记录",
       "projectTypeBackend": "服务端",

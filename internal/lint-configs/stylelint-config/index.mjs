@@ -106,6 +106,18 @@ export default {
         ignore: ['after-comment', 'first-nested'],
       },
     ],
+    'selector-pseudo-class-no-unknown': [
+      true,
+      {
+        ignorePseudoClasses: ['global', 'deep'],
+      },
+    ],
+    'selector-pseudo-element-no-unknown': [
+      true,
+      {
+        ignorePseudoElements: ['v-deep', 'v-global', 'v-slotted'],
+      },
+    ],
     'scss/at-rule-no-unknown': [
       true,
       {
