@@ -34,7 +34,9 @@ function updateDebug(message: string) {
 }
 
 function getCanvas() {
-  return containerRef.value?.querySelector('canvas') as HTMLCanvasElement | null;
+  return containerRef.value?.querySelector(
+    'canvas',
+  ) as HTMLCanvasElement | null;
 }
 
 function syncViewportLayout() {
@@ -118,7 +120,9 @@ async function connect() {
       const width = canvas?.width ?? 0;
       const height = canvas?.height ?? 0;
       bindLayout();
-      updateDebug(`VNC 已连接${width > 0 && height > 0 ? `（${width}×${height}）` : ''}`);
+      updateDebug(
+        `VNC 已连接${width > 0 && height > 0 ? `（${width}×${height}）` : ''}`,
+      );
       emit('connected');
     });
 
@@ -149,7 +153,9 @@ async function connect() {
 
     rfb.addEventListener('desktopname', (event: Event) => {
       const detail = (event as CustomEvent<{ name?: string }>).detail;
-      updateDebug(detail?.name ? `已连接桌面：${detail.name}` : '已收到桌面信息');
+      updateDebug(
+        detail?.name ? `已连接桌面：${detail.name}` : '已收到桌面信息',
+      );
       bindLayout();
     });
 
@@ -214,16 +220,16 @@ onBeforeUnmount(() => {
 
 .vnc-preview-debug {
   position: absolute;
-  left: 12px;
   bottom: 12px;
+  left: 12px;
   z-index: 2;
   max-width: calc(100% - 24px);
   padding: 4px 8px;
-  color: #e2e8f0;
   font-size: 12px;
   line-height: 1.4;
+  color: #e2e8f0;
+  pointer-events: none;
   background: rgb(2 6 23 / 72%);
   border-radius: 6px;
-  pointer-events: none;
 }
 </style>

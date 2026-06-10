@@ -107,8 +107,6 @@ onMounted(async () => {
               "
             />
           </div>
-
-
         </template>
 
         <div v-else class="browser-empty">
@@ -131,23 +129,23 @@ onMounted(async () => {
 
 .service-browser-page :deep(.ant-card) {
   display: flex;
-  height: 100%;
   flex-direction: column;
+  height: 100%;
 }
 
 .service-browser-page :deep(.ant-card-body) {
   display: flex;
-  min-height: 0;
   flex: 1;
   flex-direction: column;
+  min-height: 0;
 }
 
 .service-browser-main {
   display: flex;
-  min-width: 0;
-  min-height: 0;
   flex: 1;
   flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 .toolbar {
@@ -157,10 +155,10 @@ onMounted(async () => {
 
 .browser-preview,
 .browser-empty {
-  min-height: 520px;
-  min-width: 0;
-  min-height: 0;
   flex: 1;
+  min-width: 0;
+  min-height: 520px;
+  min-height: 0;
 }
 
 .browser-preview {
@@ -172,8 +170,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #fff;
   border: 1px dashed #d9d9d9;
   border-radius: 12px;
-  background: #fff;
 }
 </style>
