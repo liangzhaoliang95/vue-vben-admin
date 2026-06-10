@@ -107,6 +107,14 @@
     "invalidUrl": "Invalid URL format",
     "loadingProfile": "Loading controller VNC profile",
     "username": "VNC Username",
-    "connectionError": "Failed to connect to VNC"
+    "connectionError": "Failed to connect to VNC",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit Fullscreen",
+    "clipboardSynced": "Clipboard synced to remote desktop",
+    "clipboardHint": "Paste (Ctrl+V) the text you want to send to the remote desktop in the text box below",
+    "clipboardPlaceholder": "Paste text here (Ctrl+V)...",
+    "pasteClipboard": "Paste to Remote Desktop",
+    "sendToRemote": "Send to Remote",
+    "cancel": "Cancel"
   }
 }
