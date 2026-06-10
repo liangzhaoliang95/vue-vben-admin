@@ -92,5 +92,21 @@
     "step1": "复制上面的 Token 并保存到安全位置",
     "step2": "在服务器上下载并安装 EZDP Server Agent 客户端",
     "step3": "将 Token 配置到 Agent 的配置文件中，启动 Agent"
+  },
+  "serviceBrowser": {
+    "title": "服务浏览器",
+    "connect": "连接预览",
+    "reconnect": "重新连接",
+    "openUrl": "打开指定页面",
+    "urlPlaceholder": "请输入需要在主控端浏览器中打开的 URL",
+    "selectHint": "请输入需要打开的 URL",
+    "notConfigured": "主控端未配置 VNC 预览",
+    "offline": "VNC 服务不可用，无法预览",
+    "connected": "VNC 已连接",
+    "disconnected": "VNC 未连接",
+    "invalidUrl": "URL 格式不正确",
+    "loadingProfile": "正在加载主控端 VNC 配置",
+    "username": "VNC 用户名",
+    "connectionError": "VNC 连接失败"
   }
 }

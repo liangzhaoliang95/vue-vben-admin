@@ -15,11 +15,20 @@ const routes: RouteRecordRaw[] = [
       {
         name: 'ServerList',
         path: '/server-management/server',
-        component: () =>
-          import('#/views/server-management/server/list.vue'),
+        component: () => import('#/views/server-management/server/list.vue'),
         meta: {
           icon: 'lucide:server',
           title: $t('serverManagement.server.title'),
+        },
+      },
+      {
+        name: 'ServiceBrowser',
+        path: '/server-management/service-browser',
+        component: () =>
+          import('#/views/server-management/service-browser/index.vue'),
+        meta: {
+          icon: 'lucide:monitor-play',
+          title: $t('serverManagement.serviceBrowser.title'),
         },
       },
     ],

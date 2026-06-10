@@ -92,5 +92,21 @@
     "step1": "Copy the Token above and save it to a secure location",
     "step2": "Download and install EZDP Server Agent client on your server",
     "step3": "Configure the Token in the Agent configuration file and start the Agent"
+  },
+  "serviceBrowser": {
+    "title": "Service Browser",
+    "connect": "Connect Preview",
+    "reconnect": "Reconnect",
+    "openUrl": "Open URL",
+    "urlPlaceholder": "Enter the URL to open in the controller browser",
+    "selectHint": "Enter the URL to open",
+    "notConfigured": "VNC preview is not configured on the controller",
+    "offline": "VNC service is unavailable",
+    "connected": "VNC Connected",
+    "disconnected": "VNC Disconnected",
+    "invalidUrl": "Invalid URL format",
+    "loadingProfile": "Loading controller VNC profile",
+    "username": "VNC Username",
+    "connectionError": "Failed to connect to VNC"
   }
 }

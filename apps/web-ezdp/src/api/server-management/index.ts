@@ -31,8 +31,8 @@ export namespace ServerManagementApi {
   }
 
   export function createEnvironmentAgent(params: {
-    name: string;
     description?: string;
+    name: string;
   }) {
     return requestClient.post<EnvironmentAgent>(
       '/serverAgent/environment/create',
@@ -41,9 +41,9 @@ export namespace ServerManagementApi {
   }
 
   export function updateEnvironmentAgent(params: {
+    description?: string;
     id: string;
     name: string;
-    description?: string;
   }) {
     return requestClient.post<EnvironmentAgent>(
       '/serverAgent/environment/update',
@@ -104,8 +104,22 @@ export namespace ServerManagementApi {
     );
   }
 
-  export function updateServer(params: { id: string; serverName: string; remark?: string }) {
+  export function updateServer(params: {
+    id: string;
+    remark?: string;
+    serverName: string;
+  }) {
     return requestClient.post('/serverAgent/updateServer', params);
+  }
+
+  export interface VNCProfile {
+    enabled: boolean;
+    username: string;
+    password: string;
+  }
+
+  export function getVNCProfile() {
+    return requestClient.post<VNCProfile>('/vncPreview/profile', {});
   }
 
   export function deleteServer(params: { id: string }) {
@@ -159,7 +173,10 @@ export namespace ServerManagementApi {
   }
 
   export function getServerStats(params: { serverId: string }) {
-    return requestClient.post<{ stats: ServerStats | null; source?: string }>('/serverAgent/getServerStats', params);
+    return requestClient.post<{ source?: string; stats: null | ServerStats }>(
+      '/serverAgent/getServerStats',
+      params,
+    );
   }
 
   export interface ServerStatsRecord {
@@ -182,12 +199,12 @@ export namespace ServerManagementApi {
   }
 
   export function getServerStatsHistory(params: {
-    serverId: string;
-    limit?: number;
-    startMs?: number;
     endMs?: number;
+    limit?: number;
+    serverId: string;
+    startMs?: number;
   }) {
-    return requestClient.post<{ list: ServerStatsRecord[]; count: number }>(
+    return requestClient.post<{ count: number; list: ServerStatsRecord[] }>(
       '/serverAgent/getServerStatsHistory',
       params,
     );
@@ -207,7 +224,10 @@ export namespace ServerManagementApi {
     );
   }
 
-  export function downloadFile(params: { serverId: string; remotePath: string }) {
+  export function downloadFile(params: {
+    remotePath: string;
+    serverId: string;
+  }) {
     return requestClient.post<Blob>('/serverAgent/downloadFile', params, {
       responseType: 'blob',
       timeout: 5 * 60 * 1000, // 文件下载最多等待 5 分钟
@@ -225,19 +245,29 @@ export namespace ServerManagementApi {
     mode: string;
   }
 
-  export function listDir(params: { serverId: string; path?: string }) {
-    return requestClient.post<{ path: string; entries: FileEntry[] }>(
+  export function listDir(params: { path?: string; serverId: string }) {
+    return requestClient.post<{ entries: FileEntry[]; path: string }>(
       '/serverAgent/listDir',
       params,
     );
   }
 
-  export function deleteFile(params: { serverId: string; path: string; recursive?: boolean }) {
-    return requestClient.post<{ message: string }>('/serverAgent/deleteFile', params);
+  export function deleteFile(params: {
+    path: string;
+    recursive?: boolean;
+    serverId: string;
+  }) {
+    return requestClient.post<{ message: string }>(
+      '/serverAgent/deleteFile',
+      params,
+    );
   }
 
-  export function mkdir(params: { serverId: string; path: string }) {
-    return requestClient.post<{ message: string }>('/serverAgent/mkdir', params);
+  export function mkdir(params: { path: string; serverId: string }) {
+    return requestClient.post<{ message: string }>(
+      '/serverAgent/mkdir',
+      params,
+    );
   }
 
   // ---- 端口代理 ----
@@ -251,14 +281,15 @@ export namespace ServerManagementApi {
   }
 
   export function createProxy(params: {
-    serverId: string;
     localPort: string;
     remoteAddr: string;
+    serverId: string;
   }) {
-    return requestClient.post<{ proxyId: string; localPort: string; remoteAddr: string }>(
-      '/serverAgent/createProxy',
-      params,
-    );
+    return requestClient.post<{
+      localPort: string;
+      proxyId: string;
+      remoteAddr: string;
+    }>('/serverAgent/createProxy', params);
   }
 
   export function closeProxy(params: { proxyId: string }) {
