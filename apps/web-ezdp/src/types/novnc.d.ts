@@ -19,19 +19,19 @@ declare module '@novnc/novnc' {
         };
       },
     );
+    blur(): void;
+    clipboardPasteFrom(text: string): void;
     disconnect(): void;
     focus(options?: FocusOptions): void;
-    blur(): void;
+    machineReboot(): void;
+    machineReset(): void;
+    machineShutdown(): void;
     sendCredentials(credentials: {
       password?: string;
       username?: string;
     }): void;
-    sendKey(keysym: number, code: string, down?: boolean): void;
     sendCtrlAltDel(): void;
-    clipboardPasteFrom(text: string): void;
-    machineShutdown(): void;
-    machineReboot(): void;
-    machineReset(): void;
+    sendKey(keysym: number, code: string, down?: boolean): void;
     stealFocus(): void;
   }
 }

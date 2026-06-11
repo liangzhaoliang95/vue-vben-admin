@@ -506,16 +506,16 @@ onBeforeUnmount(() => {
 }
 
 .vnc-preview-root:fullscreen {
-  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 0;
 }
 
 .vnc-preview-root:fullscreen .vnc-preview-container {
-  border-radius: 0;
   width: 100%;
   height: 100%;
+  border-radius: 0;
 }
 
 .vnc-preview-container {
