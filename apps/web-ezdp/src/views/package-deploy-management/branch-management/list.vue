@@ -11,18 +11,19 @@ import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 import { useBusinessStore } from '@vben/stores';
 
-import { Button, message } from 'ant-design-vue';
+import { Button, message, Modal } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  deleteBranchManagement,
   getBranchManagementList,
   updateBranchManagement,
 } from '#/api/package-deploy-management/branch-management';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
-import Form from './modules/form.vue';
 import BuildModal from './modules/build-modal.vue';
+import Form from './modules/form.vue';
 import TopologyModal from './modules/topology-modal.vue';
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -113,6 +114,10 @@ function onActionClick(
   e: OnActionClickParams<BranchManagementApi.BranchManagement>,
 ) {
   switch (e.code) {
+    case 'delete': {
+      onDelete(e.row);
+      break;
+    }
     case 'edit': {
       onEdit(e.row);
       break;
@@ -122,6 +127,38 @@ function onActionClick(
 
 function onEdit(row: BranchManagementApi.BranchManagement) {
   formDrawerApi.setData(row).open();
+}
+
+function confirm(content: string, title: string) {
+  return new Promise((resolve, reject) => {
+    Modal.confirm({
+      content,
+      onCancel() {
+        reject(new Error('已取消'));
+      },
+      onOk() {
+        resolve(true);
+      },
+      title,
+    });
+  });
+}
+
+function onDelete(row: BranchManagementApi.BranchManagement) {
+  confirm(
+    $t('ui.confirmContent.delete', [row.name]),
+    $t('ui.confirmTitle.delete'),
+  )
+    .then(async () => {
+      await deleteBranchManagement(row.id);
+      message.success($t('ui.successMessage.delete'));
+      onRefresh();
+    })
+    .catch((error) => {
+      if (error?.message && error.message !== '已取消') {
+        message.error(error.message || $t('common.deleteFailed'));
+      }
+    });
 }
 
 async function onToggleEnabled(row: BranchManagementApi.BranchManagement) {
@@ -180,8 +217,9 @@ function onTopologyPreview() {
         <a
           class="cursor-pointer text-blue-500 hover:text-blue-600"
           @click="onBranchNameClick(row)"
-          >{{ row.name }}</a
         >
+          {{ row.name }}
+        </a>
       </template>
       <template #lastReleaseAt="{ row }">
         <span v-if="row.lastReleaseAt" class="release-badge">

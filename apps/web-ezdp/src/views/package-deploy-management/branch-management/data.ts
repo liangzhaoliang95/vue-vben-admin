@@ -55,6 +55,7 @@ export function useColumns(
       field: 'name',
       title: $t('deploy.packageDeployManagement.branchManagement.name'),
       minWidth: 200,
+      fixed: 'left',
       slots: { default: 'name' },
     },
     {
@@ -101,7 +102,8 @@ export function useColumns(
     {
       field: 'enabled',
       title: $t('deploy.packageDeployManagement.branchManagement.status'),
-      minWidth: 120,
+      width: 120,
+      fixed: 'right',
       align: 'center',
       cellRender: {
         name: 'CellSwitch',
@@ -139,12 +141,12 @@ export function useColumns(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['edit'],
+        options: ['edit', 'delete'],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('common.action'),
-      width: 100,
+      width: 140,
     },
   ];
 }
