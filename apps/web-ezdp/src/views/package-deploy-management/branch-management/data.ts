@@ -32,19 +32,10 @@ export function useColumns(
   onToggleEnabled: (row: any) => void,
 ): VxeGridProps['columns'] {
   const businessStore = useBusinessStore();
+  const isInternalBusinessLine =
+    businessStore.currentBusinessLine?.businessLine.code === 'internal';
 
-  return [
-    {
-      field: 'businessLineId',
-      title: $t('system.businessLine.name'),
-      minWidth: 150,
-      formatter: ({ row }) => {
-        const businessLine = businessStore.businessLines.find(
-          (item) => item.businessLine.id === row.businessLineId,
-        );
-        return businessLine?.businessLine.name || '-';
-      },
-    },
+  const columns: VxeGridProps['columns'] = [
     {
       field: 'sortOrder',
       title: $t('deploy.packageDeployManagement.branchManagement.sortOrder'),
@@ -65,6 +56,14 @@ export function useColumns(
       formatter: ({ cellValue }) => cellValue || '-',
     },
     {
+      field: 'defaultVersion',
+      title: $t(
+        'deploy.packageDeployManagement.branchManagement.defaultVersion',
+      ),
+      minWidth: 180,
+      formatter: ({ cellValue }) => cellValue || '-',
+    },
+    {
       field: 'lastVersion',
       title: $t('deploy.packageDeployManagement.branchManagement.lastVersion'),
       minWidth: 160,
@@ -79,11 +78,6 @@ export function useColumns(
       slots: { default: 'lastReleaseAt' },
     },
     {
-      field: 'description',
-      title: $t('deploy.packageDeployManagement.branchManagement.description'),
-      minWidth: 250,
-    },
-    {
       field: 'versionTemplate',
       title: $t(
         'deploy.packageDeployManagement.branchManagement.versionTemplate',
@@ -92,12 +86,19 @@ export function useColumns(
       formatter: ({ cellValue }) => cellValue || '-',
     },
     {
-      field: 'defaultVersion',
-      title: $t(
-        'deploy.packageDeployManagement.branchManagement.defaultVersion',
-      ),
+      field: 'createdAt',
+      title: $t('ui.table.createdTime'),
       minWidth: 180,
-      formatter: ({ cellValue }) => cellValue || '-',
+      formatter: ({ cellValue }) => {
+        if (!cellValue) return '-';
+        return new Date(cellValue).toLocaleString('zh-CN');
+      },
+    },
+    {
+      field: 'description',
+      title: $t('deploy.packageDeployManagement.branchManagement.description'),
+      minWidth: 250,
+      showOverflow: true,
     },
     {
       field: 'enabled',
@@ -118,20 +119,11 @@ export function useColumns(
           ),
         },
         attrs: {
-          beforeChange: async (newVal: boolean, row: any) => {
+          beforeChange: async (_newVal: boolean, row: any) => {
             await onToggleEnabled(row);
             return true;
           },
         },
-      },
-    },
-    {
-      field: 'createdAt',
-      title: $t('ui.table.createdTime'),
-      minWidth: 180,
-      formatter: ({ cellValue }) => {
-        if (!cellValue) return '-';
-        return new Date(cellValue).toLocaleString('zh-CN');
       },
     },
     {
@@ -149,4 +141,20 @@ export function useColumns(
       width: 140,
     },
   ];
+
+  if (isInternalBusinessLine) {
+    columns.unshift({
+      field: 'businessLineId',
+      title: $t('system.businessLine.name'),
+      minWidth: 150,
+      formatter: ({ row }) => {
+        const businessLine = businessStore.businessLines.find(
+          (item) => item.businessLine.id === row.businessLineId,
+        );
+        return businessLine?.businessLine.name || '-';
+      },
+    });
+  }
+
+  return columns;
 }

@@ -93,11 +93,19 @@ const [Grid, gridApi] = useVbenVxeGrid({
   } as VxeTableGridOptions<BranchManagementApi.BranchManagement>,
 });
 
+function refreshGridColumns() {
+  gridApi.setGridOptions({
+    columns: useColumns(onActionClick, onToggleEnabled),
+  });
+}
+
 onMounted(() => {
+  refreshGridColumns();
   loadAllBranches();
 });
 
 onActivated(() => {
+  refreshGridColumns();
   loadAllBranches();
   gridApi.query();
 });
@@ -105,6 +113,7 @@ onActivated(() => {
 watch(
   () => businessStore.currentBusinessLineId,
   () => {
+    refreshGridColumns();
     loadAllBranches();
     gridApi.query();
   },
