@@ -49,6 +49,7 @@ export namespace ProjectPackageApi {
     branchId: string;
     businessLineId?: number;
     forceRebuild?: boolean; // 强制构建（跳过 tag 和镜像检查）
+    projectIds?: string[]; // 指定构建项目ID列表（为空则构建全部）
   }
 
   export interface PreBuildCheckParams {

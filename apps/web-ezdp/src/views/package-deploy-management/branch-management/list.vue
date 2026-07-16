@@ -205,6 +205,19 @@ function onCreate() {
   formDrawerApi.setData({}).open();
 }
 
+function onInherit(row: BranchManagementApi.BranchManagement) {
+  formDrawerApi
+    .setData({
+      inheritFrom: row,
+      businessLineId: row.businessLineId,
+      parentBranchId: row.id,
+      versionTemplate: row.versionTemplate || '',
+      initialVersion: row.initialVersion || '',
+      description: row.description || '',
+    })
+    .open();
+}
+
 function onTopologyPreview() {
   topologyOpen.value = true;
 }
@@ -229,6 +242,11 @@ function onTopologyPreview() {
         >
           {{ row.name }}
         </a>
+      </template>
+      <template #inherit="{ row }">
+        <Button class="inherit-button" size="small" @click="onInherit(row)">
+          {{ $t('deploy.packageDeployManagement.branchManagement.inherit') }}
+        </Button>
       </template>
       <template #lastReleaseAt="{ row }">
         <span v-if="row.lastReleaseAt" class="release-badge">
@@ -267,6 +285,19 @@ function onTopologyPreview() {
 /* 深色模式下的悬浮效果 */
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
   background-color: rgb(24 144 255 / 15%) !important;
+}
+
+.inherit-button {
+  color: #c41d7f;
+  background-color: #fff0f6;
+  border-color: #ffadd2;
+}
+
+.inherit-button:hover,
+.inherit-button:focus {
+  color: #eb2f96;
+  background-color: #fff0f6;
+  border-color: #ff85c0;
 }
 
 .release-badge {

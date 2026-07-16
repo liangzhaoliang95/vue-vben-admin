@@ -37,17 +37,25 @@ export function useColumns(
 
   const columns: VxeGridProps['columns'] = [
     {
-      field: 'sortOrder',
-      title: $t('deploy.packageDeployManagement.branchManagement.sortOrder'),
-      minWidth: 80,
-      align: 'center',
-    },
-    {
       field: 'name',
       title: $t('deploy.packageDeployManagement.branchManagement.name'),
       minWidth: 200,
       fixed: 'left',
       slots: { default: 'name' },
+    },
+    {
+      field: 'inherit',
+      title: $t('deploy.packageDeployManagement.branchManagement.inherit'),
+      width: 100,
+      fixed: 'left',
+      align: 'center',
+      slots: { default: 'inherit' },
+    },
+    {
+      field: 'sortOrder',
+      title: $t('deploy.packageDeployManagement.branchManagement.sortOrder'),
+      minWidth: 80,
+      align: 'center',
     },
     {
       field: 'parentBranchName',

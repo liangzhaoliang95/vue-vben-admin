@@ -142,6 +142,22 @@ function extractInitialVersionInput(savedInitialVersion: string) {
   return numPart;
 }
 
+function extractInheritedInitialVersionInput(data: any) {
+  const savedInitialVersion = String(data.initialVersion || '');
+  if (!savedInitialVersion) {
+    return '';
+  }
+
+  if (!data.versionTemplate && data.inheritFrom?.name) {
+    const parentPrefix = `${data.inheritFrom.name}.`;
+    if (savedInitialVersion.startsWith(parentPrefix)) {
+      return savedInitialVersion.slice(parentPrefix.length);
+    }
+  }
+
+  return extractInitialVersionInput(savedInitialVersion);
+}
+
 const [Form, formApi] = useVbenForm({
   schema: [
     {
@@ -254,9 +270,23 @@ const [Drawer, drawerApi] = useVbenDrawer({
       } else {
         id.value = undefined;
         const defaultBusinessLineId =
+          data?.businessLineId ??
           businessStore.currentBusinessLine?.businessLine.id;
         if (defaultBusinessLineId && isSuperAdmin) {
           formApi.setValues({ businessLineId: defaultBusinessLineId });
+        }
+
+        if (data?.parentBranchId) {
+          parentBranchId.value = data.parentBranchId;
+          const template = data.versionTemplate || '';
+          await formApi.setValues({
+            name: '',
+            versionTemplate: template,
+            description: data.description || '',
+            businessLineId: data.businessLineId,
+          });
+          syncTemplateState(template, '');
+          initialVersionInput.value = extractInheritedInitialVersionInput(data);
         }
       }
       await nextTick();

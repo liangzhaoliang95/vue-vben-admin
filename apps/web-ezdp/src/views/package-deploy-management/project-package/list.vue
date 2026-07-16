@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { ProjectConfigApi } from '#/api/project-management/project-config';
+
 import { computed, onActivated, onDeactivated, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
@@ -8,6 +10,7 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   Collapse,
   CollapsePanel,
   Empty,
@@ -26,12 +29,10 @@ import {
   startBuildTask,
   triggerPreBuildCheck,
 } from '#/api/package-deploy-management/project-package';
+import { getProjectConfigList } from '#/api/project-management/project-config';
 import { $t } from '#/locales';
 import { useWebSocketStore } from '#/store/websocket';
 import { copyToClipboard } from '#/utils/clipboard';
-
-const businessStore = useBusinessStore();
-const wsStore = useWebSocketStore();
 
 // 嵌入模式 props（从 build-modal 传入时使用）
 const props = withDefaults(
@@ -40,8 +41,14 @@ const props = withDefaults(
     initialBranchName?: string;
     initialBusinessLineId?: number;
   }>(),
-  {},
+  {
+    initialBranchId: undefined,
+    initialBranchName: undefined,
+    initialBusinessLineId: undefined,
+  },
 );
+const businessStore = useBusinessStore();
+const wsStore = useWebSocketStore();
 
 // 是否嵌入模式（有 props 传入时）
 const isEmbedded = computed(() => !!props.initialBranchId);
@@ -57,6 +64,13 @@ const allBranchesMap = ref<Map<number, any[]>>(new Map());
 const versionList = ref<any[]>([]);
 const loading = ref(false);
 const activeKeys = ref<string[]>([]); // 展开的版本面板
+
+// 单项目构建弹窗
+const singleBuildModalOpen = ref(false);
+const singleBuildLoading = ref(false);
+const singleBuildProjectLoading = ref(false);
+const singleBuildProjects = ref<ProjectConfigApi.ProjectConfig[]>([]);
+const selectedSingleBuildProjectIds = ref<string[]>([]);
 
 // 排序模式：version=版本内项目按类型排序，name=版本内项目按名称升序（版本列表本身始终按版本号降序）
 const sortMode = ref<'name' | 'version'>('version');
@@ -108,6 +122,14 @@ const currentBranchOptions = computed(() => {
     value: item.id,
   }));
 });
+
+const backendSingleBuildProjects = computed(() =>
+  singleBuildProjects.value.filter((project) => project.type !== 'frontend'),
+);
+
+const frontendSingleBuildProjects = computed(() =>
+  singleBuildProjects.value.filter((project) => project.type === 'frontend'),
+);
 
 // 加载指定业务线的分支数据（懒加载）
 async function loadBranchesForBusinessLine(
@@ -412,6 +434,126 @@ async function handleBuild() {
   }
 }
 
+async function loadSingleBuildProjects() {
+  if (!selectedBusinessLineId.value && isSuperAdmin.value) {
+    message.warning(
+      $t(
+        'deploy.packageDeployManagement.projectPackage.selectBusinessLineFirst',
+      ),
+    );
+    singleBuildProjects.value = [];
+    return;
+  }
+
+  singleBuildProjectLoading.value = true;
+  try {
+    const queryParams: any = {
+      page: 1,
+      pageSize: 1000,
+    };
+
+    if (isSuperAdmin.value && selectedBusinessLineId.value) {
+      queryParams.businessLineId = selectedBusinessLineId.value;
+    }
+
+    const res = await getProjectConfigList(queryParams);
+    singleBuildProjects.value = (res.items || []).filter(
+      (project) => project.hasBuildConfig,
+    );
+  } catch (error) {
+    console.error('[项目打包] 加载可构建项目列表失败:', error);
+    message.error(
+      $t(
+        'deploy.packageDeployManagement.projectPackage.singleBuildProjectLoadFailed',
+      ),
+    );
+  } finally {
+    singleBuildProjectLoading.value = false;
+  }
+}
+
+async function handleOpenSingleBuildModal() {
+  if (!selectedBranchId.value) {
+    message.warning('请先选择分支');
+    return;
+  }
+
+  if (hasRunningTaskInBranch()) {
+    message.warning(
+      $t('deploy.packageDeployManagement.projectPackage.branchHasRunningTask'),
+    );
+    return;
+  }
+
+  selectedSingleBuildProjectIds.value = [];
+  singleBuildProjects.value = [];
+  singleBuildModalOpen.value = true;
+  await loadSingleBuildProjects();
+}
+
+function toggleSingleBuildProject(projectId: string) {
+  const selected = new Set(selectedSingleBuildProjectIds.value);
+  if (selected.has(projectId)) {
+    selected.delete(projectId);
+  } else {
+    selected.add(projectId);
+  }
+  selectedSingleBuildProjectIds.value = [...selected];
+}
+
+function isSingleBuildProjectChecked(projectId: string) {
+  return selectedSingleBuildProjectIds.value.includes(projectId);
+}
+
+async function handleSingleBuildSubmit() {
+  if (!selectedBranchId.value) {
+    message.warning('请先选择分支');
+    return;
+  }
+
+  if (selectedSingleBuildProjectIds.value.length === 0) {
+    message.warning(
+      $t('deploy.packageDeployManagement.projectPackage.singleBuildSelectTip'),
+    );
+    return;
+  }
+
+  singleBuildLoading.value = true;
+  try {
+    const queryParams: any = {
+      branchId: selectedBranchId.value,
+      projectIds: selectedSingleBuildProjectIds.value,
+    };
+
+    if (isSuperAdmin.value && selectedBusinessLineId.value) {
+      queryParams.businessLineId = selectedBusinessLineId.value;
+    }
+
+    await startBuildTask(queryParams);
+    message.success(
+      $t('deploy.packageDeployManagement.projectPackage.singleBuildStarted'),
+    );
+    singleBuildModalOpen.value = false;
+
+    wsStore.openGlobalLogViewer(1);
+
+    setTimeout(() => {
+      if (isComponentActive.value) {
+        loadVersionList();
+      }
+    }, 2000);
+  } catch (error) {
+    console.error('启动单项目构建失败:', error);
+    message.error(
+      $t(
+        'deploy.packageDeployManagement.projectPackage.singleBuildStartFailed',
+      ),
+    );
+  } finally {
+    singleBuildLoading.value = false;
+  }
+}
+
 // 强制构建（跳过 tag 和镜像检查）
 async function handleForceBuild() {
   if (!selectedBranchId.value) {
@@ -552,6 +694,14 @@ function getProjectTypeIcon(type: string) {
     submodule: Package,
   };
   return iconMap[type] || FolderOpen;
+}
+
+function isNewProjectVersion(project: any, version: any) {
+  return !!(project.version && project.version === version.version);
+}
+
+function formatProjectImageName(project: any) {
+  return `${project.imageName}${project.imageTag ? `:${project.imageTag}` : ''}`;
 }
 
 // 格式化构建耗时为 hh:mm:ss
@@ -987,6 +1137,11 @@ onDeactivated(() => {
               $t('deploy.packageDeployManagement.projectPackage.preBuildCheck')
             }}
           </Button>
+          <Button @click="handleOpenSingleBuildModal">
+            {{
+              $t('deploy.packageDeployManagement.projectPackage.singleBuild')
+            }}
+          </Button>
           <Button type="primary" @click="handleBuild">
             {{ $t('deploy.packageDeployManagement.projectPackage.startBuild') }}
           </Button>
@@ -1198,24 +1353,18 @@ onDeactivated(() => {
                               project.projectName || '-'
                             }}</span>
                             <span
-                              v-if="
-                                !!(
-                                  project.version &&
-                                  project.version === version.version
-                                )
-                              "
+                              v-if="isNewProjectVersion(project, version)"
                               class="new-badge"
-                              >NEW</span
                             >
+                              NEW
+                            </span>
                           </div>
                           <span
                             v-if="showImageName && project.imageName"
                             class="project-image-name"
-                            >{{ project.imageName
-                            }}{{
-                              project.imageTag ? `:${project.imageTag}` : ''
-                            }}</span
                           >
+                            {{ formatProjectImageName(project) }}
+                          </span>
                         </div>
                         <span
                           v-if="project.duration && project.duration > 0"
@@ -1328,24 +1477,18 @@ onDeactivated(() => {
                               project.projectName || '-'
                             }}</span>
                             <span
-                              v-if="
-                                !!(
-                                  project.version &&
-                                  project.version === version.version
-                                )
-                              "
+                              v-if="isNewProjectVersion(project, version)"
                               class="new-badge"
-                              >NEW</span
                             >
+                              NEW
+                            </span>
                           </div>
                           <span
                             v-if="showImageName && project.imageName"
                             class="project-image-name"
-                            >{{ project.imageName
-                            }}{{
-                              project.imageTag ? `:${project.imageTag}` : ''
-                            }}</span
                           >
+                            {{ formatProjectImageName(project) }}
+                          </span>
                         </div>
                         <span
                           v-if="project.duration && project.duration > 0"
@@ -1438,6 +1581,97 @@ onDeactivated(() => {
     </div>
     <!-- end flex container -->
 
+    <!-- Single Build Modal -->
+    <Modal
+      v-model:open="singleBuildModalOpen"
+      :confirm-loading="singleBuildLoading"
+      :ok-button-props="{
+        disabled: selectedSingleBuildProjectIds.length === 0,
+      }"
+      :ok-text="
+        $t('deploy.packageDeployManagement.projectPackage.singleBuildSubmit')
+      "
+      :title="
+        $t('deploy.packageDeployManagement.projectPackage.singleBuildTitle')
+      "
+      width="760px"
+      @ok="handleSingleBuildSubmit"
+    >
+      <Spin :spinning="singleBuildProjectLoading">
+        <div class="single-build-section">
+          <div class="single-build-section-title">
+            {{
+              $t(
+                'deploy.packageDeployManagement.projectPackage.singleBuildBackendTitle',
+              )
+            }}
+          </div>
+          <div
+            v-if="backendSingleBuildProjects.length > 0"
+            class="single-build-grid"
+          >
+            <Checkbox
+              v-for="project in backendSingleBuildProjects"
+              :key="project.id"
+              :checked="isSingleBuildProjectChecked(project.id)"
+              @change="toggleSingleBuildProject(project.id)"
+            >
+              <Tooltip
+                :title="`${project.name} (${getProjectTypeName(project.type)})`"
+              >
+                <span class="single-build-project-name">{{
+                  project.name
+                }}</span>
+              </Tooltip>
+            </Checkbox>
+          </div>
+          <Empty
+            v-else
+            :description="
+              $t(
+                'deploy.packageDeployManagement.projectPackage.singleBuildNoBackendProjects',
+              )
+            "
+          />
+        </div>
+
+        <div class="single-build-section">
+          <div class="single-build-section-title">
+            {{
+              $t(
+                'deploy.packageDeployManagement.projectPackage.singleBuildFrontendTitle',
+              )
+            }}
+          </div>
+          <div
+            v-if="frontendSingleBuildProjects.length > 0"
+            class="single-build-grid"
+          >
+            <Checkbox
+              v-for="project in frontendSingleBuildProjects"
+              :key="project.id"
+              :checked="isSingleBuildProjectChecked(project.id)"
+              @change="toggleSingleBuildProject(project.id)"
+            >
+              <Tooltip :title="project.name">
+                <span class="single-build-project-name">{{
+                  project.name
+                }}</span>
+              </Tooltip>
+            </Checkbox>
+          </div>
+          <Empty
+            v-else
+            :description="
+              $t(
+                'deploy.packageDeployManagement.projectPackage.singleBuildNoFrontendProjects',
+              )
+            "
+          />
+        </div>
+      </Spin>
+    </Modal>
+
     <!-- Changelog Modal -->
     <Modal
       v-model:open="changelogModalOpen"
@@ -1501,6 +1735,35 @@ onDeactivated(() => {
 
 .compact-toolbar-card .filter-label {
   font-size: 12px;
+}
+
+.single-build-section + .single-build-section {
+  margin-top: 18px;
+}
+
+.single-build-section-title {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.single-build-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.single-build-grid :deep(.ant-checkbox-wrapper) {
+  min-width: 0;
+  margin-inline-start: 0;
+}
+
+.single-build-project-name {
+  display: inline-block;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  white-space: nowrap;
 }
 
 /* project-package 独有：项目列表列宽（含构建时长列） */
