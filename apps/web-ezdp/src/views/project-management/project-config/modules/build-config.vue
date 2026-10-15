@@ -44,28 +44,36 @@ const dockerSecretList = ref<Array<{ id: string; name: string }>>([]);
 const buildModeOptions = computed(() => [
   {
     value: 1,
-    label: $t('deploy.projectManagement.projectConfig.buildConfig.buildModeDockerfile'),
+    label: $t(
+      'deploy.projectManagement.projectConfig.buildConfig.buildModeDockerfile',
+    ),
   },
   {
     value: 2,
-    label: $t('deploy.projectManagement.projectConfig.buildConfig.buildModeShell'),
+    label: $t(
+      'deploy.projectManagement.projectConfig.buildConfig.buildModeShell',
+    ),
   },
 ]);
 
 // 构建参数的 placeholder（使用计算属性避免引号冲突）
-const buildArgsPlaceholder = computed(
-  () => $t('deploy.projectManagement.projectConfig.buildConfig.buildArgsPlaceholder'),
+const buildArgsPlaceholder = computed(() =>
+  $t('deploy.projectManagement.projectConfig.buildConfig.buildArgsPlaceholder'),
 );
 
 // 构建检查模式选项
 const buildCheckModeOptions = computed(() => [
   {
     value: 1,
-    label: $t('deploy.projectManagement.projectConfig.buildConfig.buildCheckModeNeedBuild'),
+    label: $t(
+      'deploy.projectManagement.projectConfig.buildConfig.buildCheckModeNeedBuild',
+    ),
   },
   {
     value: 2,
-    label: $t('deploy.projectManagement.projectConfig.buildConfig.buildCheckModeVersionDiff'),
+    label: $t(
+      'deploy.projectManagement.projectConfig.buildConfig.buildCheckModeVersionDiff',
+    ),
   },
 ]);
 
@@ -83,29 +91,40 @@ const formRules = computed(() => {
       dockerfile: [
         {
           required: true,
-          message: $t('deploy.projectManagement.projectConfig.buildConfig.dockerfile') + $t('ui.inputRequired'),
-          trigger: 'blur'
+          message:
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.dockerfile',
+            ) + $t('ui.inputRequired'),
+          trigger: 'blur',
         },
       ],
       buildContext: [
         {
           required: true,
-          message: $t('deploy.projectManagement.projectConfig.buildConfig.buildContext') + $t('ui.inputRequired'),
-          trigger: 'blur'
+          message:
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.buildContext',
+            ) + $t('ui.inputRequired'),
+          trigger: 'blur',
         },
       ],
       imageName: [
         {
           required: true,
-          message: $t('deploy.projectManagement.projectConfig.buildConfig.imageName') + $t('ui.inputRequired'),
-          trigger: 'blur'
-        }
+          message:
+            $t('deploy.projectManagement.projectConfig.buildConfig.imageName') +
+            $t('ui.inputRequired'),
+          trigger: 'blur',
+        },
       ],
       dockerSecretId: [
         {
           required: true,
-          message: $t('deploy.projectManagement.projectConfig.buildConfig.dockerSecret') + $t('ui.selectRequired'),
-          trigger: 'change'
+          message:
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.dockerSecret',
+            ) + $t('ui.selectRequired'),
+          trigger: 'change',
         },
       ],
     };
@@ -117,8 +136,10 @@ const formRules = computed(() => {
         ossName: [
           {
             required: true,
-            message: $t('deploy.projectManagement.projectConfig.buildConfig.ossName') + $t('ui.inputRequired'),
-            trigger: 'blur'
+            message:
+              $t('deploy.projectManagement.projectConfig.buildConfig.ossName') +
+              $t('ui.inputRequired'),
+            trigger: 'blur',
           },
         ],
       };
@@ -132,22 +153,31 @@ const formRules = computed(() => {
       artifactName: [
         {
           required: true,
-          message: $t('deploy.projectManagement.projectConfig.buildConfig.artifactName') + $t('ui.inputRequired'),
-          trigger: 'blur'
+          message:
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.artifactName',
+            ) + $t('ui.inputRequired'),
+          trigger: 'blur',
         },
       ],
       buildScript: [
         {
           required: true,
-          message: $t('deploy.projectManagement.projectConfig.buildConfig.buildScript') + $t('ui.inputRequired'),
-          trigger: 'blur'
+          message:
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.buildScript',
+            ) + $t('ui.inputRequired'),
+          trigger: 'blur',
         },
       ],
       uploadScript: [
         {
           required: true,
-          message: $t('deploy.projectManagement.projectConfig.buildConfig.uploadScript') + $t('ui.inputRequired'),
-          trigger: 'blur'
+          message:
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.uploadScript',
+            ) + $t('ui.inputRequired'),
+          trigger: 'blur',
         },
       ],
     };
@@ -158,9 +188,12 @@ const formRules = computed(() => {
 const formRef = ref();
 
 // 监听构建模式变化,清空表单验证
-watch(() => formState.buildMode, () => {
-  formRef.value?.clearValidate();
-});
+watch(
+  () => formState.buildMode,
+  () => {
+    formRef.value?.clearValidate();
+  },
+);
 
 // 保存配置
 async function handleSave() {
@@ -197,7 +230,9 @@ async function handleSave() {
     console.error('保存配置失败:', error);
     // 区分验证错误和保存错误
     if (error && typeof error === 'object' && 'errorFields' in error) {
-      message.error($t('deploy.projectManagement.projectConfig.buildConfig.fillRequired'));
+      message.error(
+        $t('deploy.projectManagement.projectConfig.buildConfig.fillRequired'),
+      );
     } else {
       message.error($t('ui.errorMessage.save'));
     }
@@ -269,12 +304,18 @@ onMounted(() => {
     >
       <!-- 构建模式选择 -->
       <FormItem
-        :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildMode')"
+        :label="
+          $t('deploy.projectManagement.projectConfig.buildConfig.buildMode')
+        "
         name="buildMode"
       >
         <Select
           v-model:value="formState.buildMode"
-          :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.buildModePlaceholder')"
+          :placeholder="
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.buildModePlaceholder',
+            )
+          "
           :options="buildModeOptions"
         />
       </FormItem>
@@ -282,42 +323,70 @@ onMounted(() => {
       <!-- Dockerfile 构建模式的表单 -->
       <template v-if="isDockerfileMode">
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.dockerfile')"
+          :label="
+            $t('deploy.projectManagement.projectConfig.buildConfig.dockerfile')
+          "
           name="dockerfile"
         >
           <Input
             v-model:value="formState.dockerfile"
-            :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.dockerfilePlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.buildConfig.dockerfilePlaceholder',
+              )
+            "
           />
         </FormItem>
 
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildContext')"
+          :label="
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.buildContext',
+            )
+          "
           name="buildContext"
         >
           <Input
             v-model:value="formState.buildContext"
-            :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.buildContextPlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.buildConfig.buildContextPlaceholder',
+              )
+            "
           />
         </FormItem>
 
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.imageName')"
+          :label="
+            $t('deploy.projectManagement.projectConfig.buildConfig.imageName')
+          "
           name="imageName"
         >
           <Input
             v-model:value="formState.imageName"
-            :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.imageNamePlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.buildConfig.imageNamePlaceholder',
+              )
+            "
           />
         </FormItem>
 
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.dockerSecret')"
+          :label="
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.dockerSecret',
+            )
+          "
           name="dockerSecretId"
         >
           <Select
             v-model:value="formState.dockerSecretId"
-            :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.dockerSecretPlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.buildConfig.dockerSecretPlaceholder',
+              )
+            "
             allow-clear
           >
             <Select.Option
@@ -332,17 +401,25 @@ onMounted(() => {
 
         <FormItem
           v-if="isFrontendProject"
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.ossName')"
+          :label="
+            $t('deploy.projectManagement.projectConfig.buildConfig.ossName')
+          "
           name="ossName"
         >
           <Input
             v-model:value="formState.ossName"
-            :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.ossNamePlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.buildConfig.ossNamePlaceholder',
+              )
+            "
           />
         </FormItem>
 
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildArgs')"
+          :label="
+            $t('deploy.projectManagement.projectConfig.buildConfig.buildArgs')
+          "
           name="buildArgs"
         >
           <Input.TextArea
@@ -356,34 +433,56 @@ onMounted(() => {
       <!-- Shell 构建模式的表单 -->
       <template v-if="isShellMode">
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.artifactName')"
+          :label="
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.artifactName',
+            )
+          "
           name="artifactName"
         >
           <Input
             v-model:value="formState.artifactName"
-            :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.artifactNamePlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.buildConfig.artifactNamePlaceholder',
+              )
+            "
           />
         </FormItem>
 
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildScript')"
+          :label="
+            $t('deploy.projectManagement.projectConfig.buildConfig.buildScript')
+          "
           name="buildScript"
         >
           <Input.TextArea
             v-model:value="formState.buildScript"
             :rows="6"
-            :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.buildScriptPlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.buildConfig.buildScriptPlaceholder',
+              )
+            "
           />
         </FormItem>
 
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.buildConfig.uploadScript')"
+          :label="
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.uploadScript',
+            )
+          "
           name="uploadScript"
         >
           <Input.TextArea
             v-model:value="formState.uploadScript"
             :rows="6"
-            :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.uploadScriptPlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.buildConfig.uploadScriptPlaceholder',
+              )
+            "
           />
         </FormItem>
       </template>
@@ -391,19 +490,29 @@ onMounted(() => {
       <!-- 构建检查模式（隐藏） -->
       <FormItem
         v-show="false"
-        :label="$t('deploy.projectManagement.projectConfig.buildConfig.buildCheckMode')"
+        :label="
+          $t(
+            'deploy.projectManagement.projectConfig.buildConfig.buildCheckMode',
+          )
+        "
         name="buildCheckMode"
       >
         <Select
           v-model:value="formState.buildCheckMode"
-          :placeholder="$t('deploy.projectManagement.projectConfig.buildConfig.buildCheckModePlaceholder')"
+          :placeholder="
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.buildCheckModePlaceholder',
+            )
+          "
           :options="buildCheckModeOptions"
         />
       </FormItem>
 
       <FormItem :wrapper-col="{ offset: 6, span: 18 }">
         <Button type="primary" :loading="loading" @click="handleSave">
-          {{ $t('deploy.projectManagement.projectConfig.buildConfig.saveConfig') }}
+          {{
+            $t('deploy.projectManagement.projectConfig.buildConfig.saveConfig')
+          }}
         </Button>
       </FormItem>
     </Form>
