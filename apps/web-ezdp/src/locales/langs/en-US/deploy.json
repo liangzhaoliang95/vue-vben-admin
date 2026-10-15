@@ -229,6 +229,10 @@
       "basicInfo": "Project Basic Information",
       "buildConfig": {
         "title": "Build Configuration",
+        "buildMode": "Build Mode",
+        "buildModePlaceholder": "Please select build mode",
+        "buildModeDockerfile": "Dockerfile Build",
+        "buildModeShell": "Shell Build",
         "dockerfile": "Dockerfile Path",
         "dockerfilePlaceholder": "For example: ./Dockerfile or ./docker/Dockerfile",
         "buildContext": "Build Context",
@@ -245,6 +249,12 @@
         "buildCheckModePlaceholder": "Please select build check mode",
         "buildCheckModeNeedBuild": "Strict check (needBuild=true)",
         "buildCheckModeVersionDiff": "Version diff (build if version differs)",
+        "artifactName": "Artifact Name",
+        "artifactNamePlaceholder": "Please enter artifact name, e.g: app.tar.gz",
+        "buildScript": "Build Script",
+        "buildScriptPlaceholder": "Please enter build script, for example:\n#!/bin/bash\nmake build\ntar -czf app.tar.gz ./bin",
+        "uploadScript": "Upload Script",
+        "uploadScriptPlaceholder": "Please enter upload script, for example:\n#!/bin/bash\nscp app.tar.gz user@server:/path/to/deploy/",
         "saveConfig": "Save Configuration",
         "fillRequired": "Please fill in the required fields"
       },

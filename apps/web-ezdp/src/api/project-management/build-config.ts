@@ -4,12 +4,18 @@ export namespace BuildConfigApi {
   export interface BuildConfig {
     id: string;
     projectConfigId: string;
+    buildMode: number; // 1=Dockerfile构建，2=Shell构建
+    // Dockerfile 构建字段
     dockerfile: string;
     buildContext: string;
     buildArgs?: string;
     imageName: string;
     dockerSecretId?: string;
     ossName?: string;
+    // Shell 构建字段
+    artifactName?: string;
+    buildScript?: string;
+    uploadScript?: string;
     buildCheckMode: number; // 1=检查needBuild，2=比对version
     createdAt: number;
     updatedAt: number;

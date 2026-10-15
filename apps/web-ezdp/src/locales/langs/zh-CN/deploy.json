@@ -229,6 +229,10 @@
       "basicInfo": "项目基本信息",
       "buildConfig": {
         "title": "打包配置",
+        "buildMode": "构建模式",
+        "buildModePlaceholder": "请选择构建模式",
+        "buildModeDockerfile": "Dockerfile 构建",
+        "buildModeShell": "Shell 构建",
         "dockerfile": "Dockerfile 路径",
         "dockerfilePlaceholder": "例如: ./Dockerfile 或 ./docker/Dockerfile",
         "buildContext": "构建上下文",
@@ -245,6 +249,12 @@
         "buildCheckModePlaceholder": "请选择构建检查模式",
         "buildCheckModeNeedBuild": "强检查（needBuild=true）",
         "buildCheckModeVersionDiff": "版本号比对（version 不同则构建）",
+        "artifactName": "产物名称",
+        "artifactNamePlaceholder": "请输入产物名称，例如: app.tar.gz",
+        "buildScript": "构建脚本",
+        "buildScriptPlaceholder": "请输入构建脚本，例如：\n#!/bin/bash\nmake build\ntar -czf app.tar.gz ./bin",
+        "uploadScript": "上传脚本",
+        "uploadScriptPlaceholder": "请输入上传脚本，例如：\n#!/bin/bash\nscp app.tar.gz user@server:/path/to/deploy/",
         "saveConfig": "保存配置",
         "fillRequired": "请填写必填项"
       },
