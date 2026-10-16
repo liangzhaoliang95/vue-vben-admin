@@ -255,6 +255,11 @@
         "buildScriptPlaceholder": "请输入构建脚本，例如：\n#!/bin/bash\nmake build\ntar -czf app.tar.gz ./bin",
         "uploadScript": "上传脚本",
         "uploadScriptPlaceholder": "请输入上传脚本，例如：\n#!/bin/bash\nscp app.tar.gz user@server:/path/to/deploy/",
+        "isMonorepo": "Monorepo 子项目",
+        "isMonorepoTip": "优先按 Dockerfile 路径判断，若为默认值则使用此开关",
+        "packagePath": "包目录路径",
+        "packagePathPlaceholder": "请输入包目录路径，例如: apps/web",
+        "packagePathTip": "Monorepo 项目的子包路径，用于读取 version.json 等配置文件",
         "saveConfig": "保存配置",
         "fillRequired": "请填写必填项"
       },

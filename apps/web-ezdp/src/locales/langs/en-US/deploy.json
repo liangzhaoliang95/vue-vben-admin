@@ -255,6 +255,11 @@
         "buildScriptPlaceholder": "Please enter build script, for example:\n#!/bin/bash\nmake build\ntar -czf app.tar.gz ./bin",
         "uploadScript": "Upload Script",
         "uploadScriptPlaceholder": "Please enter upload script, for example:\n#!/bin/bash\nscp app.tar.gz user@server:/path/to/deploy/",
+        "isMonorepo": "Monorepo Subproject",
+        "isMonorepoTip": "Priority is given to the Dockerfile path. If it's the default value, use this switch",
+        "packagePath": "Package Path",
+        "packagePathPlaceholder": "Please enter package path, e.g: apps/web",
+        "packagePathTip": "Subpackage path in Monorepo project, used to read version.json and other config files",
         "saveConfig": "Save Configuration",
         "fillRequired": "Please fill in the required fields"
       },

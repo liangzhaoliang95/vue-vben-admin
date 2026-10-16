@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
-import { Button, Form, FormItem, Input, message, Select } from 'ant-design-vue';
+import { Button, Form, FormItem, Input, message, Select, Switch } from 'ant-design-vue';
 
 import { getDockerSecretList } from '#/api/deploy-tools/docker-secret';
 import {
@@ -35,6 +35,9 @@ const formState = reactive({
   buildScript: '', // 构建脚本
   uploadScript: '', // 上传脚本
   buildCheckMode: 1, // 构建检查模式（默认1）
+  // Monorepo 配置
+  isMonorepo: false, // 是否为 Monorepo 子项目（默认false）
+  packagePath: '', // 包目录路径
 });
 
 const loading = ref(false);
@@ -224,6 +227,10 @@ async function handleSave() {
       payload.uploadScript = formState.uploadScript || undefined;
     }
 
+    // Monorepo 配置
+    payload.isMonorepo = formState.isMonorepo;
+    payload.packagePath = formState.packagePath || undefined;
+
     await createOrUpdateBuildConfig(payload);
     message.success($t('ui.successMessage.save'));
   } catch (error) {
@@ -260,6 +267,9 @@ async function loadConfig() {
       formState.buildScript = config.buildScript || '';
       formState.uploadScript = config.uploadScript || '';
       formState.buildCheckMode = config.buildCheckMode || 1;
+      // Monorepo 配置
+      formState.isMonorepo = config.isMonorepo || false;
+      formState.packagePath = config.packagePath || '';
     }
   } catch (error) {
     console.error('加载配置失败:', error);
@@ -506,6 +516,48 @@ onMounted(() => {
           "
           :options="buildCheckModeOptions"
         />
+      </FormItem>
+
+      <!-- Monorepo 配置 -->
+      <FormItem
+        :label="
+          $t('deploy.projectManagement.projectConfig.buildConfig.isMonorepo')
+        "
+        name="isMonorepo"
+      >
+        <Switch v-model:checked="formState.isMonorepo" />
+        <span style="margin-left: 8px; color: #666">
+          {{
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.isMonorepoTip',
+            )
+          }}
+        </span>
+      </FormItem>
+
+      <!-- 包目录路径 (Monorepo) -->
+      <FormItem
+        v-if="formState.isMonorepo"
+        :label="
+          $t('deploy.projectManagement.projectConfig.buildConfig.packagePath')
+        "
+        name="packagePath"
+      >
+        <Input
+          v-model:value="formState.packagePath"
+          :placeholder="
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.packagePathPlaceholder',
+            )
+          "
+        />
+        <span style="margin-left: 0; margin-top: 4px; display: block; color: #999; font-size: 12px">
+          {{
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.packagePathTip',
+            )
+          }}
+        </span>
       </FormItem>
 
       <FormItem :wrapper-col="{ offset: 6, span: 18 }">

@@ -16,6 +16,10 @@ export namespace BuildConfigApi {
     artifactName?: string;
     buildScript?: string;
     uploadScript?: string;
+
+    // Monorepo 配置
+    isMonorepo?: boolean;
+    packagePath?: string;
     buildCheckMode: number; // 1=检查needBuild，2=比对version
     createdAt: number;
     updatedAt: number;
