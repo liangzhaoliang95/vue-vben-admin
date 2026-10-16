@@ -1,14 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-echo "1. 清理旧的构建产物..."
-rm -rf apps/web-ezdp/dist apps/web-ezdp/dist.zip
-rm -rf .turbo
-
-echo "2. 清理node_modules缓存..."
-rm -rf apps/web-ezdp/.vite
-rm -rf packages/@core/preferences/dist
-
 VERSION_FILE="version.json"
 
 # 读取当前版本并自增 patch 号
