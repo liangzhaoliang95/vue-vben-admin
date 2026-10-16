@@ -36,7 +36,10 @@ export async function loadReferenceData() {
     objectStorageMap.value = newObjectStorageMap;
 
     // 加载K8S集群列表
-    const k8sSecretRes = await getK8sSecretList({ pageIndex: 1, pageSize: 1000 });
+    const k8sSecretRes = await getK8sSecretList({
+      pageIndex: 1,
+      pageSize: 1000,
+    });
     const newK8sSecretMap = new Map<string, string>();
     if (k8sSecretRes.items) {
       k8sSecretRes.items.forEach((item) => {
@@ -46,7 +49,10 @@ export async function loadReferenceData() {
     k8sSecretMap.value = newK8sSecretMap;
 
     // 加载CDN配置列表
-    const cdnConfigRes = await getCdnConfigList({ pageIndex: 1, pageSize: 1000 });
+    const cdnConfigRes = await getCdnConfigList({
+      pageIndex: 1,
+      pageSize: 1000,
+    });
     const newCdnConfigMap = new Map<string, string>();
     if (cdnConfigRes.items) {
       cdnConfigRes.items.forEach((item) => {
@@ -443,7 +449,9 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
       minWidth: 150,
       formatter: ({ row }) => {
         if (!row.cdnConfigIds || row.cdnConfigIds.length === 0) return '-';
-        const names = row.cdnConfigIds.map((id: string) => cdnConfigMap.value.get(id) || id).filter(Boolean);
+        const names = row.cdnConfigIds
+          .map((id: string) => cdnConfigMap.value.get(id) || id)
+          .filter(Boolean);
         return names.join(', ');
       },
     },
@@ -455,9 +463,7 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
       minWidth: 100,
       align: 'center',
       formatter: ({ cellValue }) => {
-        return cellValue
-          ? $t('common.yes')
-          : $t('common.no');
+        return cellValue ? $t('common.yes') : $t('common.no');
       },
     },
     {

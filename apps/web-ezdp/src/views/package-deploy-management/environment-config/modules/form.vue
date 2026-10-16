@@ -144,11 +144,18 @@ async function handleConfirm() {
   // - 如果不是Agent环境：必须配置前端、后端或远端服务器之一
   if (isAgentDeploy) {
     // Agent环境：检查是否尝试配置了前端/后端/远端服务器
-    if (values.frontendStorageId || values.frontendBaseUrl ||
-        values.backendSecretId || values.backendNamespace ||
-        values.remoteServer || values.remoteDeployPath) {
+    if (
+      values.frontendStorageId ||
+      values.frontendBaseUrl ||
+      values.backendSecretId ||
+      values.backendNamespace ||
+      values.remoteServer ||
+      values.remoteDeployPath
+    ) {
       message.error(
-        $t('deploy.packageDeployManagement.environmentConfig.agentEnvNotAllowedFrontendBackend'),
+        $t(
+          'deploy.packageDeployManagement.environmentConfig.agentEnvNotAllowedFrontendBackend',
+        ),
       );
       return;
     }
