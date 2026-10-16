@@ -646,7 +646,7 @@
       "backendEnvironment": "Backend NS",
       "backendEnvironmentPlaceholder": "Please enter backend NS",
       "remoteServer": "Server Config",
-      "remoteServerPlaceholder": "Please enter server config (format: user@ip, e.g.: root@192.168.1.100)",
+      "remoteServerPlaceholder": "Please enter server config",
       "remoteDeployPath": "Deploy Path",
       "remoteDeployPathPlaceholder": "Please enter deploy directory path, e.g.: /var/www/html",
       "isAgentDeploy": "Agent Deploy",

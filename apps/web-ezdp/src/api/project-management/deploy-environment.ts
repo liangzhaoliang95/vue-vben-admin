@@ -13,6 +13,8 @@ export namespace DeployEnvironmentApi {
     cdnConfigIds?: string[];
     backendSecretId?: string;
     backendNamespace?: string;
+    remoteServer?: string;
+    remoteDeployPath?: string;
     isAgentDeploy: boolean;
     sortOrder: number;
     createdAt: number;

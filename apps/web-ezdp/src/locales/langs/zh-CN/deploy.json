@@ -645,7 +645,7 @@
       "backendEnvironment": "后端NS",
       "backendEnvironmentPlaceholder": "请输入后端NS",
       "remoteServer": "服务器配置",
-      "remoteServerPlaceholder": "请输入服务器配置（格式：user@ip，如：root@192.168.1.100）",
+      "remoteServerPlaceholder": "请输入服务器配置",
       "remoteDeployPath": "部署位置",
       "remoteDeployPathPlaceholder": "请输入部署目录路径，如：/var/www/html",
       "isAgentDeploy": "Agent负责发布",
