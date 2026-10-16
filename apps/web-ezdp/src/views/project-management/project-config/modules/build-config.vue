@@ -1,7 +1,15 @@
 <script lang="ts" setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 
-import { Button, Form, FormItem, Input, message, Select, Switch } from 'ant-design-vue';
+import {
+  Button,
+  Form,
+  FormItem,
+  Input,
+  message,
+  Select,
+  Switch,
+} from 'ant-design-vue';
 
 import { getDockerSecretList } from '#/api/deploy-tools/docker-secret';
 import {
@@ -551,7 +559,15 @@ onMounted(() => {
             )
           "
         />
-        <span style="margin-left: 0; margin-top: 4px; display: block; color: #999; font-size: 12px">
+        <span
+          style="
+            display: block;
+            margin-top: 4px;
+            margin-left: 0;
+            font-size: 12px;
+            color: #999;
+          "
+        >
           {{
             $t(
               'deploy.projectManagement.projectConfig.buildConfig.packagePathTip',
