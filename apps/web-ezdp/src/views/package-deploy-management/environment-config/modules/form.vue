@@ -82,6 +82,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
             cdnConfigIds: detail.cdnConfigIds || [],
             backendSecretId: detail.backendSecretId || '',
             backendNamespace: detail.backendNamespace || '',
+            remoteServer: detail.remoteServer || '',
+            remoteDeployPath: detail.remoteDeployPath || '',
             businessLineId: detail.businessLineId,
             isAgentDeploy: detail.isAgentDeploy || false,
           });
@@ -99,6 +101,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
             cdnConfigIds: data.cdnConfigIds || [],
             backendSecretId: data.backendSecretId || '',
             backendNamespace: data.backendNamespace || '',
+            remoteServer: data.remoteServer || '',
+            remoteDeployPath: data.remoteDeployPath || '',
             businessLineId: data.businessLineId,
             isAgentDeploy: data.isAgentDeploy || false,
           });
@@ -136,23 +140,25 @@ async function handleConfirm() {
   const isAgentDeploy = values.isAgentDeploy || false;
 
   // 验证逻辑：
-  // - 如果是Agent环境：不允许配置前端/后端
-  // - 如果不是Agent环境：必须配置前端或后端之一
+  // - 如果是Agent环境：不允许配置前端/后端/远端服务器
+  // - 如果不是Agent环境：必须配置前端、后端或远端服务器之一
   if (isAgentDeploy) {
-    // Agent环境：检查是否尝试配置了前端/后端
+    // Agent环境：检查是否尝试配置了前端/后端/远端服务器
     if (values.frontendStorageId || values.frontendBaseUrl ||
-        values.backendSecretId || values.backendNamespace) {
+        values.backendSecretId || values.backendNamespace ||
+        values.remoteServer || values.remoteDeployPath) {
       message.error(
         $t('deploy.packageDeployManagement.environmentConfig.agentEnvNotAllowedFrontendBackend'),
       );
       return;
     }
   } else {
-    // 非Agent环境：必须配置前端或后端之一
+    // 非Agent环境：必须配置前端、后端或远端服务器之一
     const hasFrontend = !!(values.frontendStorageId || values.frontendBaseUrl);
     const hasBackend = !!(values.backendSecretId && values.backendNamespace);
+    const hasRemoteServer = !!(values.remoteServer && values.remoteDeployPath);
 
-    if (!hasFrontend && !hasBackend) {
+    if (!hasFrontend && !hasBackend && !hasRemoteServer) {
       message.error(
         $t(
           'deploy.packageDeployManagement.environmentConfig.atLeastOneTargetRequired',
@@ -179,7 +185,7 @@ async function handleConfirm() {
     submitData.description = values.description;
   }
 
-  // Agent环境不提交前端/后端字段，非Agent环境正常提交
+  // Agent环境不提交前端/后端/远端服务器字段，非Agent环境正常提交
   if (!isAgentDeploy) {
     if (values.frontendStorageId) {
       submitData.frontendStorageId = values.frontendStorageId;
@@ -195,6 +201,12 @@ async function handleConfirm() {
     }
     if (values.backendNamespace) {
       submitData.backendNamespace = values.backendNamespace;
+    }
+    if (values.remoteServer) {
+      submitData.remoteServer = values.remoteServer;
+    }
+    if (values.remoteDeployPath) {
+      submitData.remoteDeployPath = values.remoteDeployPath;
     }
   }
 

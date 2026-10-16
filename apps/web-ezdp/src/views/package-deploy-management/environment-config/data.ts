@@ -16,7 +16,7 @@ const objectStorageMap = ref<Map<string, string>>(new Map());
 const k8sSecretMap = ref<Map<string, string>>(new Map());
 const cdnConfigMap = ref<Map<string, string>>(new Map());
 
-// 加载对象存储和K8S集群列表（用于显示名称）
+// 加载对象存储、K8S集群和CDN配置列表（用于显示名称）
 // 注意：不传businessLineId，后端会根据用户角色自动处理：
 // - 超级管理员：返回所有业务线的数据
 // - 非超级管理员：返回token中业务线ID的数据
@@ -280,6 +280,32 @@ export function useFormSchema(): VbenFormSchema[] {
         ),
       },
     },
+    {
+      component: 'Input',
+      fieldName: 'remoteServer',
+      label: $t(
+        'deploy.packageDeployManagement.environmentConfig.remoteServer',
+      ),
+      ifShow: (values) => !values?.isAgentDeploy,
+      componentProps: {
+        placeholder: $t(
+          'deploy.packageDeployManagement.environmentConfig.remoteServerPlaceholder',
+        ),
+      },
+    },
+    {
+      component: 'Input',
+      fieldName: 'remoteDeployPath',
+      label: $t(
+        'deploy.packageDeployManagement.environmentConfig.remoteDeployPath',
+      ),
+      ifShow: (values) => !values?.isAgentDeploy,
+      componentProps: {
+        placeholder: $t(
+          'deploy.packageDeployManagement.environmentConfig.remoteDeployPathPlaceholder',
+        ),
+      },
+    },
   ];
 }
 
@@ -396,6 +422,20 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
         'deploy.packageDeployManagement.environmentConfig.backendEnvironment',
       ),
       minWidth: 150,
+    },
+    {
+      field: 'remoteServer',
+      title: $t(
+        'deploy.packageDeployManagement.environmentConfig.remoteServer',
+      ),
+      minWidth: 180,
+    },
+    {
+      field: 'remoteDeployPath',
+      title: $t(
+        'deploy.packageDeployManagement.environmentConfig.remoteDeployPath',
+      ),
+      minWidth: 200,
     },
     {
       field: 'cdnConfigIds',
