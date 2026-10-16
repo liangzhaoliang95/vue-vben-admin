@@ -487,9 +487,7 @@ onMounted(() => {
 
         <FormItem
           :label="
-            $t(
-              'deploy.projectManagement.projectConfig.buildConfig.uploadScript',
-            )
+            $t('deploy.projectManagement.projectConfig.buildConfig.uploadScript')
           "
           name="uploadScript"
         >
