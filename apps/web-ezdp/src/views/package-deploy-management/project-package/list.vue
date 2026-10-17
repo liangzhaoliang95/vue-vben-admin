@@ -71,6 +71,8 @@ const singleBuildLoading = ref(false);
 const singleBuildProjectLoading = ref(false);
 const singleBuildProjects = ref<ProjectConfigApi.ProjectConfig[]>([]);
 const selectedSingleBuildProjectIds = ref<string[]>([]);
+const singleBuildForceRebuild = ref(true); // 是否强制构建（默认勾选）
+const singleBuildInstallDependency = ref(false); // 是否安装依赖
 
 // 排序模式：version=版本内项目按类型排序，name=版本内项目按名称升序（版本列表本身始终按版本号降序）
 const sortMode = ref<'name' | 'version'>('version');
@@ -124,11 +126,15 @@ const currentBranchOptions = computed(() => {
 });
 
 const backendSingleBuildProjects = computed(() =>
-  singleBuildProjects.value.filter((project) => project.type !== 'frontend'),
+  singleBuildProjects.value
+    .filter((project) => project.type !== 'frontend')
+    .sort((a, b) => a.name.localeCompare(b.name)),
 );
 
 const frontendSingleBuildProjects = computed(() =>
-  singleBuildProjects.value.filter((project) => project.type === 'frontend'),
+  singleBuildProjects.value
+    .filter((project) => project.type === 'frontend')
+    .sort((a, b) => a.name.localeCompare(b.name)),
 );
 
 // 加载指定业务线的分支数据（懒加载）
@@ -487,6 +493,8 @@ async function handleOpenSingleBuildModal() {
 
   selectedSingleBuildProjectIds.value = [];
   singleBuildProjects.value = [];
+  singleBuildForceRebuild.value = true; // 重置强制构建为 true（默认勾选）
+  singleBuildInstallDependency.value = false; // 重置安装依赖
   singleBuildModalOpen.value = true;
   await loadSingleBuildProjects();
 }
@@ -523,6 +531,8 @@ async function handleSingleBuildSubmit() {
     const queryParams: any = {
       branchId: selectedBranchId.value,
       projectIds: selectedSingleBuildProjectIds.value,
+      forceRebuild: singleBuildForceRebuild.value, // 是否强制构建
+      installDependency: singleBuildInstallDependency.value, // 是否安装依赖
     };
 
     if (isSuperAdmin.value && selectedBusinessLineId.value) {
@@ -1137,7 +1147,14 @@ onDeactivated(() => {
               $t('deploy.packageDeployManagement.projectPackage.preBuildCheck')
             }}
           </Button>
-          <Button @click="handleOpenSingleBuildModal">
+          <Button
+            type="primary"
+            style="
+              background-color: #722ed1;
+              border-color: #722ed1;
+            "
+            @click="handleOpenSingleBuildModal"
+          >
             {{
               $t('deploy.packageDeployManagement.projectPackage.singleBuild')
             }}
@@ -1598,77 +1615,94 @@ onDeactivated(() => {
       @ok="handleSingleBuildSubmit"
     >
       <Spin :spinning="singleBuildProjectLoading">
-        <div class="single-build-section">
-          <div class="single-build-section-title">
-            {{
-              $t(
-                'deploy.packageDeployManagement.projectPackage.singleBuildBackendTitle',
-              )
-            }}
+        <!-- 无可构建项目时显示 -->
+        <Empty
+          v-if="
+            backendSingleBuildProjects.length === 0 &&
+            frontendSingleBuildProjects.length === 0
+          "
+          :description="
+            $t(
+              'deploy.packageDeployManagement.projectPackage.singleBuildNoProjects',
+            )
+          "
+        />
+
+        <template v-else>
+          <!-- 构建参数选项 -->
+          <div class="build-options-section">
+            <Checkbox v-model:checked="singleBuildForceRebuild">
+              {{
+                $t('deploy.packageDeployManagement.projectPackage.forceRebuild')
+              }}
+            </Checkbox>
+            <Checkbox v-model:checked="singleBuildInstallDependency">
+              {{
+                $t(
+                  'deploy.packageDeployManagement.projectPackage.installDependency',
+                )
+              }}
+            </Checkbox>
           </div>
+
+          <!-- 后端项目 -->
           <div
             v-if="backendSingleBuildProjects.length > 0"
-            class="single-build-grid"
+            class="single-build-section"
           >
-            <Checkbox
-              v-for="project in backendSingleBuildProjects"
-              :key="project.id"
-              :checked="isSingleBuildProjectChecked(project.id)"
-              @change="toggleSingleBuildProject(project.id)"
-            >
-              <Tooltip
-                :title="`${project.name} (${getProjectTypeName(project.type)})`"
+            <div class="single-build-section-title">
+              {{
+                $t(
+                  'deploy.packageDeployManagement.projectPackage.singleBuildBackendTitle',
+                )
+              }}
+            </div>
+            <div class="single-build-grid">
+              <Checkbox
+                v-for="project in backendSingleBuildProjects"
+                :key="project.id"
+                :checked="isSingleBuildProjectChecked(project.id)"
+                @change="toggleSingleBuildProject(project.id)"
               >
-                <span class="single-build-project-name">{{
-                  project.name
-                }}</span>
-              </Tooltip>
-            </Checkbox>
+                <Tooltip
+                  :title="`${project.name} (${getProjectTypeName(project.type)})`"
+                >
+                  <span class="single-build-project-name">{{
+                    project.name
+                  }}</span>
+                </Tooltip>
+              </Checkbox>
+            </div>
           </div>
-          <Empty
-            v-else
-            :description="
-              $t(
-                'deploy.packageDeployManagement.projectPackage.singleBuildNoBackendProjects',
-              )
-            "
-          />
-        </div>
 
-        <div class="single-build-section">
-          <div class="single-build-section-title">
-            {{
-              $t(
-                'deploy.packageDeployManagement.projectPackage.singleBuildFrontendTitle',
-              )
-            }}
-          </div>
+          <!-- 前端项目 -->
           <div
             v-if="frontendSingleBuildProjects.length > 0"
-            class="single-build-grid"
+            class="single-build-section"
           >
-            <Checkbox
-              v-for="project in frontendSingleBuildProjects"
-              :key="project.id"
-              :checked="isSingleBuildProjectChecked(project.id)"
-              @change="toggleSingleBuildProject(project.id)"
-            >
-              <Tooltip :title="project.name">
-                <span class="single-build-project-name">{{
-                  project.name
-                }}</span>
-              </Tooltip>
-            </Checkbox>
+            <div class="single-build-section-title">
+              {{
+                $t(
+                  'deploy.packageDeployManagement.projectPackage.singleBuildFrontendTitle',
+                )
+              }}
+            </div>
+            <div class="single-build-grid">
+              <Checkbox
+                v-for="project in frontendSingleBuildProjects"
+                :key="project.id"
+                :checked="isSingleBuildProjectChecked(project.id)"
+                @change="toggleSingleBuildProject(project.id)"
+              >
+                <Tooltip :title="project.name">
+                  <span class="single-build-project-name">{{
+                    project.name
+                  }}</span>
+                </Tooltip>
+              </Checkbox>
+            </div>
           </div>
-          <Empty
-            v-else
-            :description="
-              $t(
-                'deploy.packageDeployManagement.projectPackage.singleBuildNoFrontendProjects',
-              )
-            "
-          />
-        </div>
+        </template>
       </Spin>
     </Modal>
 
@@ -1735,6 +1769,20 @@ onDeactivated(() => {
 
 .compact-toolbar-card .filter-label {
   font-size: 12px;
+}
+
+.build-options-section {
+  display: flex;
+  gap: 24px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  background-color: hsl(var(--muted) / 0.3);
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+}
+
+.build-options-section :deep(.ant-checkbox-wrapper) {
+  margin-inline-start: 0;
 }
 
 .single-build-section + .single-build-section {
