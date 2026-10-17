@@ -254,7 +254,7 @@
         "buildScript": "Build Script",
         "buildScriptPlaceholder": "Please enter build script, for example:\n#!/bin/bash\nmake build\ntar -czf app.tar.gz ./bin",
         "uploadScript": "Upload Script",
-        "uploadScriptPlaceholder": "Please enter upload script, for example:\n#!/bin/bash\nscp app.tar.gz user@server:/path/to/deploy/",
+        "uploadScriptPlaceholder": "Please enter upload script, for example:\n#!/bin/bash\nscp app.tar.gz server:/path/to/deploy/",
         "isMonorepo": "Monorepo Subproject",
         "isMonorepoTip": "Priority is given to the Dockerfile path. If it's the default value, use this switch",
         "packagePath": "Package Path",
