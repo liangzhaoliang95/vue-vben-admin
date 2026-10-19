@@ -1149,10 +1149,7 @@ onDeactivated(() => {
           </Button>
           <Button
             type="primary"
-            style="
-              background-color: #722ed1;
-              border-color: #722ed1;
-            "
+            style="background-color: #722ed1; border-color: #722ed1"
             @click="handleOpenSingleBuildModal"
           >
             {{
@@ -1776,7 +1773,7 @@ onDeactivated(() => {
   gap: 24px;
   padding: 16px 20px;
   margin-bottom: 16px;
-  background-color: hsl(var(--muted) / 0.3);
+  background-color: hsl(var(--muted) / 30%);
   border: 1px solid hsl(var(--border));
   border-radius: 6px;
 }
