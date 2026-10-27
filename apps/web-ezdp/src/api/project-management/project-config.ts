@@ -8,7 +8,7 @@ export namespace ProjectConfigApi {
     name: string;
     projectId?: number;
     projectUrl: string;
-    type: 'backend' | 'frontend' | 'submodule';
+    type: 'android' | 'backend' | 'frontend' | 'submodule';
     businessLineId: number;
     hasBuildConfig?: boolean;
     hasDeployConfig?: boolean;
@@ -99,7 +99,9 @@ async function getProjectConfigDetail(id: number | string) {
 /**
  * 获取 GitLab 项目列表
  */
-async function fetchGitlabProjects(data: ProjectConfigApi.FetchGitlabProjectsParams) {
+async function fetchGitlabProjects(
+  data: ProjectConfigApi.FetchGitlabProjectsParams,
+) {
   return requestClient.post<ProjectConfigApi.GitlabProject[]>(
     '/projectManagement/projectConfig/fetchGitlabProjects',
     data,

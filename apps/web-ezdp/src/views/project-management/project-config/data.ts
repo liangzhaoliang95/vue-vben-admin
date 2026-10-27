@@ -97,6 +97,10 @@ export function useFormSchema(): VbenFormSchema[] {
             label: $t('deploy.projectManagement.projectConfig.type.submodule'),
             value: 'submodule',
           },
+          {
+            label: $t('deploy.projectManagement.projectConfig.type.android'),
+            value: 'android',
+          },
         ],
         placeholder: $t('deploy.projectManagement.projectConfig.type.select'),
         style: { width: '100%' },
@@ -160,6 +164,10 @@ export function useGridFormSchema(): VbenFormSchema[] {
             label: $t('deploy.projectManagement.projectConfig.type.submodule'),
             value: 'submodule',
           },
+          {
+            label: $t('deploy.projectManagement.projectConfig.type.android'),
+            value: 'android',
+          },
         ],
         placeholder: $t('deploy.projectManagement.projectConfig.type.select'),
         style: { width: '100%' },
@@ -213,6 +221,7 @@ export function useColumns(
           backend: `🖥️ ${$t('deploy.projectManagement.projectConfig.type.backend')}`,
           frontend: `🎨 ${$t('deploy.projectManagement.projectConfig.type.frontend')}`,
           submodule: `📦 ${$t('deploy.projectManagement.projectConfig.type.submodule')}`,
+          android: `📱 ${$t('deploy.projectManagement.projectConfig.type.android')}`,
         };
         return typeMap[cellValue] || cellValue;
       },

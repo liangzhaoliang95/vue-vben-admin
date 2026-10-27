@@ -376,8 +376,13 @@ export const useBusinessStore = defineStore(
           await apiProvider.switchBusinessLine(id);
         }
 
-        // 切换业务线前，先清空菜单缓存，确保获取新业务线的菜单
-        roleMenuCache.value = {};
+        // 只清空当前业务线相关角色的菜单缓存（保留其他业务线的缓存，提升再次切换速度）
+        const currentRoles =
+          currentBusinessLine.value?.roles.map((r) => r.id) ?? [];
+        currentRoles.forEach((roleId) => {
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete roleMenuCache.value[roleId];
+        });
 
         // 清空标签页（只保留固定标签）
         const tabbarStore = useTabbarStore();

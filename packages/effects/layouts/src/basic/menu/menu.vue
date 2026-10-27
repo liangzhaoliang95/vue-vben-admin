@@ -65,18 +65,15 @@ const selectedValue = computed({
     }
     switchingBusinessLine.value = true;
     try {
-      // 调用store的switchBusinessLine方法，它会调用后端接口并更新状态
       await businessStore.switchBusinessLine(id);
-      // 先跳转到根路由，确保reload后停留在首页（避免停留在新业务线下没有权限的路由）
+      // 先跳转到根路由，确保reload后停留在首页
       await router.replace('/');
-      // 切换成功后刷新页面，重新执行所有初始化流程
-      // 使用 window.location.reload() 进行完整的页面刷新
+      // 使用页面刷新确保菜单100%正确更新
       window.location.reload();
     } catch (error) {
       console.error('切换业务线失败:', error);
       switchingBusinessLine.value = false;
     }
-    // 注意：reload() 后不需要 finally，因为页面会刷新
   },
 });
 
@@ -174,7 +171,7 @@ $namespace: vben;
 
   :deep(.business-line-select-trigger) {
     width: 90%;
-    margin: 0px 10px 10px auto;
+    margin: 0 10px 10px auto;
   }
 }
 

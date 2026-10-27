@@ -210,7 +210,8 @@
         "select": "Please select project type",
         "backend": "Backend",
         "frontend": "Frontend",
-        "submodule": "Submodule"
+        "submodule": "Submodule",
+        "android": "Android Client"
       },
       "cloud": {
         "label": "Cloud Provider",
@@ -507,6 +508,7 @@
       "singleBuildTitle": "Single Project Build",
       "singleBuildBackendTitle": "Backend Projects",
       "singleBuildFrontendTitle": "Frontend Projects",
+      "singleBuildAndroidTitle": "Android Projects",
       "singleBuildSubmit": "Start Build",
       "singleBuildNoProjects": "No buildable projects",
       "forceRebuild": "Force Rebuild (Skip tag and image checks)",
@@ -520,6 +522,11 @@
       "preBuildCheckStarted": "Pre-build check task started, please view real-time logs",
       "preBuildCheckStartFailed": "Failed to start pre-build check",
       "preBuildCheckConfirm": "Are you sure you want to start the build pre-check?",
+      "androidConfigTitle": "Android Build Configuration",
+      "androidWebviewVersion": "WebView Version",
+      "androidWebviewPlaceholder": "Please select WebView version",
+      "androidWebviewRequired": "Please select WebView version",
+      "androidBuildType": "Build Type",
       "branchHasRunningTask": "There is a task in progress under this branch. Please wait for it to complete.",
       "refresh": "Refresh",
       "startBuild": "Start Build",

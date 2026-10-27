@@ -50,6 +50,12 @@ export namespace ProjectPackageApi {
     businessLineId?: number;
     forceRebuild?: boolean; // 强制构建（跳过 tag 和镜像检查）
     projectIds?: string[]; // 指定构建项目ID列表（为空则构建全部）
+    installDependency?: boolean; // 是否安装依赖
+    androidConfig?: {
+      buildType: 'debug' | 'release'; // 构建类型
+      // Android 构建配置（仅当有 Android 项目时需要）
+      webviewDownloadUrl: string; // WebView 下载地址
+    };
   }
 
   export interface PreBuildCheckParams {

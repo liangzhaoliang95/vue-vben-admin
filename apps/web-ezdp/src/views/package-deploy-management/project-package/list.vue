@@ -74,6 +74,22 @@ const selectedSingleBuildProjectIds = ref<string[]>([]);
 const singleBuildForceRebuild = ref(true); // 是否强制构建（默认勾选）
 const singleBuildInstallDependency = ref(false); // 是否安装依赖
 
+// Android 构建配置
+const androidConfig = ref({
+  webviewVersion: '',
+  buildType: 'release' as 'release' | 'debug',
+});
+
+// WebView 版本预设列表
+const webviewVersionOptions = [
+  {
+    label: 'WebView 134.0.6998.39',
+    value:
+      'https://rongke.plaso.cn/package/android/webview/134.0.6998.39_min26_arm64.apk',
+  },
+  { label: '无', value: '' },
+];
+
 // 排序模式：version=版本内项目按类型排序，name=版本内项目按名称升序（版本列表本身始终按版本号降序）
 const sortMode = ref<'name' | 'version'>('version');
 const showImageName = ref(false);
@@ -127,7 +143,9 @@ const currentBranchOptions = computed(() => {
 
 const backendSingleBuildProjects = computed(() =>
   singleBuildProjects.value
-    .filter((project) => project.type !== 'frontend')
+    .filter(
+      (project) => project.type !== 'frontend' && project.type !== 'android',
+    )
     .sort((a, b) => a.name.localeCompare(b.name)),
 );
 
@@ -135,6 +153,20 @@ const frontendSingleBuildProjects = computed(() =>
   singleBuildProjects.value
     .filter((project) => project.type === 'frontend')
     .sort((a, b) => a.name.localeCompare(b.name)),
+);
+
+const androidSingleBuildProjects = computed(() =>
+  singleBuildProjects.value
+    .filter((project) => project.type === 'android')
+    .sort((a, b) => a.name.localeCompare(b.name)),
+);
+
+// 检测是否选中了 Android 项目
+const hasAndroidProjectSelected = computed(() =>
+  selectedSingleBuildProjectIds.value.some((id) => {
+    const project = singleBuildProjects.value.find((p) => p.id === id);
+    return project?.type === 'android';
+  }),
 );
 
 // 加载指定业务线的分支数据（懒加载）
@@ -495,6 +527,12 @@ async function handleOpenSingleBuildModal() {
   singleBuildProjects.value = [];
   singleBuildForceRebuild.value = true; // 重置强制构建为 true（默认勾选）
   singleBuildInstallDependency.value = false; // 重置安装依赖
+  // 设置 Android 配置默认值：第一个 WebView 版本 + Release 构建
+  androidConfig.value = {
+    webviewVersion:
+      webviewVersionOptions.length > 0 ? webviewVersionOptions[0].value : '',
+    buildType: 'release',
+  };
   singleBuildModalOpen.value = true;
   await loadSingleBuildProjects();
 }
@@ -526,6 +564,18 @@ async function handleSingleBuildSubmit() {
     return;
   }
 
+  // 如果选中了 Android 项目，验证配置
+  if (hasAndroidProjectSelected.value) {
+    if (!androidConfig.value.webviewVersion) {
+      message.warning(
+        $t(
+          'deploy.packageDeployManagement.projectPackage.androidWebviewRequired',
+        ),
+      );
+      return;
+    }
+  }
+
   singleBuildLoading.value = true;
   try {
     const queryParams: any = {
@@ -534,6 +584,14 @@ async function handleSingleBuildSubmit() {
       forceRebuild: singleBuildForceRebuild.value, // 是否强制构建
       installDependency: singleBuildInstallDependency.value, // 是否安装依赖
     };
+
+    // 如果选中了 Android 项目，添加 Android 配置
+    if (hasAndroidProjectSelected.value) {
+      queryParams.androidConfig = {
+        webviewDownloadUrl: androidConfig.value.webviewVersion,
+        buildType: androidConfig.value.buildType,
+      };
+    }
 
     if (isSuperAdmin.value && selectedBusinessLineId.value) {
       queryParams.businessLineId = selectedBusinessLineId.value;
@@ -1616,7 +1674,8 @@ onDeactivated(() => {
         <Empty
           v-if="
             backendSingleBuildProjects.length === 0 &&
-            frontendSingleBuildProjects.length === 0
+            frontendSingleBuildProjects.length === 0 &&
+            androidSingleBuildProjects.length === 0
           "
           :description="
             $t(
@@ -1640,6 +1699,56 @@ onDeactivated(() => {
                 )
               }}
             </Checkbox>
+          </div>
+
+          <!-- Android 配置（仅在选中 Android 项目时显示） -->
+          <div v-if="hasAndroidProjectSelected" class="android-config-section">
+            <div class="android-config-title">
+              📱
+              {{
+                $t(
+                  'deploy.packageDeployManagement.projectPackage.androidConfigTitle',
+                )
+              }}
+            </div>
+            <div class="android-config-form">
+              <div class="android-config-item">
+                <span class="android-config-label">
+                  {{
+                    $t(
+                      'deploy.packageDeployManagement.projectPackage.androidWebviewVersion',
+                    )
+                  }}:
+                </span>
+                <Select
+                  v-model:value="androidConfig.webviewVersion"
+                  :options="webviewVersionOptions"
+                  :placeholder="
+                    $t(
+                      'deploy.packageDeployManagement.projectPackage.androidWebviewPlaceholder',
+                    )
+                  "
+                  class="android-config-select"
+                />
+              </div>
+              <div class="android-config-item">
+                <span class="android-config-label">
+                  {{
+                    $t(
+                      'deploy.packageDeployManagement.projectPackage.androidBuildType',
+                    )
+                  }}:
+                </span>
+                <Select
+                  v-model:value="androidConfig.buildType"
+                  :options="[
+                    { label: 'Release', value: 'release' },
+                    { label: 'Debug', value: 'debug' },
+                  ]"
+                  class="android-config-select"
+                />
+              </div>
+            </div>
           </div>
 
           <!-- 后端项目 -->
@@ -1687,6 +1796,35 @@ onDeactivated(() => {
             <div class="single-build-grid">
               <Checkbox
                 v-for="project in frontendSingleBuildProjects"
+                :key="project.id"
+                :checked="isSingleBuildProjectChecked(project.id)"
+                @change="toggleSingleBuildProject(project.id)"
+              >
+                <Tooltip :title="project.name">
+                  <span class="single-build-project-name">{{
+                    project.name
+                  }}</span>
+                </Tooltip>
+              </Checkbox>
+            </div>
+          </div>
+
+          <!-- 安卓项目 -->
+          <div
+            v-if="androidSingleBuildProjects.length > 0"
+            class="single-build-section"
+          >
+            <div class="single-build-section-title">
+              📱
+              {{
+                $t(
+                  'deploy.packageDeployManagement.projectPackage.singleBuildAndroidTitle',
+                )
+              }}
+            </div>
+            <div class="single-build-grid">
+              <Checkbox
+                v-for="project in androidSingleBuildProjects"
                 :key="project.id"
                 :checked="isSingleBuildProjectChecked(project.id)"
                 @change="toggleSingleBuildProject(project.id)"
@@ -1780,6 +1918,49 @@ onDeactivated(() => {
 
 .build-options-section :deep(.ant-checkbox-wrapper) {
   margin-inline-start: 0;
+}
+
+.android-config-section {
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 5%) 0%,
+    hsl(var(--primary) / 10%) 100%
+  );
+  border: 1px solid hsl(var(--primary) / 30%);
+  border-radius: 8px;
+}
+
+.android-config-title {
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.android-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.android-config-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.android-config-label {
+  flex-shrink: 0;
+  width: 120px;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+}
+
+.android-config-select {
+  flex: 1;
+  max-width: 450px;
 }
 
 .single-build-section + .single-build-section {

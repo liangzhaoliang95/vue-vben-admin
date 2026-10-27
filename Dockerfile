@@ -1,5 +1,5 @@
 # 第一阶段：构建前端应用
-FROM node:20-alpine AS builder
+FROM docker-hub.geekz.cn:81/node:20-alpine AS builder
 
 # 安装必要的构建工具
 RUN apk add --no-cache python3 make g++
@@ -23,7 +23,7 @@ RUN pnpm -r run stub --if-present
 RUN pnpm run build:ezdp
 
 # 第二阶段：运行 nginx
-FROM nginx:alpine
+FROM docker-hub.geekz.cn:81/nginx:alpine
 
 # 复制构建产物到 nginx 目录
 COPY --from=builder /app/apps/web-ezdp/dist /usr/share/nginx/html

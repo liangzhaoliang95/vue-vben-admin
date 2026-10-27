@@ -28,19 +28,23 @@ async function generateAccess(options: GenerateMenuAndRoutesOptions) {
   return await generateAccessible(preferences.app.accessMode, {
     ...options,
     fetchMenuListAsync: async () => {
-      // 显示 loading 提示
-      const hideLoading = message.loading({
-        content: `${$t('common.loadingMenu')}...`,
-        duration: 0, // 设置为 0 表示不自动关闭
-      });
+      // 延迟显示loading，避免快速请求时的闪烁（小于300ms的请求不显示loading）
+      let hideLoading: (() => void) | null = null;
+      const loadingTimer = setTimeout(() => {
+        hideLoading = message.loading({
+          content: `${$t('common.loadingMenu')}...`,
+          duration: 0, // 设置为 0 表示不自动关闭
+        });
+      }, 300);
 
       try {
         // 使用后端真实接口获取当前角色的菜单
         const menus = await businessStore.ensureCurrentRoleMenus(true);
         return menus;
       } finally {
-        // 菜单加载完成后关闭 loading
-        hideLoading();
+        // 菜单加载完成后清除定时器并关闭 loading
+        clearTimeout(loadingTimer);
+        hideLoading?.();
       }
     },
     // 可以指定没有权限跳转403页面
