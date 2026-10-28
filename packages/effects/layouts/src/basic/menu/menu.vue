@@ -131,8 +131,7 @@ function handleMenuOpen(key: string, path: string[]) {
             :key="option.value"
             :value="option.value"
             :class="{
-              'business-line-item-selected':
-                option.value === selectedValue,
+              'business-line-item-selected': option.value === selectedValue,
             }"
           >
             <div class="flex items-center">
@@ -192,16 +191,16 @@ $namespace: vben;
 <style lang="scss">
 // 业务线下拉内容样式 - 不使用 scoped，因为 SelectContent 通过 Portal 渲染到 body
 .business-line-select-content {
+  width: auto !important;
   // 增加宽度，适应业务线名称
   min-width: 200px !important;
-  width: auto !important;
   // 移除最大高度限制，让所有业务线一次性显示
   max-height: none !important;
 
   // 隐藏选中项的对钩图标，添加边框高亮效果
   .business-line-item-selected {
-    border: 1px solid hsl(var(--primary)) !important;
     background-color: hsl(var(--accent) / 30%) !important;
+    border: 1px solid hsl(var(--primary)) !important;
     border-radius: 4px !important;
 
     // 隐藏右侧的对钩指示器容器
@@ -211,7 +210,7 @@ $namespace: vben;
   }
 
   // 调整所有选项的右侧 padding（因为隐藏了对钩）
-  [role="option"] {
+  [role='option'] {
     padding-right: 0.5rem !important;
   }
 }
