@@ -2240,8 +2240,8 @@ onDeactivated(() => {
 
 .artifact-content {
   max-height: 60vh;
-  overflow-y: auto;
   padding: 12px;
+  overflow-y: auto;
   background-color: hsl(var(--muted) / 20%);
   border: 1px solid hsl(var(--border));
   border-radius: 6px;
@@ -2249,12 +2249,12 @@ onDeactivated(() => {
 
 .artifact-content pre {
   margin: 0;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: Monaco, Menlo, 'Ubuntu Mono', monospace;
   font-size: 13px;
   line-height: 1.6;
   color: hsl(var(--foreground));
-  white-space: pre-wrap;
   word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .artifact-content pre :deep(a) {
