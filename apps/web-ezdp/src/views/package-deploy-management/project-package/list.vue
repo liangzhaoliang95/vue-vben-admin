@@ -1054,6 +1054,11 @@ async function copyVersionAsYaml(version: any) {
 const changelogModalOpen = ref(false);
 const changelogVersion = ref<any>(null);
 
+// artifact modal 状态
+const artifactModalOpen = ref(false);
+const artifactContent = ref('');
+const artifactProjectName = ref('');
+
 // 解析 changelog JSON
 const changelogCommits = computed(() => {
   if (!changelogVersion.value?.changelog) return [];
@@ -1070,6 +1075,13 @@ function openChangelog(version: any) {
   changelogModalOpen.value = true;
 }
 
+// 打开 artifact modal
+function openArtifactModal(project: any) {
+  artifactProjectName.value = project.projectName || '-';
+  artifactContent.value = project.artifactListFileContent || '';
+  artifactModalOpen.value = true;
+}
+
 // 格式化 commit 时间
 function formatCommitTime(ms: number) {
   if (!ms) return '-';
@@ -1080,6 +1092,17 @@ function formatCommitTime(ms: number) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+// 格式化产物内容，将 URL 转换为可点击链接
+function formatArtifactContent(content: string) {
+  if (!content) return '';
+  // 匹配 http:// 或 https:// 开头的 URL
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return content.replace(
+    urlRegex,
+    '<a href="$1" target="_blank" style="color: #1890ff; text-decoration: underline;">$1</a>',
+  );
 }
 
 // 路由切换时清理资源
@@ -1430,6 +1453,15 @@ onDeactivated(() => {
                             >
                               NEW
                             </span>
+                            <Button
+                              v-if="project.artifactListFileContent"
+                              size="small"
+                              type="link"
+                              class="artifact-btn"
+                              @click.stop="openArtifactModal(project)"
+                            >
+                              产物
+                            </Button>
                           </div>
                           <span
                             v-if="showImageName && project.imageName"
@@ -1554,6 +1586,15 @@ onDeactivated(() => {
                             >
                               NEW
                             </span>
+                            <Button
+                              v-if="project.artifactListFileContent"
+                              size="small"
+                              type="link"
+                              class="artifact-btn"
+                              @click.stop="openArtifactModal(project)"
+                            >
+                              产物
+                            </Button>
                           </div>
                           <span
                             v-if="showImageName && project.imageName"
@@ -1879,6 +1920,18 @@ onDeactivated(() => {
         </div>
       </div>
     </Modal>
+
+    <!-- Artifact Modal -->
+    <Modal
+      v-model:open="artifactModalOpen"
+      :title="`${artifactProjectName} - 构建产物`"
+      :footer="null"
+      width="800px"
+    >
+      <div class="artifact-content">
+        <pre v-html="formatArtifactContent(artifactContent)"></pre>
+      </div>
+    </Modal>
   </component>
 </template>
 
@@ -2176,5 +2229,40 @@ onDeactivated(() => {
 .commit-time-tag {
   justify-self: start;
   font-size: 11px;
+}
+
+/* Artifact Modal 样式 */
+.artifact-btn {
+  padding: 0 6px;
+  font-size: 12px;
+  color: #1890ff;
+}
+
+.artifact-content {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 12px;
+  background-color: hsl(var(--muted) / 20%);
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+}
+
+.artifact-content pre {
+  margin: 0;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: hsl(var(--foreground));
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.artifact-content pre :deep(a) {
+  color: #1890ff;
+  text-decoration: underline;
+}
+
+.artifact-content pre :deep(a):hover {
+  color: #40a9ff;
 }
 </style>

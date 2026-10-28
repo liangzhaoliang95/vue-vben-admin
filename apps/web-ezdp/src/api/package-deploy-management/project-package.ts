@@ -18,6 +18,7 @@ export namespace ProjectPackageApi {
     errorMessage: string;
     createdAt: number;
     updatedAt: number;
+    artifactListFileContent?: string; // 构建产物列表文件内容
   }
 
   export interface VersionGroupItem {
