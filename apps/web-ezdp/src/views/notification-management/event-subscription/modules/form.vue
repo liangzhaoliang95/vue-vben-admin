@@ -16,7 +16,9 @@ import { $t } from '#/locales';
 
 const EVENT_TYPE_OPTIONS = [
   {
-    label: $t('notification.eventSubscription.eventTypes.projectBuildCompleted'),
+    label: $t(
+      'notification.eventSubscription.eventTypes.projectBuildCompleted',
+    ),
     value: 'project_build_completed',
   },
 ];

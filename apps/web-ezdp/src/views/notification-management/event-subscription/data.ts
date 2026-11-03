@@ -6,7 +6,9 @@ import { $t } from '#/locales';
 
 export const EVENT_TYPE_OPTIONS = [
   {
-    label: $t('notification.eventSubscription.eventTypes.projectBuildCompleted'),
+    label: $t(
+      'notification.eventSubscription.eventTypes.projectBuildCompleted',
+    ),
     value: 'project_build_completed',
   },
 ];
@@ -26,7 +28,9 @@ export function useColumns<T = EventSubscriptionApi.EventSubscriptionItem>(
       title: $t('notification.eventSubscription.eventType'),
       width: 180,
       formatter: ({ cellValue }: { cellValue: string }) => {
-        const option = EVENT_TYPE_OPTIONS.find((opt) => opt.value === cellValue);
+        const option = EVENT_TYPE_OPTIONS.find(
+          (opt) => opt.value === cellValue,
+        );
         return option?.label || cellValue;
       },
     },
