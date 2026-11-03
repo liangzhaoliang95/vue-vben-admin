@@ -63,5 +63,39 @@
     "dragSortTip": "Drag rows to reorder",
     "sortUpdateSuccess": "Sort order updated successfully",
     "sortUpdateFailed": "Failed to update sort order"
+  },
+  "eventSubscription": {
+    "title": "Event Subscription",
+    "eventType": "Event Type",
+    "webhookUrl": "Webhook URL",
+    "enabled": "Status",
+    "enabledYes": "Enabled",
+    "enabledNo": "Disabled",
+    "actions": "Actions",
+    "createdAt": "Created At",
+    "edit": "Edit",
+    "test": "Test Push",
+    "delete": "Delete",
+    "createSubscription": "Create Event Subscription",
+    "editSubscription": "Edit Event Subscription",
+    "selectEventType": "Select event type",
+    "webhookUrlPlaceholder": "Enter push URL (HTTP/HTTPS)",
+    "eventTypeRequired": "Event type is required",
+    "webhookUrlRequired": "Webhook URL is required",
+    "webhookUrlInvalid": "Invalid webhook URL format)",
+    "testWebhook": "Test Push",
+    "testSuccess": "Test push successful",
+    "testFailed": "Test push failed",
+    "createSuccess": "Event subscription created successfully",
+    "updateSuccess": "Event subscription updated successfully",
+    "submitFailed": "Submit failed",
+    "deleteSuccess": "Event subscription deleted successfully",
+    "deleteFailed": "Failed to delete event subscription",
+    "deleteConfirmTitle": "Confirm Delete",
+    "deleteConfirmContent": "Are you sure you want to delete this event subscription?",
+    "eventTypes": {
+      "projectBuildCompleted": "Project Build Completed"
+    }
   }
 }
+

@@ -88,10 +88,10 @@ const webviewVersionOptions = [
       'https://rongke.plaso.cn/package/android/webview/134.0.6998.39_min26_arm64.apk',
   },
   {
-      label: 'WebView 113.0.5672.136',
-      value:
-        'https://rongke.plaso.cn/package/android/webview/113.0.5672.136_min24_arm64.apk',
-    },
+    label: 'WebView 113.0.5672.136',
+    value:
+      'https://rongke.plaso.cn/package/android/webview/113.0.5672.136_min24_arm64.apk',
+  },
   { label: '无', value: '' },
 ];
 

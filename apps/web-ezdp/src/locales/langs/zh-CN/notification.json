@@ -63,5 +63,39 @@
     "dragSortTip": "拖拽行可调整排序",
     "sortUpdateSuccess": "排序更新成功",
     "sortUpdateFailed": "排序更新失败"
+  },
+  "eventSubscription": {
+    "title": "事件订阅",
+    "eventType": "事件类型",
+    "webhookUrl": "Webhook地址",
+    "enabled": "启用状态",
+    "enabledYes": "启用",
+    "enabledNo": "禁用",
+    "actions": "操作",
+    "createdAt": "创建时间",
+    "edit": "编辑",
+    "test": "测试推送",
+    "delete": "删除",
+    "createSubscription": "新增事件订阅",
+    "editSubscription": "编辑事件订阅",
+    "selectEventType": "请选择事件类型",
+    "webhookUrlPlaceholder": "请输入推送地址（支持HTTP/HTTPS）",
+    "eventTypeRequired": "事件类型不能为空",
+    "webhookUrlRequired": "推送地址不能为空",
+    "webhookUrlInvalid": "推送地址格式不正确",
+    "testWebhook": "测试推送",
+    "testSuccess": "测试推送成功",
+    "testFailed": "测试推送失败",
+    "createSuccess": "创建事件订阅成功",
+    "updateSuccess": "更新事件订阅成功",
+    "submitFailed": "提交失败",
+    "deleteSuccess": "删除事件订阅成功",
+    "deleteFailed": "删除事件订阅失败",
+    "deleteConfirmTitle": "确认删除",
+    "deleteConfirmContent": "确定要删除该事件订阅吗？",
+    "eventTypes": {
+      "projectBuildCompleted": "项目打包完成"
+    }
   }
 }
+
