@@ -108,7 +108,9 @@
     "clientIp": "客户端IP",
     "createdAt": "操作时间",
     "auditKeyBuild": "构建操作",
-    "auditKeyDeploy": "发布操作"
+    "auditKeyDeploy": "发布操作",
+    "auditKeyBranchManagement": "分支管理",
+    "auditKeyProjectRelease": "项目Release"
   },
   "role": {
     "title": "角色管理",

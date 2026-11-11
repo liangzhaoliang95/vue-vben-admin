@@ -32,6 +32,8 @@ export function useGridFormSchema(): VbenFormSchema[] {
         options: [
           { label: $t('system.auditLog.auditKeyBuild'), value: 'ProjectPackage' },
           { label: $t('system.auditLog.auditKeyDeploy'), value: 'ProjectDeploy' },
+          { label: $t('system.auditLog.auditKeyBranchManagement'), value: 'BranchManagement' },
+          { label: $t('system.auditLog.auditKeyProjectRelease'), value: 'ProjectRelease' },
         ],
         placeholder: $t('system.auditLog.auditKeyPlaceholder'),
       },
@@ -92,6 +94,8 @@ export function useColumns(): VxeTableGridOptions<SystemAuditLogApi.AuditLog>['c
         const map: Record<string, string> = {
           ProjectPackage: $t('system.auditLog.auditKeyBuild'),
           ProjectDeploy: $t('system.auditLog.auditKeyDeploy'),
+          BranchManagement: $t('system.auditLog.auditKeyBranchManagement'),
+          ProjectRelease: $t('system.auditLog.auditKeyProjectRelease'),
         };
         return map[cellValue] || cellValue;
       },

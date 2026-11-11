@@ -108,7 +108,9 @@
     "clientIp": "Client IP",
     "createdAt": "Operation Time",
     "auditKeyBuild": "Build",
-    "auditKeyDeploy": "Deploy"
+    "auditKeyDeploy": "Deploy",
+    "auditKeyBranchManagement": "Branch Management",
+    "auditKeyProjectRelease": "Project Release"
   },
   "role": {
     "title": "Role Management",
