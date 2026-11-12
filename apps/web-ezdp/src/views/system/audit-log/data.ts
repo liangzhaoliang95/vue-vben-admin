@@ -30,10 +30,22 @@ export function useGridFormSchema(): VbenFormSchema[] {
       componentProps: {
         allowClear: true,
         options: [
-          { label: $t('system.auditLog.auditKeyBuild'), value: 'ProjectPackage' },
-          { label: $t('system.auditLog.auditKeyDeploy'), value: 'ProjectDeploy' },
-          { label: $t('system.auditLog.auditKeyBranchManagement'), value: 'BranchManagement' },
-          { label: $t('system.auditLog.auditKeyProjectRelease'), value: 'ProjectRelease' },
+          {
+            label: $t('system.auditLog.auditKeyBuild'),
+            value: 'ProjectPackage',
+          },
+          {
+            label: $t('system.auditLog.auditKeyDeploy'),
+            value: 'ProjectDeploy',
+          },
+          {
+            label: $t('system.auditLog.auditKeyBranchManagement'),
+            value: 'BranchManagement',
+          },
+          {
+            label: $t('system.auditLog.auditKeyProjectRelease'),
+            value: 'ProjectRelease',
+          },
         ],
         placeholder: $t('system.auditLog.auditKeyPlaceholder'),
       },
