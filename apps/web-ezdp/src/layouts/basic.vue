@@ -473,8 +473,8 @@ watch(
 }
 
 .log-viewer-container {
-  width: 90%;
-  max-width: 1200px;
+  width: 95%;
+  max-width: 1600px;
   height: 80%;
   max-height: 800px;
   overflow: hidden;
