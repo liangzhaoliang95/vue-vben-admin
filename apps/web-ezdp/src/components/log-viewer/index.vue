@@ -338,7 +338,10 @@ function renderStructuredLog(data: any) {
   if (visibleFields.value.includes('message') && data.message) {
     const color = LEVEL_COLORS[data.level as LogLevel] || '';
     // 确保 emoji 后面有空格（如果没有的话自动添加）
-    const message = data.message.replace(/([\u{1F300}-\u{1F9FF}])([一-龥a-zA-Z])/gu, '$1 $2');
+    const message = data.message.replace(
+      /([\u{1F300}-\u{1F9FF}])([一-龥a-zA-Z])/gu,
+      '$1 $2',
+    );
     parts.push(`${color}${message}${RESET_COLOR}`);
   }
 
@@ -748,14 +751,14 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 }
 
 .level-filter-inline :deep(.ant-checkbox-wrapper) {
+  margin: 0;
   font-size: 12px;
   color: #d4d4d4;
-  margin: 0;
 }
 
 .level-filter-inline :deep(.ant-checkbox-wrapper span) {
-  padding-left: 4px;
   padding-right: 0;
+  padding-left: 4px;
 }
 
 .auto-scroll-switch {
@@ -803,9 +806,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 
 .filter-label {
   flex-shrink: 0;
+  min-width: 80px;
   font-size: 12px;
   color: #d4d4d4;
-  min-width: 80px;
 }
 
 .log-viewer-search {
@@ -838,8 +841,8 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 /* xterm.js 样式覆盖 */
 :deep(.xterm) {
   height: 100%;
-  letter-spacing: 1px; /* 增加字间距，让 emoji 和文字不那么挤 */
   line-height: 1.4; /* 增加行间距 */
+  letter-spacing: 1px; /* 增加字间距，让 emoji 和文字不那么挤 */
 }
 
 :deep(.xterm-viewport) {

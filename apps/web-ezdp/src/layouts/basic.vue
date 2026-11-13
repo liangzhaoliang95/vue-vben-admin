@@ -97,7 +97,8 @@ async function handleSaveProfile() {
   try {
     const data: { userName?: string; avatar?: string; password?: string } = {};
     if (profileForm.value.userName) data.userName = profileForm.value.userName;
-    if (profileForm.value.avatar !== undefined) data.avatar = profileForm.value.avatar;
+    if (profileForm.value.avatar !== undefined)
+      data.avatar = profileForm.value.avatar;
     if (profileForm.value.password) data.password = profileForm.value.password;
 
     await updateProfile(data);
@@ -178,14 +179,17 @@ async function loadNotifications() {
     });
 
     // 转换为 NotificationItem 格式（保留 id 用于标记已读）
-    notifications.value = res.items.map((item) => ({
-      id: item.id,
-      date: formatTime(item.createdAt),
-      isRead: item.isRead,
-      message: item.content,
-      title: item.title,
-      operatorName: item.operatorName || '',
-    } as any));
+    notifications.value = res.items.map(
+      (item) =>
+        ({
+          id: item.id,
+          date: formatTime(item.createdAt),
+          isRead: item.isRead,
+          message: item.content,
+          title: item.title,
+          operatorName: item.operatorName || '',
+        }) as any,
+    );
   } catch (error) {
     console.error('加载通知失败:', error);
   }
@@ -338,7 +342,11 @@ watch(
   <BasicLayout @clear-preferences-and-logout="handleLogout">
     <!-- 实时日志按钮 - 放在搜索框左边 (index=45 < REFERENCE_VALUE=50) -->
     <template #header-right-45>
-      <Button type="primary" class="realtime-log-btn mr-6" @click="openLogViewer">
+      <Button
+        type="primary"
+        class="realtime-log-btn mr-6"
+        @click="openLogViewer"
+      >
         <BarChart2 class="mr-1 size-4" />
         {{ $t('deploy.packageDeployManagement.projectPackage.realtimeLog') }}
       </Button>
@@ -420,8 +428,13 @@ watch(
           ></div>
           <!-- 通知元信息 -->
           <div class="notification-meta">
-            <span class="notification-time">{{ currentNotification?.date }}</span>
-            <span v-if="(currentNotification as any)?.operatorName" class="notification-operator">
+            <span class="notification-time">{{
+              currentNotification?.date
+            }}</span>
+            <span
+              v-if="(currentNotification as any)?.operatorName"
+              class="notification-operator"
+            >
               · 操作人：{{ (currentNotification as any).operatorName }}
             </span>
           </div>
@@ -489,11 +502,11 @@ watch(
 }
 
 .notification-meta {
-  margin-top: 24px;
   padding-top: 16px;
-  border-top: 1px solid hsl(var(--border));
-  color: hsl(var(--muted-foreground));
+  margin-top: 24px;
   font-size: 14px;
+  color: hsl(var(--muted-foreground));
+  border-top: 1px solid hsl(var(--border));
 }
 
 .notification-time {
@@ -519,15 +532,15 @@ watch(
 }
 
 .markdown-body h1 {
+  padding-bottom: 0.3em;
   font-size: 2em;
   border-bottom: 1px solid hsl(var(--border));
-  padding-bottom: 0.3em;
 }
 
 .markdown-body h2 {
+  padding-bottom: 0.3em;
   font-size: 1.5em;
   border-bottom: 1px solid hsl(var(--border));
-  padding-bottom: 0.3em;
 }
 
 .markdown-body h3 {
@@ -562,21 +575,22 @@ watch(
 .markdown-body code {
   padding: 0.2em 0.4em;
   margin: 0;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+    monospace;
   font-size: 85%;
   background-color: hsl(var(--muted));
   border-radius: 6px;
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-    'Liberation Mono', monospace;
 }
 
 .markdown-body pre {
   padding: 16px;
+  margin-bottom: 16px;
   overflow: auto;
   font-size: 85%;
   line-height: 1.45;
   background-color: hsl(var(--muted));
   border-radius: 6px;
-  margin-bottom: 16px;
 }
 
 .markdown-body pre code {
@@ -592,15 +606,15 @@ watch(
 
 .markdown-body blockquote {
   padding: 0 1em;
+  margin: 0 0 16px;
   color: hsl(var(--muted-foreground));
   border-left: 0.25em solid hsl(var(--border));
-  margin: 0 0 16px 0;
 }
 
 .markdown-body table {
   width: 100%;
-  border-collapse: collapse;
   margin-bottom: 16px;
+  border-collapse: collapse;
 }
 
 .markdown-body table th,
