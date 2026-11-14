@@ -335,18 +335,22 @@ function renderStructuredLog(data: any) {
     parts.push(`\u001B[35m[${formatRunningTime(data.runningTime)}]\u001B[0m`);
   }
 
-  // 消息内容（颜色与级别一致）
-  if (visibleFields.value.includes('message') && data.message) {
+  // 消息内容（颜色与级别一致，允许空消息）
+  if (visibleFields.value.includes('message')) {
     const color = LEVEL_COLORS[data.level as LogLevel] || '';
-    // 确保 emoji 后面有空格（如果没有的话自动添加）
-    const message = data.message.replace(
-      /([\u{1F300}-\u{1F9FF}])([一-龥a-zA-Z])/gu,
-      '$1 $2',
-    );
-    parts.push(`${color}${message}${RESET_COLOR}`);
+    if (data.message) {
+      // 确保 emoji 后面有空格（如果没有的话自动添加）
+      const message = data.message.replace(
+        /([\u{1F300}-\u{1F9FF}])([一-龥a-zA-Z])/gu,
+        '$1 $2',
+      );
+      parts.push(`${color}${message}${RESET_COLOR}`);
+    }
+    // 如果消息为空但有其他字段，不添加消息部分，但仍然渲染这一行
   }
 
   // 拼接所有部分（用空格分隔）
+  // 即使 parts 为空（空消息且所有字段都隐藏），也渲染一个空行
   terminal.writeln(parts.join(' '));
   totalLines.value++;
 }
@@ -383,8 +387,8 @@ function renderLogMessage(message: WebSocketMessage) {
     const data = message.data;
     if (!data) return;
 
-    // 优先使用新的结构化日志格式
-    if (data.timestamp && data.level && data.message) {
+    // 优先使用新的结构化日志格式（允许空消息用于空行）
+    if (data.timestamp && data.level) {
       renderStructuredLog(data);
     } else if (data.content) {
       // 兼容旧版本
@@ -677,7 +681,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: #000000;
+  background: #000;
   border-radius: 4px;
 }
 
@@ -842,17 +846,19 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 /* xterm.js 样式覆盖 */
 :deep(.xterm) {
   height: 100%;
+  font-family:
+    '0xProto Nerd Font Mono', 'JetBrains Mono', 'Fira Code', Consolas,
+    Monaco, 'Courier New', monospace;
   line-height: 1.8; /* 增加行间距 */
   letter-spacing: 1px; /* 增加字间距，让 emoji 和文字不那么挤 */
-  font-family: '0xProto Nerd Font Mono', 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
 :deep(.xterm-viewport) {
-  background: #000000 !important;
+  background: #000 !important;
 }
 
 :deep(.xterm-screen) {
-  background: #000000 !important;
+  background: #000 !important;
 }
 
 /* Checkbox 样式适配暗色主题 */

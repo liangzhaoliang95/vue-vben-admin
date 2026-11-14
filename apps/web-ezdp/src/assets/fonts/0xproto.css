@@ -1,24 +1,24 @@
 /* 0xProto Nerd Font Mono */
 @font-face {
   font-family: '0xProto Nerd Font Mono';
+  font-style: normal;
+  font-weight: normal;
   src: url('./0xProtoNerdFontMono-Regular.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
   font-family: '0xProto Nerd Font Mono';
-  src: url('./0xProtoNerdFontMono-Bold.ttf') format('truetype');
+  font-style: normal;
   font-weight: bold;
-  font-style: normal;
+  src: url('./0xProtoNerdFontMono-Bold.ttf') format('truetype');
   font-display: swap;
 }
 
 @font-face {
   font-family: '0xProto Nerd Font Mono';
-  src: url('./0xProtoNerdFontMono-Italic.ttf') format('truetype');
-  font-weight: normal;
   font-style: italic;
+  font-weight: normal;
+  src: url('./0xProtoNerdFontMono-Italic.ttf') format('truetype');
   font-display: swap;
 }

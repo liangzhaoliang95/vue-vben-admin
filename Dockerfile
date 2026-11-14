@@ -1,14 +1,23 @@
 # 第一阶段：构建前端应用
 FROM docker-hub.geekz.cn:81/node:20-alpine AS builder
 
+# 配置 Alpine 镜像源（使用阿里云镜像）
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # 安装必要的构建工具
 RUN apk add --no-cache python3 make g++
 
 # 设置工作目录
 WORKDIR /app
 
+# 配置 npm 镜像源（淘宝镜像）
+RUN npm config set registry https://registry.npmmirror.com
+
 # 启用 corepack 并准备 pnpm
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+
+# 配置 pnpm 镜像源
+RUN pnpm config set registry https://registry.npmmirror.com
 
 # 复制所有源代码（.dockerignore 会排除 node_modules 和 dist）
 COPY . .
