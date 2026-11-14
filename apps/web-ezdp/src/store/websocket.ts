@@ -360,7 +360,8 @@ export const useWebSocketStore = defineStore('websocket', () => {
 
     // 计算当前重连延迟（指数退避）
     conn.currentReconnectDelay = Math.min(
-      initialReconnectDelay * Math.pow(reconnectDelayMultiplier, conn.reconnectAttempts - 1),
+      initialReconnectDelay *
+        reconnectDelayMultiplier ** (conn.reconnectAttempts - 1),
       maxReconnectDelay,
     );
 
@@ -374,7 +375,10 @@ export const useWebSocketStore = defineStore('websocket', () => {
       console.warn(`[WebSocket] 开始第 ${conn.reconnectAttempts} 次重连...`);
 
       connect().catch((error) => {
-        console.error(`[WebSocket] 第 ${conn.reconnectAttempts} 次重连失败:`, error);
+        console.error(
+          `[WebSocket] 第 ${conn.reconnectAttempts} 次重连失败:`,
+          error,
+        );
         // 重连失败，继续尝试下一次重连
         const currentConn = connection.value;
         if (currentConn) {
@@ -485,7 +489,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
       if (existingConn.ws) {
         try {
           existingConn.ws.close();
-        } catch (e) {
+        } catch {
           // 忽略关闭错误
         }
       }
@@ -570,9 +574,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
       // 重连后自动恢复业务线订阅
       if (currentBusinessLineId.value !== null) {
         const businessLineId = currentBusinessLineId.value;
-        console.warn(
-          `[WebSocket] 重连成功，恢复业务线订阅: ${businessLineId}`,
-        );
+        console.warn(`[WebSocket] 重连成功，恢复业务线订阅: ${businessLineId}`);
         const subscribeMsg = ['subscribe', 0, { businessLineId }];
         conn.ws.send(JSON.stringify(subscribeMsg));
         console.warn('[WebSocket] 已重新发送业务线订阅消息:', subscribeMsg);
@@ -898,18 +900,17 @@ export const useWebSocketStore = defineStore('websocket', () => {
     const accessStore = useAccessStore();
     const menus = accessStore.accessMenus;
 
-    function findMenuByPath(
-      menus: any[],
-      targetPath: string,
-    ): boolean {
+    function findMenuByPath(menus: any[], targetPath: string): boolean {
       for (const menu of menus) {
         if (menu.path === targetPath) {
           return true;
         }
-        if (menu.children && menu.children.length > 0) {
-          if (findMenuByPath(menu.children, targetPath)) {
-            return true;
-          }
+        if (
+          menu.children &&
+          menu.children.length > 0 &&
+          findMenuByPath(menu.children, targetPath)
+        ) {
+          return true;
         }
       }
       return false;
@@ -972,9 +973,10 @@ export const useWebSocketStore = defineStore('websocket', () => {
       commandType: 'system',
       commandId: 0,
       data: {
-        message: logTypesText.length > 0
-          ? `✓ 已订阅：${logTypesText.join('、')}`
-          : '⚠ 无可订阅的日志类型（缺少菜单权限）',
+        message:
+          logTypesText.length > 0
+            ? `✓ 已订阅：${logTypesText.join('、')}`
+            : '⚠ 无可订阅的日志类型（缺少菜单权限）',
         timestamp: Date.now(),
       },
     };
@@ -1003,6 +1005,25 @@ export const useWebSocketStore = defineStore('websocket', () => {
     // 更新当前订阅的业务线ID
     currentBusinessLineId.value = businessLineId;
 
+    // 添加业务线订阅标记到连接对象，确保断开后会重连
+    const finalConn = connection.value;
+    if (finalConn) {
+      // 使用特殊的订阅ID标记业务线订阅
+      const businessLineSubscriptionId = `businessline_${businessLineId}`;
+      finalConn.subscriptions.add(businessLineSubscriptionId);
+      console.warn(
+        `[WebSocket] 已添加业务线订阅标记 (订阅者数: ${finalConn.subscriptions.size})`,
+      );
+    }
+
+    // 如果日志查看器已打开且处于等待状态，更新 subscriptionId
+    if (
+      showGlobalLogViewer.value &&
+      globalLogViewerSubscriptionId.value === 'pending'
+    ) {
+      globalLogViewerSubscriptionId.value = String(businessLineId);
+    }
+
     // console.warn(`[WebSocket] 订阅业务线成功: ${businessLineId}`);
   }
 
@@ -1030,6 +1051,15 @@ export const useWebSocketStore = defineStore('websocket', () => {
       // console.warn('[WebSocket] 发送取消订阅消息:', unsubscribeMsg);
     }
 
+    // 移除业务线订阅标记
+    if (conn) {
+      const businessLineSubscriptionId = `businessline_${currentBusinessLineId.value}`;
+      conn.subscriptions.delete(businessLineSubscriptionId);
+      console.warn(
+        `[WebSocket] 已移除业务线订阅标记 (订阅者数: ${conn.subscriptions.size})`,
+      );
+    }
+
     // 清除当前订阅
     currentBusinessLineId.value = null;
   }
@@ -1043,19 +1073,33 @@ export const useWebSocketStore = defineStore('websocket', () => {
     globalLogViewerTaskType.value = taskType;
 
     // 设置订阅ID为当前业务线ID
-    if (currentBusinessLineId.value !== null) {
-      globalLogViewerSubscriptionId.value = String(currentBusinessLineId.value);
-    }
+    // 即使 currentBusinessLineId 为 null，也设置一个默认值，避免弹框显示但组件不渲染
+    // 如果当前没有业务线ID，使用特殊值 "pending" 表示等待状态，LogViewer 组件会显示"等待数据"提示
+    globalLogViewerSubscriptionId.value =
+      currentBusinessLineId.value === null
+        ? 'pending'
+        : String(currentBusinessLineId.value);
 
     // 根据任务类型设置标题
-    if (taskType === 1) {
-      globalLogViewerTitle.value = '构建日志';
-    } else if (taskType === 2) {
-      globalLogViewerTitle.value = '部署日志';
-    } else if (taskType === 3) {
-      globalLogViewerTitle.value = '预检查日志';
-    } else {
-      globalLogViewerTitle.value = '实时日志';
+    switch (taskType) {
+      case 1: {
+        globalLogViewerTitle.value = '构建日志';
+
+        break;
+      }
+      case 2: {
+        globalLogViewerTitle.value = '部署日志';
+
+        break;
+      }
+      case 3: {
+        globalLogViewerTitle.value = '预检查日志';
+
+        break;
+      }
+      default: {
+        globalLogViewerTitle.value = '实时日志';
+      }
     }
 
     // 显示日志查看器

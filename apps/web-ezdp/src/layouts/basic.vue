@@ -262,18 +262,24 @@ function closeNotificationDetail() {
   currentNotification.value = null;
 }
 async function openLogViewer() {
-  // 获取当前业务线 ID
-  const businessLineId = businessStore.currentBusinessLineId;
-  if (!businessLineId) {
-    console.warn('未选择业务线');
-    return;
+  try {
+    // 获取当前业务线 ID
+    const businessLineId = businessStore.currentBusinessLineId;
+
+    if (businessLineId) {
+      // 如果有业务线ID，在后台订阅业务线日志（不等待）
+      wsStore.subscribeBusinessLine(businessLineId).catch((error) => {
+        console.error('订阅业务线日志失败:', error);
+      });
+    } else {
+      console.warn('未选择业务线，日志查看器将在业务线准备好后自动连接');
+    }
+
+    // 立即打开日志查看器（不等待订阅完成）
+    wsStore.openGlobalLogViewer();
+  } catch (error) {
+    console.error('打开日志查看器失败:', error);
   }
-
-  // 先订阅业务线日志
-  await wsStore.subscribeBusinessLine(businessLineId);
-
-  // 打开日志查看器（显示全部日志）
-  wsStore.openGlobalLogViewer();
 }
 
 // 关闭实时日志

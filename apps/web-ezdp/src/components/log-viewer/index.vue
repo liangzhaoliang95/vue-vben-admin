@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import '../../assets/fonts/0xproto.css';
 import type { WebSocketMessage } from '#/store/websocket';
 
 import {
@@ -847,8 +846,8 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 :deep(.xterm) {
   height: 100%;
   font-family:
-    '0xProto Nerd Font Mono', 'JetBrains Mono', 'Fira Code', Consolas,
-    Monaco, 'Courier New', monospace;
+    '0xProto Nerd Font Mono', 'JetBrains Mono', 'Fira Code', Consolas, Monaco,
+    'Courier New', monospace;
   line-height: 1.8; /* 增加行间距 */
   letter-spacing: 1px; /* 增加字间距，让 emoji 和文字不那么挤 */
 }
