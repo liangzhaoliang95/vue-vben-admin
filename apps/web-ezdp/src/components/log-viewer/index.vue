@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import '../../assets/fonts/0xproto.css';
 import type { WebSocketMessage } from '#/store/websocket';
 
 import {
@@ -676,7 +677,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: #1e1e1e;
+  background: #000000;
   border-radius: 4px;
 }
 
@@ -841,16 +842,17 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 /* xterm.js 样式覆盖 */
 :deep(.xterm) {
   height: 100%;
-  line-height: 1.4; /* 增加行间距 */
+  line-height: 1.8; /* 增加行间距 */
   letter-spacing: 1px; /* 增加字间距，让 emoji 和文字不那么挤 */
+  font-family: '0xProto Nerd Font Mono', 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 
 :deep(.xterm-viewport) {
-  background: #1e1e1e !important;
+  background: #000000 !important;
 }
 
 :deep(.xterm-screen) {
-  background: #1e1e1e !important;
+  background: #000000 !important;
 }
 
 /* Checkbox 样式适配暗色主题 */
