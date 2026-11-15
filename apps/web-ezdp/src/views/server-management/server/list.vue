@@ -966,17 +966,23 @@ const proxyServerId = ref('');
 const proxyServerName = ref('');
 const proxyList = ref<ServerManagementApi.ProxyInfo[]>([]);
 const proxyLoading = ref(false);
-const proxyForm = ref({ localPort: '', remoteAddr: '' });
+const proxyForm = ref({ localPort: '', remoteAddr: '', remark: '' });
 const proxyCreateLoading = ref(false);
+
+// 历史记录相关
+const proxyHistoryList = ref<ServerManagementApi.ProxyHistory[]>([]);
+const proxyHistoryLoading = ref(false);
+const editingHistoryId = ref<string | null>(null);
+const editingHistoryRemark = ref('');
 
 const openProxy = async (row: any) => {
   const ok = await mfaVerifyRef.value?.checkMFA();
   if (!ok) return;
   proxyServerId.value = row.serverId;
   proxyServerName.value = row.serverName;
-  proxyForm.value = { localPort: '', remoteAddr: '' };
+  proxyForm.value = { localPort: '', remoteAddr: '', remark: '' };
   proxyVisible.value = true;
-  await refreshProxyList();
+  await Promise.all([refreshProxyList(), refreshProxyHistoryList()]);
 };
 
 const refreshProxyList = async () => {
@@ -988,6 +994,18 @@ const refreshProxyList = async () => {
     message.error('获取代理列表失败');
   } finally {
     proxyLoading.value = false;
+  }
+};
+
+const refreshProxyHistoryList = async () => {
+  proxyHistoryLoading.value = true;
+  try {
+    const res = await ServerManagementApi.getProxyHistoryList({ serverId: proxyServerId.value, limit: 50 });
+    proxyHistoryList.value = res.list || [];
+  } catch {
+    message.error('获取历史记录失败');
+  } finally {
+    proxyHistoryLoading.value = false;
   }
 };
 
@@ -1004,8 +1022,23 @@ const handleCreateProxy = async () => {
       remoteAddr: proxyForm.value.remoteAddr,
     });
     message.success('代理创建成功');
-    proxyForm.value = { localPort: '', remoteAddr: '' };
-    await refreshProxyList();
+
+    // 保存到历史记录
+    if (proxyForm.value.remark) {
+      try {
+        await ServerManagementApi.saveProxyHistory({
+          serverId: proxyServerId.value,
+          localPort: proxyForm.value.localPort,
+          remoteAddr: proxyForm.value.remoteAddr,
+          remark: proxyForm.value.remark,
+        });
+      } catch {
+        // 历史记录保存失败不影响主流程
+      }
+    }
+
+    proxyForm.value = { localPort: '', remoteAddr: '', remark: '' };
+    await Promise.all([refreshProxyList(), refreshProxyHistoryList()]);
   } catch (e: any) {
     message.error(e?.message || '创建失败');
   } finally {
@@ -1023,11 +1056,66 @@ const handleCloseProxy = async (proxyId: string) => {
   }
 };
 
+// 使用历史记录填充表单
+const useHistoryRecord = (record: ServerManagementApi.ProxyHistory) => {
+  proxyForm.value = {
+    localPort: record.localPort,
+    remoteAddr: record.remoteAddr,
+    remark: record.remark || '',
+  };
+};
+
+// 开始编辑历史记录备注
+const startEditHistoryRemark = (record: ServerManagementApi.ProxyHistory) => {
+  editingHistoryId.value = record.id;
+  editingHistoryRemark.value = record.remark || '';
+};
+
+// 取消编辑
+const cancelEditHistoryRemark = () => {
+  editingHistoryId.value = null;
+  editingHistoryRemark.value = '';
+};
+
+// 保存备注
+const saveHistoryRemark = async (record: ServerManagementApi.ProxyHistory) => {
+  try {
+    await ServerManagementApi.updateProxyHistory({
+      id: record.id,
+      remark: editingHistoryRemark.value,
+    });
+    message.success('备注更新成功');
+    editingHistoryId.value = null;
+    editingHistoryRemark.value = '';
+    await refreshProxyHistoryList();
+  } catch (e: any) {
+    message.error(e?.message || '更新失败');
+  }
+};
+
+// 删除历史记录
+const deleteHistoryRecord = async (id: string) => {
+  try {
+    await ServerManagementApi.deleteProxyHistory({ id });
+    message.success('删除成功');
+    await refreshProxyHistoryList();
+  } catch (e: any) {
+    message.error(e?.message || '删除失败');
+  }
+};
+
 const proxyColumns = [
   { title: '本地端口', dataIndex: 'localPort', key: 'localPort' },
   { title: '远端地址', dataIndex: 'remoteAddr', key: 'remoteAddr' },
   { title: '连接数', dataIndex: 'connCount', key: 'connCount' },
   { title: '操作', key: 'action' },
+];
+
+const proxyHistoryColumns = [
+  { title: '本地端口', dataIndex: 'localPort', key: 'localPort', width: 100 },
+  { title: '远端地址', dataIndex: 'remoteAddr', key: 'remoteAddr', width: 180 },
+  { title: '备注', dataIndex: 'remark', key: 'remark' },
+  { title: '操作', key: 'action', width: 120 },
 ];
 </script>
 
@@ -1803,19 +1891,22 @@ const proxyColumns = [
     <Modal
       v-model:open="proxyVisible"
       :title="`端口代理 - ${proxyServerName}`"
-      :width="640"
+      :width="900"
       :footer="null"
       :destroy-on-close="true"
     >
       <div class="space-y-4">
         <Card title="创建新代理" size="small">
-          <Space>
-            <Input v-model:value="proxyForm.localPort" placeholder="本地端口 如 13306" style="width: 160px" />
-            <span class="text-gray-400">→</span>
-            <Input v-model:value="proxyForm.remoteAddr" placeholder="远端地址 如 localhost:3306" style="width: 200px" />
-            <Button type="primary" :loading="proxyCreateLoading" @click="handleCreateProxy">创建</Button>
-          </Space>
-          <div class="text-xs text-gray-400 mt-2">服务端监听本地端口，流量通过 Agent 转发到远端目标</div>
+          <div class="flex flex-col gap-2">
+            <Space>
+              <Input v-model:value="proxyForm.localPort" placeholder="本地端口 如 13306" style="width: 120px" />
+              <span class="text-gray-400">→</span>
+              <Input v-model:value="proxyForm.remoteAddr" placeholder="远端地址 如 localhost:3306" style="width: 200px" />
+              <Input v-model:value="proxyForm.remark" placeholder="备注端口用途（可选）" style="width: 220px" />
+              <Button type="primary" :loading="proxyCreateLoading" @click="handleCreateProxy">创建</Button>
+            </Space>
+            <div class="text-xs text-gray-400">服务端监听本地端口，流量通过 Agent 转发到远端目标</div>
+          </div>
         </Card>
 
         <Card title="当前代理列表" size="small" :extra="h('a', { onClick: refreshProxyList }, '刷新')">
@@ -1830,6 +1921,54 @@ const proxyColumns = [
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'action'">
                   <Button danger size="small" @click="handleCloseProxy(record.proxyId)">关闭</Button>
+                </template>
+              </template>
+            </Table>
+          </Spin>
+        </Card>
+
+        <Card title="历史代理记录" size="small" :extra="h('a', { onClick: refreshProxyHistoryList }, '刷新')">
+          <Spin :spinning="proxyHistoryLoading">
+            <Table
+              :data-source="proxyHistoryList"
+              :columns="proxyHistoryColumns"
+              :pagination="false"
+              size="small"
+              row-key="id"
+              :scroll="{ y: 300 }"
+            >
+              <template #bodyCell="{ column, record }">
+                <template v-if="column.key === 'remark'">
+                  <div v-if="editingHistoryId === record.id" class="flex items-center gap-1">
+                    <Input
+                      v-model:value="editingHistoryRemark"
+                      size="small"
+                      placeholder="端口用途"
+                      @press-enter="saveHistoryRemark(record)"
+                    />
+                    <Button size="small" type="link" @click="saveHistoryRemark(record)">保存</Button>
+                    <Button size="small" type="link" @click="cancelEditHistoryRemark">取消</Button>
+                  </div>
+                  <div v-else class="flex items-center gap-1">
+                    <span class="text-xs text-gray-400">{{ record.remark || '-' }}</span>
+                    <Button size="small" type="link" @click="startEditHistoryRemark(record)">
+                      <IconifyIcon icon="mdi:pencil" class="size-3" />
+                    </Button>
+                  </div>
+                </template>
+                <template v-else-if="column.key === 'action'">
+                  <Space size="small">
+                    <Button size="small" type="link" @click="useHistoryRecord(record)">使用</Button>
+                    <Popconfirm
+                      title="确认删除此历史记录？"
+                      ok-text="删除"
+                      ok-type="danger"
+                      cancel-text="取消"
+                      @confirm="deleteHistoryRecord(record.id)"
+                    >
+                      <Button size="small" type="link" danger>删除</Button>
+                    </Popconfirm>
+                  </Space>
                 </template>
               </template>
             </Table>

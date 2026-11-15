@@ -280,6 +280,20 @@ export namespace ServerManagementApi {
     connCount: number;
   }
 
+  export interface ProxyHistory {
+    id: string;
+    businessLineId: number;
+    serverId: string;
+    serverName: string;
+    localPort: string;
+    remoteAddr: string;
+    remark: string;
+    userId: string;
+    userName: string;
+    createdAt: number;
+    updatedAt: number;
+  }
+
   export function createProxy(params: {
     localPort: string;
     remoteAddr: string;
@@ -300,6 +314,39 @@ export namespace ServerManagementApi {
     return requestClient.post<{ proxies: ProxyInfo[] }>(
       '/serverAgent/getProxyList',
       params || {},
+    );
+  }
+
+  export function getProxyHistoryList(params: { limit?: number; serverId: string }) {
+    return requestClient.post<{ count: number; list: ProxyHistory[] }>(
+      '/serverAgent/getProxyHistoryList',
+      params,
+    );
+  }
+
+  export function saveProxyHistory(params: {
+    localPort: string;
+    remoteAddr: string;
+    remark?: string;
+    serverId: string;
+  }) {
+    return requestClient.post<{ id: string; message: string }>(
+      '/serverAgent/saveProxyHistory',
+      params,
+    );
+  }
+
+  export function updateProxyHistory(params: { id: string; remark: string }) {
+    return requestClient.post<{ message: string }>(
+      '/serverAgent/updateProxyHistory',
+      params,
+    );
+  }
+
+  export function deleteProxyHistory(params: { id: string }) {
+    return requestClient.post<{ message: string }>(
+      '/serverAgent/deleteProxyHistory',
+      params,
     );
   }
 
