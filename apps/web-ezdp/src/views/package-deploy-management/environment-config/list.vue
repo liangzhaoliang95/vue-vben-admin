@@ -209,20 +209,20 @@ function showVersionModal(id: string, name: string) {
 <style scoped>
 /* 表格行悬浮效果 */
 :deep(.vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.08) !important;
+  background-color: rgb(24 144 255 / 8%) !important;
   transition: background-color 0.2s ease;
 }
 
 /* 深色模式下的悬浮效果 */
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.15) !important;
+  background-color: rgb(24 144 255 / 15%) !important;
 }
 
 /* 环境名称列样式 - 链接效果 */
 :deep(.env-name-cell) .vxe-cell--label {
   color: #1890ff;
-  cursor: pointer;
   text-decoration: none;
+  cursor: pointer;
 }
 
 :deep(.env-name-cell) .vxe-cell--label:hover {

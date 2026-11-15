@@ -6,7 +6,23 @@ import { Plus } from '@vben/icons';
 
 import { IconifyIcon } from '@vben/icons';
 
-import { Button, Modal, Space, Tag, Tooltip, message, Form, FormItem, Input, Card, Alert, Table, Upload, Spin, Popconfirm } from 'ant-design-vue';
+import {
+  Button,
+  Modal,
+  Space,
+  Tag,
+  Tooltip,
+  message,
+  Form,
+  FormItem,
+  Input,
+  Card,
+  Alert,
+  Table,
+  Upload,
+  Spin,
+  Popconfirm,
+} from 'ant-design-vue';
 import type { Rule } from 'ant-design-vue/es/form';
 import type { UploadProps } from 'ant-design-vue';
 
@@ -77,13 +93,30 @@ const getOsCategory = (os: string): OsFilter => {
   const lower = (os || '').toLowerCase();
   if (lower.includes('darwin') || lower.includes('mac')) return 'darwin';
   if (lower.includes('windows')) return 'windows';
-  if (lower.includes('linux') || lower.includes('ubuntu') || lower.includes('debian') ||
-      lower.includes('centos') || lower.includes('fedora') || lower.includes('arch') ||
-      lower.includes('alpine') || lower.includes('kylin') || lower.includes('麒麟') ||
-      lower.includes('uos') || lower.includes('uniontech') || lower.includes('openeuler') ||
-      lower.includes('euler') || lower.includes('anolis') || lower.includes('tencentos') ||
-      lower.includes('alinux') || lower.includes('rocky') || lower.includes('opensuse') ||
-      lower.includes('suse') || lower.includes('manjaro') || lower.includes('kali')) return 'linux';
+  if (
+    lower.includes('linux') ||
+    lower.includes('ubuntu') ||
+    lower.includes('debian') ||
+    lower.includes('centos') ||
+    lower.includes('fedora') ||
+    lower.includes('arch') ||
+    lower.includes('alpine') ||
+    lower.includes('kylin') ||
+    lower.includes('麒麟') ||
+    lower.includes('uos') ||
+    lower.includes('uniontech') ||
+    lower.includes('openeuler') ||
+    lower.includes('euler') ||
+    lower.includes('anolis') ||
+    lower.includes('tencentos') ||
+    lower.includes('alinux') ||
+    lower.includes('rocky') ||
+    lower.includes('opensuse') ||
+    lower.includes('suse') ||
+    lower.includes('manjaro') ||
+    lower.includes('kali')
+  )
+    return 'linux';
   return 'other';
 };
 
@@ -162,7 +195,9 @@ const loadServerList = async () => {
     // 并发拉取所有在线服务器的实时 stats
     const onlineServers = serverList.value.filter((s) => s.status === 'online');
     const results = await Promise.allSettled(
-      onlineServers.map((s) => ServerManagementApi.getServerStats({ serverId: s.serverId })),
+      onlineServers.map((s) =>
+        ServerManagementApi.getServerStats({ serverId: s.serverId }),
+      ),
     );
     const map: Record<string, ServerManagementApi.ServerStats> = {};
     results.forEach((r, i) => {
@@ -181,7 +216,11 @@ const loadServerList = async () => {
 // 根据 OS 返回对应的 Iconify 图标名
 const getOsIcon = (os: string, osVersion?: string): string => {
   const lower = ((osVersion || '') + ' ' + (os || '')).toLowerCase();
-  if (lower.includes('darwin') || lower.includes('macos') || lower.includes('mac os')) {
+  if (
+    lower.includes('darwin') ||
+    lower.includes('macos') ||
+    lower.includes('mac os')
+  ) {
     return 'simple-icons:apple';
   }
   if (lower.includes('ubuntu')) return 'simple-icons:ubuntu';
@@ -191,21 +230,31 @@ const getOsIcon = (os: string, osVersion?: string): string => {
   if (lower.includes('fedora')) return 'simple-icons:fedora';
   if (lower.includes('arch')) return 'simple-icons:archlinux';
   if (lower.includes('alpine')) return 'simple-icons:alpinelinux';
-  if (lower.includes('opensuse') || lower.includes('suse')) return 'simple-icons:opensuse';
+  if (lower.includes('opensuse') || lower.includes('suse'))
+    return 'simple-icons:opensuse';
   if (lower.includes('manjaro')) return 'simple-icons:manjaro';
   if (lower.includes('kali')) return 'simple-icons:kalilinux';
   if (lower.includes('raspberry')) return 'simple-icons:raspberrypi';
   // 国产发行版：麒麟、统信、欧拉等无专属图标，统一用通用 Linux 图标
-  if (lower.includes('kylin') || lower.includes('麒麟') ||
-      lower.includes('uos') || lower.includes('uniontech') || lower.includes('统信') ||
-      lower.includes('openeuler') || lower.includes('euler') ||
-      lower.includes('anolis') || lower.includes('tencentos') ||
-      lower.includes('alibaba') || lower.includes('alinux')) {
+  if (
+    lower.includes('kylin') ||
+    lower.includes('麒麟') ||
+    lower.includes('uos') ||
+    lower.includes('uniontech') ||
+    lower.includes('统信') ||
+    lower.includes('openeuler') ||
+    lower.includes('euler') ||
+    lower.includes('anolis') ||
+    lower.includes('tencentos') ||
+    lower.includes('alibaba') ||
+    lower.includes('alinux')
+  ) {
     return 'simple-icons:linux';
   }
   if (lower.includes('linux')) return 'simple-icons:linux';
   if (lower.includes('windows')) return 'simple-icons:windows';
-  if (lower.includes('freebsd') || lower.includes('bsd')) return 'simple-icons:freebsd';
+  if (lower.includes('freebsd') || lower.includes('bsd'))
+    return 'simple-icons:freebsd';
   return 'mdi:server';
 };
 
@@ -225,12 +274,17 @@ const getOsIconColor = (os: string, osVersion?: string): string => {
   if (lower.includes('kali')) return '#367bf0';
   if (lower.includes('raspberry')) return '#c51a4a';
   // 国产发行版配色
-  if (lower.includes('kylin') || lower.includes('麒麟')) return '#c8232c';       // 麒麟红
-  if (lower.includes('uos') || lower.includes('uniontech') || lower.includes('统信')) return '#0050b3'; // 统信蓝
-  if (lower.includes('openeuler') || lower.includes('euler')) return '#c7000b';  // 欧拉红
-  if (lower.includes('anolis')) return '#ff6a00';                                 // Anolis 橙
-  if (lower.includes('tencentos')) return '#006eff';                              // TencentOS 蓝
-  if (lower.includes('alibaba') || lower.includes('alinux')) return '#ff6a00';   // Alibaba Cloud Linux 橙
+  if (lower.includes('kylin') || lower.includes('麒麟')) return '#c8232c'; // 麒麟红
+  if (
+    lower.includes('uos') ||
+    lower.includes('uniontech') ||
+    lower.includes('统信')
+  )
+    return '#0050b3'; // 统信蓝
+  if (lower.includes('openeuler') || lower.includes('euler')) return '#c7000b'; // 欧拉红
+  if (lower.includes('anolis')) return '#ff6a00'; // Anolis 橙
+  if (lower.includes('tencentos')) return '#006eff'; // TencentOS 蓝
+  if (lower.includes('alibaba') || lower.includes('alinux')) return '#ff6a00'; // Alibaba Cloud Linux 橙
   if (lower.includes('windows')) return '#0078d4';
   if (lower.includes('freebsd')) return '#ab2b28';
   return '#6b7280';
@@ -254,22 +308,40 @@ const terminalMinHeight = 320;
 let terminalZCounter = 1050;
 
 // 拖拽状态（同一时刻只有一个终端在拖拽）
-let dragging: { id: string; startMouseX: number; startMouseY: number; startX: number; startY: number } | null = null;
+let dragging: {
+  id: string;
+  startMouseX: number;
+  startMouseY: number;
+  startX: number;
+  startY: number;
+} | null = null;
 // resize 状态
-let resizingState: { id: string; startMouseX: number; startMouseY: number; startW: number; startH: number } | null = null;
+let resizingState: {
+  id: string;
+  startMouseX: number;
+  startMouseY: number;
+  startW: number;
+  startH: number;
+} | null = null;
 
 const onDragStart = (e: MouseEvent, id: string) => {
-  const t = terminals.value.find(t => t.id === id);
+  const t = terminals.value.find((t) => t.id === id);
   if (!t) return;
   bringToFront(id);
-  dragging = { id, startMouseX: e.clientX, startMouseY: e.clientY, startX: t.x, startY: t.y };
+  dragging = {
+    id,
+    startMouseX: e.clientX,
+    startMouseY: e.clientY,
+    startX: t.x,
+    startY: t.y,
+  };
   window.addEventListener('mousemove', onDragMove);
   window.addEventListener('mouseup', onDragEnd);
 };
 
 const onDragMove = (e: MouseEvent) => {
   if (!dragging) return;
-  const t = terminals.value.find(t => t.id === dragging!.id);
+  const t = terminals.value.find((t) => t.id === dragging!.id);
   if (!t) return;
   t.x = Math.max(0, dragging.startX + e.clientX - dragging.startMouseX);
   t.y = Math.max(0, dragging.startY + e.clientY - dragging.startMouseY);
@@ -284,20 +356,32 @@ const onDragEnd = () => {
 const onResizeStart = (e: MouseEvent, id: string) => {
   e.preventDefault();
   e.stopPropagation();
-  const t = terminals.value.find(t => t.id === id);
+  const t = terminals.value.find((t) => t.id === id);
   if (!t) return;
   bringToFront(id);
-  resizingState = { id, startMouseX: e.clientX, startMouseY: e.clientY, startW: t.width, startH: t.height };
+  resizingState = {
+    id,
+    startMouseX: e.clientX,
+    startMouseY: e.clientY,
+    startW: t.width,
+    startH: t.height,
+  };
   window.addEventListener('mousemove', onResizeMove);
   window.addEventListener('mouseup', onResizeEnd);
 };
 
 const onResizeMove = (e: MouseEvent) => {
   if (!resizingState) return;
-  const t = terminals.value.find(t => t.id === resizingState!.id);
+  const t = terminals.value.find((t) => t.id === resizingState!.id);
   if (!t) return;
-  t.width = Math.max(terminalMinWidth, resizingState.startW + e.clientX - resizingState.startMouseX);
-  t.height = Math.max(terminalMinHeight, resizingState.startH + e.clientY - resizingState.startMouseY);
+  t.width = Math.max(
+    terminalMinWidth,
+    resizingState.startW + e.clientX - resizingState.startMouseX,
+  );
+  t.height = Math.max(
+    terminalMinHeight,
+    resizingState.startH + e.clientY - resizingState.startMouseY,
+  );
 };
 
 const onResizeEnd = () => {
@@ -307,7 +391,7 @@ const onResizeEnd = () => {
 };
 
 const bringToFront = (id: string) => {
-  const t = terminals.value.find(t => t.id === id);
+  const t = terminals.value.find((t) => t.id === id);
   if (t) t.zIndex = ++terminalZCounter;
 };
 
@@ -372,7 +456,7 @@ const openTerminal = async (row: any) => {
 
 // 关闭指定终端
 const closeTerminal = (id: string) => {
-  const idx = terminals.value.findIndex(t => t.id === id);
+  const idx = terminals.value.findIndex((t) => t.id === id);
   if (idx !== -1) terminals.value.splice(idx, 1);
 };
 
@@ -549,7 +633,8 @@ const createRules: Record<string, Rule[]> = {
 
 // 一行安装命令
 const oneLineInstallCmd = computed(() => {
-  const addr = tokenResultData.value.serverAgentAddr || 'your-ezdp-server.com:82';
+  const addr =
+    tokenResultData.value.serverAgentAddr || 'your-ezdp-server.com:82';
   const token = tokenResultData.value.token || '<TOKEN>';
   const name = tokenResultData.value.serverName || 'my-server';
   return `curl -fsSL https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/install.sh | env EZDP_SERVER=${addr} EZDP_TOKEN=${token} EZDP_NAME="${name}" bash`;
@@ -636,7 +721,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
           }
           // OS 过滤
           if (filterOs.value !== 'all') {
-            servers = servers.filter((s) => getOsCategory(s.os) === filterOs.value);
+            servers = servers.filter(
+              (s) => getOsCategory(s.os) === filterOs.value,
+            );
           }
           // 排序
           servers = applySort(servers);
@@ -657,7 +744,8 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 function openDocs() {
-  const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
+  const baseUrl =
+    window.location.origin + window.location.pathname.replace(/\/$/, '');
   window.open(`${baseUrl}#/docs?doc=serverAgent-overview`, '_blank');
 }
 
@@ -685,7 +773,9 @@ const latestAgentVersion = ref('');
 
 const fetchLatestAgentVersion = async () => {
   try {
-    const res = await fetch(`https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/version.json?_t=${Date.now()}`);
+    const res = await fetch(
+      `https://oss.geekz.cn:81/devops/ezdp/agent/serverAgent/version.json?_t=${Date.now()}`,
+    );
     const data = await res.json();
     latestAgentVersion.value = data.version || '';
   } catch {
@@ -727,9 +817,14 @@ const handleUpgradeAgent = async (server: ServerManagementApi.Server) => {
     okText: $t('serverManagement.server.upgradeConfirmOk'),
     cancelText: $t('common.cancel'),
     onOk: async () => {
-      upgradingServers.value = new Set([...upgradingServers.value, server.serverId]);
+      upgradingServers.value = new Set([
+        ...upgradingServers.value,
+        server.serverId,
+      ]);
       try {
-        const res = await ServerManagementApi.upgradeAgent({ serverId: server.serverId });
+        const res = await ServerManagementApi.upgradeAgent({
+          serverId: server.serverId,
+        });
         if (res.status === 'upgrading') {
           message.info($t('serverManagement.server.upgradeTriggered'));
         } else {
@@ -815,7 +910,10 @@ const openFileManager = async (row: any) => {
 const loadDir = async (path: string) => {
   dirLoading.value = true;
   try {
-    const res = await ServerManagementApi.listDir({ serverId: fileServerId.value, path });
+    const res = await ServerManagementApi.listDir({
+      serverId: fileServerId.value,
+      path,
+    });
     currentPath.value = res.path || path;
     dirEntries.value = (res.entries || []).sort((a, b) => {
       if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
@@ -872,9 +970,14 @@ const confirmPathInput = async () => {
 const handleUpload: UploadProps['customRequest'] = async (options) => {
   uploadLoading.value = true;
   try {
-    const base = currentPath.value === '/' ? '' : currentPath.value.replace(/\/$/, '');
+    const base =
+      currentPath.value === '/' ? '' : currentPath.value.replace(/\/$/, '');
     const remotePath = base + '/' + (options.file as File).name;
-    await ServerManagementApi.uploadFile(fileServerId.value, remotePath, options.file as File);
+    await ServerManagementApi.uploadFile(
+      fileServerId.value,
+      remotePath,
+      options.file as File,
+    );
     message.success('上传成功');
     uploadFileList.value = [];
     await loadDir(currentPath.value);
@@ -935,8 +1038,12 @@ const confirmMkdir = async () => {
   if (!name) return;
   mkdirLoading.value = true;
   try {
-    const base = currentPath.value === '/' ? '' : currentPath.value.replace(/\/$/, '');
-    await ServerManagementApi.mkdir({ serverId: fileServerId.value, path: base + '/' + name });
+    const base =
+      currentPath.value === '/' ? '' : currentPath.value.replace(/\/$/, '');
+    await ServerManagementApi.mkdir({
+      serverId: fileServerId.value,
+      path: base + '/' + name,
+    });
     message.success('创建成功');
     mkdirVisible.value = false;
     await loadDir(currentPath.value);
@@ -951,7 +1058,8 @@ const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '-';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 };
 
@@ -988,7 +1096,9 @@ const openProxy = async (row: any) => {
 const refreshProxyList = async () => {
   proxyLoading.value = true;
   try {
-    const res = await ServerManagementApi.getProxyList({ serverId: proxyServerId.value });
+    const res = await ServerManagementApi.getProxyList({
+      serverId: proxyServerId.value,
+    });
     proxyList.value = res.proxies || [];
   } catch {
     message.error('获取代理列表失败');
@@ -1000,7 +1110,10 @@ const refreshProxyList = async () => {
 const refreshProxyHistoryList = async () => {
   proxyHistoryLoading.value = true;
   try {
-    const res = await ServerManagementApi.getProxyHistoryList({ serverId: proxyServerId.value, limit: 50 });
+    const res = await ServerManagementApi.getProxyHistoryList({
+      serverId: proxyServerId.value,
+      limit: 50,
+    });
     proxyHistoryList.value = res.list || [];
   } catch {
     message.error('获取历史记录失败');
@@ -1122,11 +1235,20 @@ const proxyHistoryColumns = [
 <template>
   <Page auto-content-height>
     <!-- 顶部工具栏（Grid 视图时独立渲染，List 视图时由 Grid 组件渲染） -->
-    <div v-if="viewMode === 'grid'" class="server-page-header flex items-center justify-between mb-3">
-      <h2 class="text-base font-semibold m-0">{{ $t('serverManagement.server.title') }}</h2>
+    <div
+      v-if="viewMode === 'grid'"
+      class="server-page-header mb-3 flex items-center justify-between"
+    >
+      <h2 class="m-0 text-base font-semibold">
+        {{ $t('serverManagement.server.title') }}
+      </h2>
       <Space>
         <Button type="default" @click="openDocs">
-          <IconifyIcon icon="mdi:file-document-outline" class="mr-1 size-4" aria-hidden="true" />
+          <IconifyIcon
+            icon="mdi:file-document-outline"
+            class="mr-1 size-4"
+            aria-hidden="true"
+          />
           {{ $t('page.docs.title') }}
         </Button>
         <Button type="primary" @click="onCreate">
@@ -1134,7 +1256,9 @@ const proxyHistoryColumns = [
           {{ $t('serverManagement.server.createServer') }}
         </Button>
         <!-- 视图切换 -->
-        <div class="view-toggle flex rounded overflow-hidden border border-gray-600">
+        <div
+          class="view-toggle flex overflow-hidden rounded border border-gray-600"
+        >
           <button
             class="view-toggle-btn"
             :class="{ active: viewMode === 'grid' }"
@@ -1153,7 +1277,11 @@ const proxyHistoryColumns = [
           </button>
         </div>
         <Button type="default" @click="loadServerList">
-          <IconifyIcon icon="mdi:refresh" class="size-4" :class="{ 'animate-spin': serverListLoading }" />
+          <IconifyIcon
+            icon="mdi:refresh"
+            class="size-4"
+            :class="{ 'animate-spin': serverListLoading }"
+          />
         </Button>
       </Space>
     </div>
@@ -1171,7 +1299,7 @@ const proxyHistoryColumns = [
           :key="opt.value"
           class="filter-chip"
           :class="{ active: filterStatus === opt.value }"
-          @click="filterStatus = (opt.value as StatusFilter)"
+          @click="filterStatus = opt.value as StatusFilter"
         >
           <span
             v-if="opt.value !== 'all'"
@@ -1206,12 +1334,15 @@ const proxyHistoryColumns = [
       <!-- 排序 -->
       <div class="filter-sort-wrap">
         <div ref="sortDropdownRef" class="sort-dropdown-anchor">
-          <button class="sort-btn" @click="sortDropdownOpen = !sortDropdownOpen">
+          <button
+            class="sort-btn"
+            @click="sortDropdownOpen = !sortDropdownOpen"
+          >
             <IconifyIcon icon="mdi:sort" class="size-4" />
             排序：{{ sortOptions.find((o) => o.value === sortKey)?.label }}
             <IconifyIcon
               :icon="sortOrder === 'asc' ? 'mdi:arrow-up' : 'mdi:arrow-down'"
-              class="size-3.5 ml-0.5"
+              class="ml-0.5 size-3.5"
             />
           </button>
           <div v-if="sortDropdownOpen" class="sort-dropdown">
@@ -1226,9 +1357,9 @@ const proxyHistoryColumns = [
               <IconifyIcon
                 v-if="sortKey === opt.value"
                 :icon="sortOrder === 'asc' ? 'mdi:arrow-up' : 'mdi:arrow-down'"
-                class="size-3.5 mr-1"
+                class="mr-1 size-3.5"
               />
-              <span v-else class="size-3.5 mr-1 inline-block" />
+              <span v-else class="mr-1 inline-block size-3.5" />
               {{ opt.label }}
             </button>
           </div>
@@ -1239,12 +1370,21 @@ const proxyHistoryColumns = [
     <!-- Grid 卡片视图 -->
     <div v-if="viewMode === 'grid'">
       <Spin :spinning="serverListLoading">
-        <div v-if="serverList.length === 0 && !serverListLoading" class="empty-state flex flex-col items-center justify-center py-20 text-gray-400">
-          <IconifyIcon icon="mdi:server-off" class="size-16 mb-4 opacity-30" />
+        <div
+          v-if="serverList.length === 0 && !serverListLoading"
+          class="empty-state flex flex-col items-center justify-center py-20 text-gray-400"
+        >
+          <IconifyIcon icon="mdi:server-off" class="mb-4 size-16 opacity-30" />
           <p class="text-sm">暂无服务器，点击「新建服务器」添加</p>
         </div>
-        <div v-else-if="filteredAndSortedServers.length === 0" class="empty-state flex flex-col items-center justify-center py-16 text-gray-400">
-          <IconifyIcon icon="mdi:filter-off-outline" class="size-12 mb-3 opacity-30" />
+        <div
+          v-else-if="filteredAndSortedServers.length === 0"
+          class="empty-state flex flex-col items-center justify-center py-16 text-gray-400"
+        >
+          <IconifyIcon
+            icon="mdi:filter-off-outline"
+            class="mb-3 size-12 opacity-30"
+          />
           <p class="text-sm">没有符合条件的服务器</p>
         </div>
         <div v-else class="server-grid">
@@ -1252,7 +1392,10 @@ const proxyHistoryColumns = [
             v-for="server in filteredAndSortedServers"
             :key="server.id"
             class="server-card"
-            :class="{ 'server-card--online': server.status === 'online', 'server-card--offline': server.status !== 'online' }"
+            :class="{
+              'server-card--online': server.status === 'online',
+              'server-card--offline': server.status !== 'online',
+            }"
           >
             <!-- 卡片头部：OS logo + 名称 + 状态 -->
             <div class="server-card__header">
@@ -1262,57 +1405,102 @@ const proxyHistoryColumns = [
                   class="size-10"
                   :style="{
                     color: getOsIconColor(server.os, server.osVersion),
-                    filter: server.status === 'online' ? `drop-shadow(0 0 6px ${getOsIconColor(server.os, server.osVersion)}80)` : 'none',
+                    filter:
+                      server.status === 'online'
+                        ? `drop-shadow(0 0 6px ${getOsIconColor(server.os, server.osVersion)}80)`
+                        : 'none',
                     transition: 'color 0.3s, filter 0.3s',
                   }"
                 />
               </div>
-              <div class="server-card__title-area flex-1 min-w-0">
+              <div class="server-card__title-area min-w-0 flex-1">
                 <Tooltip>
                   <template #title>
                     <div style="padding: 4px">
-                      <div><strong>主机名:</strong> {{ server.hostname || '-' }}</div>
-                      <div><strong>版本:</strong> {{ server.version || '-' }}</div>
-                      <div><strong>CPU:</strong> {{ server.cpuModel || '-' }}</div>
+                      <div>
+                        <strong>主机名:</strong> {{ server.hostname || '-' }}
+                      </div>
+                      <div>
+                        <strong>版本:</strong> {{ server.version || '-' }}
+                      </div>
+                      <div>
+                        <strong>CPU:</strong> {{ server.cpuModel || '-' }}
+                      </div>
                     </div>
                   </template>
-                  <div class="server-card__name truncate" :title="server.serverName">{{ server.serverName }}</div>
+                  <div
+                    class="server-card__name truncate"
+                    :title="server.serverName"
+                  >
+                    {{ server.serverName }}
+                  </div>
                 </Tooltip>
-                <div class="server-card__env truncate text-xs text-gray-400">{{ server.environmentName || '-' }}</div>
+                <div class="server-card__env truncate text-xs text-gray-400">
+                  {{ server.environmentName || '-' }}
+                </div>
               </div>
               <Tag
                 :color="server.status === 'online' ? 'success' : 'default'"
                 class="server-card__status-tag shrink-0"
               >
-                {{ server.status === 'online' ? $t('serverManagement.server.online') : $t('serverManagement.server.offline') }}
+                {{
+                  server.status === 'online'
+                    ? $t('serverManagement.server.online')
+                    : $t('serverManagement.server.offline')
+                }}
               </Tag>
               <!-- 版本 tag -->
               <Tooltip
                 v-if="server.version"
-                :title="upgradingServers.has(server.serverId)
-                  ? $t('serverManagement.server.upgrading')
-                  : needsUpdate(server.version)
-                    ? (server.status === 'online'
-                        ? $t('serverManagement.server.agentUpdateClickToUpgrade', { version: latestAgentVersion })
-                        : $t('serverManagement.server.agentVersionLatest', { version: latestAgentVersion }))
-                    : $t('serverManagement.server.agentLatest')"
+                :title="
+                  upgradingServers.has(server.serverId)
+                    ? $t('serverManagement.server.upgrading')
+                    : needsUpdate(server.version)
+                      ? server.status === 'online'
+                        ? $t(
+                            'serverManagement.server.agentUpdateClickToUpgrade',
+                            { version: latestAgentVersion },
+                          )
+                        : $t('serverManagement.server.agentVersionLatest', {
+                            version: latestAgentVersion,
+                          })
+                      : $t('serverManagement.server.agentLatest')
+                "
               >
                 <div
                   class="agent-version-tag shrink-0"
                   :class="{
                     'agent-version-tag--outdated': needsUpdate(server.version),
-                    'agent-version-tag--upgrading': upgradingServers.has(server.serverId),
-                    'agent-version-tag--clickable': needsUpdate(server.version) && server.status === 'online' && !upgradingServers.has(server.serverId),
+                    'agent-version-tag--upgrading': upgradingServers.has(
+                      server.serverId,
+                    ),
+                    'agent-version-tag--clickable':
+                      needsUpdate(server.version) &&
+                      server.status === 'online' &&
+                      !upgradingServers.has(server.serverId),
                   }"
-                  @click.stop="needsUpdate(server.version) && server.status === 'online' && !upgradingServers.has(server.serverId) && handleUpgradeAgent(server)"
+                  @click.stop="
+                    needsUpdate(server.version) &&
+                    server.status === 'online' &&
+                    !upgradingServers.has(server.serverId) &&
+                    handleUpgradeAgent(server)
+                  "
                 >
                   <IconifyIcon
                     v-if="upgradingServers.has(server.serverId)"
                     icon="mdi:loading"
                     class="size-3 animate-spin"
                   />
-                  <span class="agent-version-tag__text">{{ server.version }}</span>
-                  <span v-if="needsUpdate(server.version) && !upgradingServers.has(server.serverId)" class="agent-version-tag__dot" />
+                  <span class="agent-version-tag__text">{{
+                    server.version
+                  }}</span>
+                  <span
+                    v-if="
+                      needsUpdate(server.version) &&
+                      !upgradingServers.has(server.serverId)
+                    "
+                    class="agent-version-tag__dot"
+                  />
                 </div>
               </Tooltip>
             </div>
@@ -1322,37 +1510,74 @@ const proxyHistoryColumns = [
               <!-- 左侧信息 -->
               <div class="server-card__info">
                 <div class="server-card__info-row">
-                  <IconifyIcon icon="mdi:ip-network" class="size-3.5 shrink-0 text-gray-400" />
+                  <IconifyIcon
+                    icon="mdi:ip-network"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
                   <span class="truncate">
                     <span v-if="server.publicIp">{{ server.publicIp }}</span>
-                    <span v-if="server.privateIps" class="text-gray-400 ml-1 text-xs">{{ server.privateIps }}</span>
-                    <span v-if="!server.publicIp && !server.privateIps" class="text-gray-400">-</span>
+                    <span
+                      v-if="server.privateIps"
+                      class="ml-1 text-xs text-gray-400"
+                      >{{ server.privateIps }}</span
+                    >
+                    <span
+                      v-if="!server.publicIp && !server.privateIps"
+                      class="text-gray-400"
+                      >-</span
+                    >
                   </span>
                 </div>
                 <div v-if="server.ipLocation" class="server-card__info-row">
-                  <IconifyIcon icon="mdi:map-marker-outline" class="size-3.5 shrink-0 text-gray-400" />
+                  <IconifyIcon
+                    icon="mdi:map-marker-outline"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
                   <span class="truncate">{{ server.ipLocation }}</span>
                 </div>
                 <div v-if="server.remark" class="server-card__info-row">
-                  <IconifyIcon icon="mdi:note-text-outline" class="size-3.5 shrink-0 text-gray-400" />
+                  <IconifyIcon
+                    icon="mdi:note-text-outline"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
                   <span class="truncate text-xs">{{ server.remark }}</span>
                 </div>
                 <div class="server-card__info-row">
-                  <IconifyIcon icon="mdi:chip" class="size-3.5 shrink-0 text-gray-400" />
-                  <span class="font-mono text-xs truncate">{{ [server.os, server.arch].filter(Boolean).join('/') || '-' }}</span>
+                  <IconifyIcon
+                    icon="mdi:chip"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
+                  <span class="truncate font-mono text-xs">{{
+                    [server.os, server.arch].filter(Boolean).join('/') || '-'
+                  }}</span>
                 </div>
                 <div class="server-card__info-row">
-                  <IconifyIcon icon="mdi:monitor-dashboard" class="size-3.5 shrink-0 text-gray-400" />
-                  <span class="truncate">{{ server.osVersion || server.os || '-' }}</span>
+                  <IconifyIcon
+                    icon="mdi:monitor-dashboard"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
+                  <span class="truncate">{{
+                    server.osVersion || server.os || '-'
+                  }}</span>
                 </div>
                 <div class="server-card__info-row">
-                  <IconifyIcon icon="mdi:clock-outline" class="size-3.5 shrink-0 text-gray-400" />
-                  <span class="truncate text-xs">{{ formatTimestamp(server.lastSeenAt) }}</span>
+                  <IconifyIcon
+                    icon="mdi:clock-outline"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
+                  <span class="truncate text-xs">{{
+                    formatTimestamp(server.lastSeenAt)
+                  }}</span>
                 </div>
               </div>
 
               <!-- 右侧迷你图（仅在线且有 stats 时显示） -->
-              <div v-if="server.status === 'online' && serverStatsMap[server.serverId]" class="server-card__mini-stats">
+              <div
+                v-if="
+                  server.status === 'online' && serverStatsMap[server.serverId]
+                "
+                class="server-card__mini-stats"
+              >
                 <MiniGauge
                   label="CPU"
                   :value="serverStatsMap[server.serverId]!.cpu.usagePercent"
@@ -1370,7 +1595,7 @@ const proxyHistoryColumns = [
                 type="primary"
                 size="small"
                 :disabled="server.status !== 'online'"
-                style="flex: 1; min-width: 0;"
+                style="flex: 1; min-width: 0"
                 @click="openTerminal(server)"
               >
                 <IconifyIcon icon="mdi:console" class="size-3.5" />
@@ -1395,7 +1620,10 @@ const proxyHistoryColumns = [
                 :disabled="server.status !== 'online'"
                 @click="openProxy(server)"
               >
-                <IconifyIcon icon="mdi:transit-connection-variant" class="size-3.5" />
+                <IconifyIcon
+                  icon="mdi:transit-connection-variant"
+                  class="size-3.5"
+                />
               </Button>
               <Button size="small" @click="openEdit(server)">
                 <IconifyIcon icon="mdi:pencil" class="size-3.5" />
@@ -1410,10 +1638,17 @@ const proxyHistoryColumns = [
     </div>
 
     <!-- List 表格视图 -->
-    <Grid v-if="viewMode === 'list'" :table-title="$t('serverManagement.server.title')">
+    <Grid
+      v-if="viewMode === 'list'"
+      :table-title="$t('serverManagement.server.title')"
+    >
       <template #toolbar-tools>
         <Button type="default" class="mr-3" @click="openDocs">
-          <IconifyIcon icon="mdi:file-document-outline" class="mr-1 size-4" aria-hidden="true" />
+          <IconifyIcon
+            icon="mdi:file-document-outline"
+            class="mr-1 size-4"
+            aria-hidden="true"
+          />
           {{ $t('page.docs.title') }}
         </Button>
         <Button type="primary" @click="onCreate">
@@ -1421,7 +1656,9 @@ const proxyHistoryColumns = [
           {{ $t('serverManagement.server.createServer') }}
         </Button>
         <!-- 视图切换 -->
-        <div class="view-toggle flex rounded overflow-hidden border border-gray-600 ml-3">
+        <div
+          class="view-toggle ml-3 flex overflow-hidden rounded border border-gray-600"
+        >
           <button
             class="view-toggle-btn"
             :class="{ active: viewMode === 'grid' }"
@@ -1445,13 +1682,27 @@ const proxyHistoryColumns = [
         <Tooltip>
           <template #title>
             <div style="padding: 8px">
-              <div><strong>{{ $t('serverManagement.server.hostname') }}:</strong> {{ row.hostname || '-' }}</div>
-              <div><strong>{{ $t('serverManagement.server.os') }}:</strong> {{ row.os || '-' }}</div>
-              <div><strong>{{ $t('serverManagement.server.arch') }}:</strong> {{ row.arch || '-' }}</div>
-              <div><strong>{{ $t('serverManagement.server.version') }}:</strong> {{ row.version || '-' }}</div>
+              <div>
+                <strong>{{ $t('serverManagement.server.hostname') }}:</strong>
+                {{ row.hostname || '-' }}
+              </div>
+              <div>
+                <strong>{{ $t('serverManagement.server.os') }}:</strong>
+                {{ row.os || '-' }}
+              </div>
+              <div>
+                <strong>{{ $t('serverManagement.server.arch') }}:</strong>
+                {{ row.arch || '-' }}
+              </div>
+              <div>
+                <strong>{{ $t('serverManagement.server.version') }}:</strong>
+                {{ row.version || '-' }}
+              </div>
             </div>
           </template>
-          <span style="cursor: help; border-bottom: 1px dashed #999">{{ row.serverName }}</span>
+          <span style="cursor: help; border-bottom: 1px dashed #999">{{
+            row.serverName
+          }}</span>
         </Tooltip>
       </template>
 
@@ -1470,17 +1721,21 @@ const proxyHistoryColumns = [
         <div class="leading-tight">
           <div v-if="row.publicIp" class="text-sm">
             {{ row.publicIp }}
-            <span v-if="row.ipLocation" class="text-xs text-gray-400 ml-1">({{ row.ipLocation }})</span>
+            <span v-if="row.ipLocation" class="ml-1 text-xs text-gray-400"
+              >({{ row.ipLocation }})</span
+            >
           </div>
           <!-- 内网 IP -->
-          <div v-if="row.privateIps" class="text-xs text-gray-400">{{ row.privateIps }}</div>
+          <div v-if="row.privateIps" class="text-xs text-gray-400">
+            {{ row.privateIps }}
+          </div>
           <div v-if="!row.publicIp && !row.privateIps" class="text-sm">-</div>
         </div>
       </template>
 
       <!-- 架构：os/arch 格式 -->
       <template #arch="{ row }">
-        <span v-if="row.os || row.arch" class="text-sm font-mono">
+        <span v-if="row.os || row.arch" class="font-mono text-sm">
           {{ [row.os, row.arch].filter(Boolean).join('/') }}
         </span>
         <span v-else class="text-gray-400">-</span>
@@ -1531,17 +1786,10 @@ const proxyHistoryColumns = [
           >
             代理
           </Button>
-          <Button
-            size="small"
-            @click="openEdit(row)"
-          >
+          <Button size="small" @click="openEdit(row)">
             {{ $t('common.edit') }}
           </Button>
-          <Button
-            danger
-            size="small"
-            @click="deleteServer(row)"
-          >
+          <Button danger size="small" @click="deleteServer(row)">
             {{ $t('common.delete') }}
           </Button>
         </Space>
@@ -1564,14 +1812,25 @@ const proxyHistoryColumns = [
         }"
         @mousedown="bringToFront(term.id)"
       >
-        <div class="terminal-float-header" @mousedown.stop="onDragStart($event, term.id)">
+        <div
+          class="terminal-float-header"
+          @mousedown.stop="onDragStart($event, term.id)"
+        >
           <div class="terminal-float-title">
             <span class="terminal-float-dot red"></span>
             <span class="terminal-float-dot yellow"></span>
             <span class="terminal-float-dot green"></span>
-            <span class="terminal-float-name">{{ $t('serverManagement.server.terminal') }} — {{ term.serverName }}</span>
+            <span class="terminal-float-name"
+              >{{ $t('serverManagement.server.terminal') }} —
+              {{ term.serverName }}</span
+            >
           </div>
-          <button class="terminal-float-close" @click.stop="closeTerminal(term.id)">✕</button>
+          <button
+            class="terminal-float-close"
+            @click.stop="closeTerminal(term.id)"
+          >
+            ✕
+          </button>
         </div>
         <div class="terminal-float-body">
           <WebTerminal
@@ -1580,7 +1839,10 @@ const proxyHistoryColumns = [
             @close="closeTerminal(term.id)"
           />
         </div>
-        <div class="terminal-resize-handle" @mousedown.stop="onResizeStart($event, term.id)"></div>
+        <div
+          class="terminal-resize-handle"
+          @mousedown.stop="onResizeStart($event, term.id)"
+        ></div>
       </div>
     </Teleport>
 
@@ -1633,7 +1895,9 @@ const proxyHistoryColumns = [
             name="name"
             autocomplete="off"
             :maxlength="50"
-            :placeholder="$t('serverManagement.environmentAgent.namePlaceholder')"
+            :placeholder="
+              $t('serverManagement.environmentAgent.namePlaceholder')
+            "
           />
         </FormItem>
 
@@ -1648,7 +1912,9 @@ const proxyHistoryColumns = [
             spellcheck="false"
             :maxlength="200"
             show-count
-            :placeholder="$t('serverManagement.environmentAgent.descriptionPlaceholder')"
+            :placeholder="
+              $t('serverManagement.environmentAgent.descriptionPlaceholder')
+            "
             :rows="4"
           />
         </FormItem>
@@ -1664,7 +1930,9 @@ const proxyHistoryColumns = [
           <ul class="create-server-instruction-list">
             <li>{{ $t('serverManagement.server.instruction1') }}</li>
             <li>{{ $t('serverManagement.server.instruction2') }}</li>
-            <li class="create-server-instruction-warning">{{ $t('serverManagement.server.instruction3') }}</li>
+            <li class="create-server-instruction-warning">
+              {{ $t('serverManagement.server.instruction3') }}
+            </li>
           </ul>
         </template>
       </Alert>
@@ -1689,7 +1957,7 @@ const proxyHistoryColumns = [
 
         <!-- Token 显示区域 -->
         <div>
-          <div class="text-sm font-medium mb-2">
+          <div class="mb-2 text-sm font-medium">
             {{ $t('serverManagement.environmentAgent.token') }}
           </div>
           <div class="flex items-center gap-2">
@@ -1706,12 +1974,19 @@ const proxyHistoryColumns = [
 
         <!-- 一行安装命令 -->
         <div>
-          <div class="text-sm font-medium mb-2">
+          <div class="mb-2 text-sm font-medium">
             {{ $t('serverManagement.server.oneLineInstall') }}
           </div>
-          <p class="text-xs text-gray-400 mb-2">{{ $t('serverManagement.server.oneLineInstallDesc') }}</p>
-          <div class="relative bg-gray-900 rounded-lg p-3 pr-28 overflow-x-auto">
-            <pre class="text-xs font-mono text-gray-100 whitespace-pre-wrap break-all">{{ oneLineInstallCmd }}</pre>
+          <p class="mb-2 text-xs text-gray-400">
+            {{ $t('serverManagement.server.oneLineInstallDesc') }}
+          </p>
+          <div
+            class="relative overflow-x-auto rounded-lg bg-gray-900 p-3 pr-28"
+          >
+            <pre
+              class="whitespace-pre-wrap break-all font-mono text-xs text-gray-100"
+              >{{ oneLineInstallCmd }}</pre
+            >
             <Button
               type="primary"
               size="small"
@@ -1724,11 +1999,11 @@ const proxyHistoryColumns = [
         </div>
 
         <!-- 重要提示 -->
-        <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div class="font-medium text-blue-900 mb-2 text-sm">
+        <div class="rounded-lg border border-blue-200 bg-blue-50 p-3">
+          <div class="mb-2 text-sm font-medium text-blue-900">
             {{ $t('serverManagement.server.importantNote') }}
           </div>
-          <ul class="text-xs text-blue-800 space-y-1 list-disc list-inside">
+          <ul class="list-inside list-disc space-y-1 text-xs text-blue-800">
             <li>{{ $t('serverManagement.server.note1') }}</li>
             <li>{{ $t('serverManagement.server.note2') }}</li>
             <li>{{ $t('serverManagement.server.note3') }}</li>
@@ -1765,24 +2040,31 @@ const proxyHistoryColumns = [
     >
       <div class="flex flex-col" style="height: calc(80vh - 110px)">
         <!-- 地址栏 -->
-        <div class="flex items-center gap-2 mb-2 px-1">
+        <div class="mb-2 flex items-center gap-2 px-1">
           <!-- 返回上级 -->
-          <Button size="small" :disabled="currentPath === '/'" @click="goUp">↑</Button>
+          <Button size="small" :disabled="currentPath === '/'" @click="goUp"
+            >↑</Button
+          >
 
           <!-- 面包屑 / 路径输入框 -->
-          <div class="flex-1 min-w-0">
+          <div class="min-w-0 flex-1">
             <div
               v-if="!pathInputVisible"
-              class="flex items-center gap-1 px-2 py-1 rounded border border-transparent hover:border-gray-500 cursor-text select-none overflow-x-auto whitespace-nowrap"
+              class="flex cursor-text select-none items-center gap-1 overflow-x-auto whitespace-nowrap rounded border border-transparent px-2 py-1 hover:border-gray-500"
               style="font-size: 13px"
               @click="showPathInput"
             >
               <template v-for="(crumb, idx) in breadcrumbs" :key="crumb.path">
                 <span
-                  class="hover:text-blue-400 cursor-pointer shrink-0"
+                  class="shrink-0 cursor-pointer hover:text-blue-400"
                   @click.stop="loadDir(crumb.path)"
-                >{{ crumb.label }}</span>
-                <span v-if="idx < breadcrumbs.length - 1" class="text-gray-500 shrink-0">/</span>
+                  >{{ crumb.label }}</span
+                >
+                <span
+                  v-if="idx < breadcrumbs.length - 1"
+                  class="shrink-0 text-gray-500"
+                  >/</span
+                >
               </template>
             </div>
             <Input
@@ -1811,7 +2093,7 @@ const proxyHistoryColumns = [
         </div>
 
         <!-- 文件列表 -->
-        <div class="flex-1 overflow-hidden min-h-0">
+        <div class="min-h-0 flex-1 overflow-hidden">
           <Spin :spinning="dirLoading" class="h-full">
             <Table
               :data-source="dirEntries"
@@ -1824,7 +2106,9 @@ const proxyHistoryColumns = [
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'name'">
                   <span
-                    :class="record.isDir ? 'cursor-pointer hover:text-blue-400' : ''"
+                    :class="
+                      record.isDir ? 'cursor-pointer hover:text-blue-400' : ''
+                    "
                     @click="record.isDir && enterDir(record)"
                   >
                     <span class="mr-1">{{ record.isDir ? '📁' : '📄' }}</span>
@@ -1832,13 +2116,19 @@ const proxyHistoryColumns = [
                   </span>
                 </template>
                 <template v-else-if="column.key === 'size'">
-                  <span class="text-gray-400 text-xs">{{ record.isDir ? '-' : formatFileSize(record.size) }}</span>
+                  <span class="text-xs text-gray-400">{{
+                    record.isDir ? '-' : formatFileSize(record.size)
+                  }}</span>
                 </template>
                 <template v-else-if="column.key === 'mode'">
-                  <span class="font-mono text-xs text-gray-400">{{ record.mode }}</span>
+                  <span class="font-mono text-xs text-gray-400">{{
+                    record.mode
+                  }}</span>
                 </template>
                 <template v-else-if="column.key === 'modTime'">
-                  <span class="text-xs text-gray-400">{{ formatModTime(record.modTime) }}</span>
+                  <span class="text-xs text-gray-400">{{
+                    formatModTime(record.modTime)
+                  }}</span>
                 </template>
                 <template v-else-if="column.key === 'action'">
                   <Space size="small">
@@ -1848,7 +2138,8 @@ const proxyHistoryColumns = [
                       type="link"
                       :loading="!!downloadLoading[record.path]"
                       @click="handleDownload(record)"
-                    >下载</Button>
+                      >下载</Button
+                    >
                     <Popconfirm
                       :title="`确认删除 ${record.name}${record.isDir ? ' 及其所有内容' : ''}？`"
                       ok-text="删除"
@@ -1878,7 +2169,9 @@ const proxyHistoryColumns = [
       @ok="confirmMkdir"
     >
       <div class="py-2">
-        <div class="text-xs text-gray-400 mb-2">当前路径：{{ currentPath }}</div>
+        <div class="mb-2 text-xs text-gray-400">
+          当前路径：{{ currentPath }}
+        </div>
         <Input
           v-model:value="mkdirName"
           placeholder="文件夹名称"
@@ -1899,17 +2192,40 @@ const proxyHistoryColumns = [
         <Card title="创建新代理" size="small">
           <div class="flex flex-col gap-2">
             <Space>
-              <Input v-model:value="proxyForm.localPort" placeholder="本地端口 如 13306" style="width: 120px" />
+              <Input
+                v-model:value="proxyForm.localPort"
+                placeholder="本地端口 如 13306"
+                style="width: 120px"
+              />
               <span class="text-gray-400">→</span>
-              <Input v-model:value="proxyForm.remoteAddr" placeholder="远端地址 如 localhost:3306" style="width: 200px" />
-              <Input v-model:value="proxyForm.remark" placeholder="备注端口用途（可选）" style="width: 220px" />
-              <Button type="primary" :loading="proxyCreateLoading" @click="handleCreateProxy">创建</Button>
+              <Input
+                v-model:value="proxyForm.remoteAddr"
+                placeholder="远端地址 如 localhost:3306"
+                style="width: 200px"
+              />
+              <Input
+                v-model:value="proxyForm.remark"
+                placeholder="备注端口用途（可选）"
+                style="width: 220px"
+              />
+              <Button
+                type="primary"
+                :loading="proxyCreateLoading"
+                @click="handleCreateProxy"
+                >创建</Button
+              >
             </Space>
-            <div class="text-xs text-gray-400">服务端监听本地端口，流量通过 Agent 转发到远端目标</div>
+            <div class="text-xs text-gray-400">
+              服务端监听本地端口，流量通过 Agent 转发到远端目标
+            </div>
           </div>
         </Card>
 
-        <Card title="当前代理列表" size="small" :extra="h('a', { onClick: refreshProxyList }, '刷新')">
+        <Card
+          title="当前代理列表"
+          size="small"
+          :extra="h('a', { onClick: refreshProxyList }, '刷新')"
+        >
           <Spin :spinning="proxyLoading">
             <Table
               :data-source="proxyList"
@@ -1920,14 +2236,23 @@ const proxyHistoryColumns = [
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'action'">
-                  <Button danger size="small" @click="handleCloseProxy(record.proxyId)">关闭</Button>
+                  <Button
+                    danger
+                    size="small"
+                    @click="handleCloseProxy(record.proxyId)"
+                    >关闭</Button
+                  >
                 </template>
               </template>
             </Table>
           </Spin>
         </Card>
 
-        <Card title="历史代理记录" size="small" :extra="h('a', { onClick: refreshProxyHistoryList }, '刷新')">
+        <Card
+          title="历史代理记录"
+          size="small"
+          :extra="h('a', { onClick: refreshProxyHistoryList }, '刷新')"
+        >
           <Spin :spinning="proxyHistoryLoading">
             <Table
               :data-source="proxyHistoryList"
@@ -1939,26 +2264,50 @@ const proxyHistoryColumns = [
             >
               <template #bodyCell="{ column, record }">
                 <template v-if="column.key === 'remark'">
-                  <div v-if="editingHistoryId === record.id" class="flex items-center gap-1">
+                  <div
+                    v-if="editingHistoryId === record.id"
+                    class="flex items-center gap-1"
+                  >
                     <Input
                       v-model:value="editingHistoryRemark"
                       size="small"
                       placeholder="端口用途"
                       @press-enter="saveHistoryRemark(record)"
                     />
-                    <Button size="small" type="link" @click="saveHistoryRemark(record)">保存</Button>
-                    <Button size="small" type="link" @click="cancelEditHistoryRemark">取消</Button>
+                    <Button
+                      size="small"
+                      type="link"
+                      @click="saveHistoryRemark(record)"
+                      >保存</Button
+                    >
+                    <Button
+                      size="small"
+                      type="link"
+                      @click="cancelEditHistoryRemark"
+                      >取消</Button
+                    >
                   </div>
                   <div v-else class="flex items-center gap-1">
-                    <span class="text-xs text-gray-400">{{ record.remark || '-' }}</span>
-                    <Button size="small" type="link" @click="startEditHistoryRemark(record)">
+                    <span class="text-xs text-gray-400">{{
+                      record.remark || '-'
+                    }}</span>
+                    <Button
+                      size="small"
+                      type="link"
+                      @click="startEditHistoryRemark(record)"
+                    >
                       <IconifyIcon icon="mdi:pencil" class="size-3" />
                     </Button>
                   </div>
                 </template>
                 <template v-else-if="column.key === 'action'">
                   <Space size="small">
-                    <Button size="small" type="link" @click="useHistoryRecord(record)">使用</Button>
+                    <Button
+                      size="small"
+                      type="link"
+                      @click="useHistoryRecord(record)"
+                      >使用</Button
+                    >
                     <Popconfirm
                       title="确认删除此历史记录？"
                       ok-text="删除"
@@ -1984,72 +2333,85 @@ const proxyHistoryColumns = [
 
 <style>
 .terminal-modal .ant-modal-body {
-  padding: 0;
   height: 600px;
+  padding: 0;
 }
 
 .terminal-float-panel {
   display: flex;
   flex-direction: column;
-  background: #1e1e1e;
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
   min-width: 480px;
   min-height: 320px;
+  overflow: hidden;
+  background: #1e1e1e;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgb(0 0 0 / 60%);
 }
 
 .terminal-float-header {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  background: #2d2d2d;
   cursor: move;
   user-select: none;
-  flex-shrink: 0;
+  background: #2d2d2d;
   border-bottom: 1px solid #3e3e3e;
 }
 
 .terminal-float-title {
   display: flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
 }
 
 .terminal-float-dot {
+  display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  display: inline-block;
-  &.red    { background: #ff5f57; }
-  &.yellow { background: #febc2e; }
-  &.green  { background: #28c840; }
+
+  &.red {
+    background: #ff5f57;
+  }
+
+  &.yellow {
+    background: #febc2e;
+  }
+
+  &.green {
+    background: #28c840;
+  }
 }
 
 .terminal-float-name {
   margin-left: 8px;
   font-size: 13px;
-  color: #d4d4d4;
   font-weight: 500;
+  color: #d4d4d4;
 }
 
 .terminal-float-close {
-  background: none;
-  border: none;
+  padding: 2px 6px;
+  font-size: 14px;
+  line-height: 1;
   color: #888;
   cursor: pointer;
-  font-size: 14px;
-  padding: 2px 6px;
+  background: none;
+  border: none;
   border-radius: 4px;
-  line-height: 1;
-  &:hover { color: #fff; background: #ff5f57; }
+
+  &:hover {
+    color: #fff;
+    background: #ff5f57;
+  }
 }
 
 .terminal-float-body {
   flex: 1;
-  overflow: hidden;
   min-height: 0;
+  overflow: hidden;
 }
 
 .terminal-resize-handle {
@@ -2059,7 +2421,17 @@ const proxyHistoryColumns = [
   width: 16px;
   height: 16px;
   cursor: se-resize;
-  background: linear-gradient(135deg, transparent 50%, #555 50%, #555 60%, transparent 60%, transparent 70%, #555 70%, #555 80%, transparent 80%);
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    #555 50%,
+    #555 60%,
+    transparent 60%,
+    transparent 70%,
+    #555 70%,
+    #555 80%,
+    transparent 80%
+  );
 }
 
 .file-manager-modal .ant-modal-body {
@@ -2076,9 +2448,9 @@ const proxyHistoryColumns = [
 
 .file-manager-modal .ant-table-body {
   flex: 1;
-  overflow-y: auto !important;
   height: calc(80vh - 200px) !important;
   max-height: none !important;
+  overflow-y: auto !important;
 }
 
 /* 新建服务器弹窗样式优化 */
@@ -2099,16 +2471,16 @@ const proxyHistoryColumns = [
 }
 
 .create-server-modal .ant-alert-info {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 12%);
 }
 
 .create-server-modal .ant-alert-info .ant-alert-message {
-  color: rgba(255, 255, 255, 0.92);
+  color: rgb(255 255 255 / 92%);
 }
 
 .create-server-modal .ant-alert-info .ant-alert-description {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgb(255 255 255 / 72%);
 }
 
 .create-server-modal .ant-alert-info .ant-alert-icon {
@@ -2117,17 +2489,30 @@ const proxyHistoryColumns = [
 </style>
 
 <style scoped>
+@keyframes version-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+}
+
 .create-server-instruction {
   margin-top: 16px;
   border-radius: 8px;
 }
 
 .create-server-instruction-list {
-  margin: 0;
   padding-left: 20px;
-  list-style: disc;
-  line-height: 1.8;
+  margin: 0;
   font-size: 13px;
+  line-height: 1.8;
+  list-style: disc;
 }
 
 .create-server-instruction-list li {
@@ -2145,22 +2530,24 @@ const proxyHistoryColumns = [
   justify-content: center;
   width: 32px;
   height: 100%;
+  padding: 0;
+  color: rgb(255 255 255 / 45%);
+  cursor: pointer;
   background: transparent;
   border: none;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.45);
-  transition: background 0.2s, color 0.2s;
-  padding: 0;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .view-toggle-btn:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.08);
+  color: rgb(255 255 255 / 85%);
+  background: rgb(255 255 255 / 8%);
 }
 
 .view-toggle-btn.active {
   color: #1677ff;
-  background: rgba(22, 119, 255, 0.12);
+  background: rgb(22 119 255 / 12%);
 }
 
 /* 服务器卡片网格 */
@@ -2171,20 +2558,22 @@ const proxyHistoryColumns = [
 }
 
 .server-card {
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 16px;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 10px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .server-card:hover {
   border-color: #52c41a;
   border-left-color: #52c41a;
-  box-shadow: 0 4px 16px rgba(82, 196, 26, 0.2);
+  box-shadow: 0 4px 16px rgb(82 196 26 / 20%);
 }
 
 .server-card--online {
@@ -2192,25 +2581,25 @@ const proxyHistoryColumns = [
 }
 
 .server-card--offline {
-  border-left: 3px solid rgba(255, 255, 255, 0.15);
+  border-left: 3px solid rgb(255 255 255 / 15%);
   opacity: 0.75;
 }
 
 .server-card__header {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
+  align-items: flex-start;
 }
 
 .server-card__os-icon {
-  width: 44px;
-  height: 44px;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgb(255 255 255 / 6%);
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  flex-shrink: 0;
 }
 
 .server-card__title-area {
@@ -2220,8 +2609,8 @@ const proxyHistoryColumns = [
 .server-card__name {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
   line-height: 1.4;
+  color: rgb(255 255 255 / 90%);
 }
 
 .server-card__env {
@@ -2236,23 +2625,22 @@ const proxyHistoryColumns = [
 .server-card__body {
   display: flex;
   gap: 8px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
   height: 148px;
+  padding: 10px 12px;
   overflow: hidden;
+  background: rgb(0 0 0 / 20%);
+  border-radius: 6px;
 }
 
 .server-card__info {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
   min-width: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden auto;
+  scrollbar-color: rgb(255 255 255 / 15%) transparent;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
 .server-card__info::-webkit-scrollbar {
@@ -2264,37 +2652,37 @@ const proxyHistoryColumns = [
 }
 
 .server-card__info::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgb(255 255 255 / 15%);
   border-radius: 2px;
 }
 
 .server-card__info::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgb(255 255 255 / 30%);
 }
 
 .server-card__mini-stats {
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
+  gap: 0;
   align-items: center;
   justify-content: center;
-  gap: 0;
-  flex-shrink: 0;
 }
 
 .server-card__info-row {
   display: flex;
-  align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.65);
+  align-items: center;
   min-width: 0;
+  font-size: 12px;
+  color: rgb(255 255 255 / 65%);
 }
 
 .server-card__actions {
   display: flex;
   gap: 6px;
-  margin-top: auto;
   padding-top: 4px;
+  margin-top: auto;
 }
 
 .server-card__actions :deep(.ant-btn):not(:first-child) {
@@ -2309,61 +2697,68 @@ const proxyHistoryColumns = [
 /* 筛选栏 */
 .server-filter-bar {
   display: flex;
-  align-items: center;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
 }
 
 .filter-group {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
   padding: 3px;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 8%);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .filter-chip {
   display: flex;
-  align-items: center;
   gap: 5px;
+  align-items: center;
   padding: 4px 10px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.5);
   font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  color: rgb(255 255 255 / 50%);
   white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .filter-chip:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.06);
+  color: rgb(255 255 255 / 85%);
+  background: rgb(255 255 255 / 6%);
 }
 
 .filter-chip.active {
-  background: rgba(22, 119, 255, 0.18);
   color: #4096ff;
+  background: rgb(22 119 255 / 18%);
 }
 
 .filter-chip__dot {
+  flex-shrink: 0;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
-.dot-online { background: #52c41a; }
-.dot-offline { background: rgba(255, 255, 255, 0.25); }
+.dot-online {
+  background: #52c41a;
+}
+
+.dot-offline {
+  background: rgb(255 255 255 / 25%);
+}
 
 .filter-chip__count {
-  font-size: 11px;
-  opacity: 0.6;
   min-width: 14px;
+  font-size: 11px;
   text-align: center;
+  opacity: 0.6;
 }
 
 /* 排序 */
@@ -2377,41 +2772,43 @@ const proxyHistoryColumns = [
 
 .sort-btn {
   display: flex;
-  align-items: center;
   gap: 5px;
+  align-items: center;
   padding: 5px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.65);
   font-size: 12px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  color: rgb(255 255 255 / 65%);
   white-space: nowrap;
+  cursor: pointer;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 8px;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .sort-btn:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(255 255 255 / 90%);
+  border-color: rgb(255 255 255 / 25%);
 }
 
 .sort-dropdown {
   position: absolute;
-  right: 0;
   top: calc(100% + 6px);
-  min-width: 140px;
-  background: #1f1f1f;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 6px;
+  right: 0;
   z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  min-width: 140px;
+  padding: 6px;
+  background: #1f1f1f;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
 }
 
 .sort-dropdown__title {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
   padding: 4px 8px 6px;
+  font-size: 11px;
+  color: rgb(255 255 255 / 30%);
   letter-spacing: 0.05em;
 }
 
@@ -2420,19 +2817,21 @@ const proxyHistoryColumns = [
   align-items: center;
   width: 100%;
   padding: 7px 8px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.65);
   font-size: 13px;
-  cursor: pointer;
+  color: rgb(255 255 255 / 65%);
   text-align: left;
-  transition: background 0.12s, color 0.12s;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .sort-dropdown__item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(255 255 255 / 90%);
+  background: rgb(255 255 255 / 6%);
 }
 
 .sort-dropdown__item.active {
@@ -2448,23 +2847,25 @@ const proxyHistoryColumns = [
 .agent-version-tag {
   position: relative;
   display: inline-flex;
-  align-items: center;
   gap: 3px;
+  align-items: center;
   padding: 1px 7px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
-  font-size: 11px;
   font-family: ui-monospace, monospace;
-  color: rgba(255, 255, 255, 0.45);
-  cursor: default;
-  transition: border-color 0.2s, color 0.2s;
+  font-size: 11px;
   line-height: 18px;
+  color: rgb(255 255 255 / 45%);
+  cursor: default;
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 15%);
+  border-radius: 10px;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 }
 
 .agent-version-tag--outdated {
-  border-color: rgba(255, 77, 79, 0.4);
-  color: rgba(255, 255, 255, 0.65);
+  color: rgb(255 255 255 / 65%);
+  border-color: rgb(255 77 79 / 40%);
 }
 
 .agent-version-tag--clickable {
@@ -2472,28 +2873,23 @@ const proxyHistoryColumns = [
 }
 
 .agent-version-tag--clickable:hover {
-  border-color: rgba(255, 77, 79, 0.7);
-  background: rgba(255, 77, 79, 0.12);
   color: #ff7875;
+  background: rgb(255 77 79 / 12%);
+  border-color: rgb(255 77 79 / 70%);
 }
 
 .agent-version-tag--upgrading {
-  border-color: rgba(250, 173, 20, 0.5);
-  color: rgba(250, 173, 20, 0.85);
+  color: rgb(250 173 20 / 85%);
   cursor: default;
+  border-color: rgb(250 173 20 / 50%);
 }
 
 .agent-version-tag__dot {
+  flex-shrink: 0;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
   background: #ff4d4f;
-  flex-shrink: 0;
+  border-radius: 50%;
   animation: version-dot-pulse 2s ease-in-out infinite;
-}
-
-@keyframes version-dot-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.85); }
 }
 </style>

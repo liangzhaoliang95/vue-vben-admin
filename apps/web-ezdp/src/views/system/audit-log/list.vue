@@ -85,11 +85,11 @@ watch(
 
 <style scoped>
 :deep(.vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.08) !important;
+  background-color: rgb(24 144 255 / 8%) !important;
   transition: background-color 0.2s ease;
 }
 
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.15) !important;
+  background-color: rgb(24 144 255 / 15%) !important;
 }
 </style>

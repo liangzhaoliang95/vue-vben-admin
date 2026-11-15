@@ -3,7 +3,17 @@ import type { BuildAgentApi } from '#/api/deploy-tools/build-agent';
 
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 
-import { Button, Descriptions, Modal, Progress, Radio, RadioGroup, Spin, Tag, Tooltip } from 'ant-design-vue';
+import {
+  Button,
+  Descriptions,
+  Modal,
+  Progress,
+  Radio,
+  RadioGroup,
+  Spin,
+  Tag,
+  Tooltip,
+} from 'ant-design-vue';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import * as echarts from 'echarts/core';
@@ -16,7 +26,11 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 
-import { getBuildAgentDetail, getBuildAgentStats, getBuildAgentStatsHistory } from '#/api/deploy-tools/build-agent';
+import {
+  getBuildAgentDetail,
+  getBuildAgentStats,
+  getBuildAgentStatsHistory,
+} from '#/api/deploy-tools/build-agent';
 import { $t } from '#/locales';
 
 echarts.use([
@@ -45,7 +59,8 @@ const rangePreset = ref<RangePreset>('1h');
 
 const timeRange = computed<{ startMs: number; endMs: number }>(() => {
   const now = Date.now();
-  const hours = rangePreset.value === '1h' ? 1 : rangePreset.value === '6h' ? 6 : 24;
+  const hours =
+    rangePreset.value === '1h' ? 1 : rangePreset.value === '6h' ? 6 : 24;
   return { startMs: now - hours * 3600 * 1000, endMs: now };
 });
 
@@ -93,25 +108,34 @@ function formatNetworkBytes(bytes: number): string {
   if (!bytes) return '0 B';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
 
 function getStatusText(status: number): string {
   switch (status) {
-    case 1: return $t('deploy.tools.buildAgent.statusOnline');
-    case 2: return $t('deploy.tools.buildAgent.statusBusy');
-    case 3: return $t('deploy.tools.buildAgent.statusDisabled');
-    default: return $t('deploy.tools.buildAgent.statusOffline');
+    case 1:
+      return $t('deploy.tools.buildAgent.statusOnline');
+    case 2:
+      return $t('deploy.tools.buildAgent.statusBusy');
+    case 3:
+      return $t('deploy.tools.buildAgent.statusDisabled');
+    default:
+      return $t('deploy.tools.buildAgent.statusOffline');
   }
 }
 
 function getStatusColor(status: number): string {
   switch (status) {
-    case 1: return 'success';
-    case 2: return 'processing';
-    case 3: return 'default';
-    default: return 'error';
+    case 1:
+      return 'success';
+    case 2:
+      return 'processing';
+    case 3:
+      return 'default';
+    default:
+      return 'error';
   }
 }
 
@@ -123,23 +147,32 @@ function needsUpdate(currentVersion: string): boolean {
 // 使用率百分比
 const cpuUsagePercent = computed(() => {
   if (!agentDetail.value) return 0;
-  if (agentDetail.value.cpuUsagePercent) return Math.round(agentDetail.value.cpuUsagePercent);
+  if (agentDetail.value.cpuUsagePercent)
+    return Math.round(agentDetail.value.cpuUsagePercent);
   if (!agentDetail.value.cpuCores) return 0;
-  return Math.round((agentDetail.value.cpuUsage / agentDetail.value.cpuCores) * 100);
+  return Math.round(
+    (agentDetail.value.cpuUsage / agentDetail.value.cpuCores) * 100,
+  );
 });
 
 const memoryUsagePercent = computed(() => {
   if (!agentDetail.value) return 0;
-  if (agentDetail.value.memoryUsagePercent) return Math.round(agentDetail.value.memoryUsagePercent);
+  if (agentDetail.value.memoryUsagePercent)
+    return Math.round(agentDetail.value.memoryUsagePercent);
   if (!agentDetail.value.memoryTotal) return 0;
-  return Math.round((agentDetail.value.memoryUsage / agentDetail.value.memoryTotal) * 100);
+  return Math.round(
+    (agentDetail.value.memoryUsage / agentDetail.value.memoryTotal) * 100,
+  );
 });
 
 const diskUsagePercent = computed(() => {
   if (!agentDetail.value) return 0;
-  if (agentDetail.value.diskUsagePercent) return Math.round(agentDetail.value.diskUsagePercent);
+  if (agentDetail.value.diskUsagePercent)
+    return Math.round(agentDetail.value.diskUsagePercent);
   if (!agentDetail.value.diskTotal) return 0;
-  return Math.round((agentDetail.value.diskUsage / agentDetail.value.diskTotal) * 100);
+  return Math.round(
+    (agentDetail.value.diskUsage / agentDetail.value.diskTotal) * 100,
+  );
 });
 
 function usageColor(percent: number): string {
@@ -192,7 +225,11 @@ function buildLineOption(
     xAxis: {
       type: 'time',
       axisLine: { lineStyle: { color: COLORS.grid } },
-      axisLabel: { color: COLORS.text, fontSize: 11, formatter: (v: number) => dayjs(v).format('HH:mm') },
+      axisLabel: {
+        color: COLORS.text,
+        fontSize: 11,
+        formatter: (v: number) => dayjs(v).format('HH:mm'),
+      },
       splitLine: { show: false },
     },
     yAxis: {
@@ -235,10 +272,22 @@ function renderCharts() {
   const list = historyList.value;
   if (!list.length) return;
 
-  const cpuData: [number, number][] = list.map((r) => [r.timestamp, r.cpuUsagePercent]);
-  const memData: [number, number][] = list.map((r) => [r.timestamp, r.memUsedPct]);
-  const recvData: [number, number][] = list.map((r) => [r.timestamp, r.netBytesRecv]);
-  const sentData: [number, number][] = list.map((r) => [r.timestamp, r.netBytesSent]);
+  const cpuData: [number, number][] = list.map((r) => [
+    r.timestamp,
+    r.cpuUsagePercent,
+  ]);
+  const memData: [number, number][] = list.map((r) => [
+    r.timestamp,
+    r.memUsedPct,
+  ]);
+  const recvData: [number, number][] = list.map((r) => [
+    r.timestamp,
+    r.netBytesRecv,
+  ]);
+  const sentData: [number, number][] = list.map((r) => [
+    r.timestamp,
+    r.netBytesSent,
+  ]);
 
   cpuChart?.setOption(
     buildLineOption(
@@ -370,7 +419,12 @@ defineExpose({ open });
     <Spin :spinning="loading">
       <div v-if="agentDetail" class="agent-detail">
         <!-- 基本信息 -->
-        <Descriptions :column="2" bordered size="small" :title="$t('deploy.tools.buildAgent.basicInfo')">
+        <Descriptions
+          :column="2"
+          bordered
+          size="small"
+          :title="$t('deploy.tools.buildAgent.basicInfo')"
+        >
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.name')">
             {{ agentDetail.name }}
           </Descriptions.Item>
@@ -392,7 +446,9 @@ defineExpose({ open });
             {{ agentDetail.publicIp || '-' }}
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.privateIps')">
-            <Tag v-for="ip in privateIpsList" :key="ip" class="mb-1 mr-1">{{ ip }}</Tag>
+            <Tag v-for="ip in privateIpsList" :key="ip" class="mb-1 mr-1">{{
+              ip
+            }}</Tag>
             <span v-if="privateIpsList.length === 0">-</span>
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.osVersion')">
@@ -402,7 +458,8 @@ defineExpose({ open });
             {{ agentDetail.version || '-' }}
             <Tooltip v-if="needsUpdate(agentDetail.version)">
               <Tag color="warning" class="ml-2">
-                {{ $t('deploy.tools.buildAgent.upgradeAvailable') }}: {{ latestVersion }}
+                {{ $t('deploy.tools.buildAgent.upgradeAvailable') }}:
+                {{ latestVersion }}
               </Tag>
             </Tooltip>
           </Descriptions.Item>
@@ -410,9 +467,13 @@ defineExpose({ open });
 
         <!-- 历史趋势图表 -->
         <div class="mt-4">
-          <div class="flex items-center justify-between mb-2">
+          <div class="mb-2 flex items-center justify-between">
             <span class="text-sm font-semibold">历史趋势</span>
-            <RadioGroup v-model:value="rangePreset" size="small" @change="onRangePresetChange">
+            <RadioGroup
+              v-model:value="rangePreset"
+              size="small"
+              @change="onRangePresetChange"
+            >
               <Radio value="1h">近1小时</Radio>
               <Radio value="6h">近6小时</Radio>
               <Radio value="24h">近24小时</Radio>
@@ -428,17 +489,29 @@ defineExpose({ open });
         </div>
 
         <!-- 任务信息 -->
-        <Descriptions :column="3" bordered class="mt-4" size="small" :title="$t('deploy.tools.buildAgent.taskInfo')">
-          <Descriptions.Item :label="$t('deploy.tools.buildAgent.maxConcurrentTasks')">
+        <Descriptions
+          :column="3"
+          bordered
+          class="mt-4"
+          size="small"
+          :title="$t('deploy.tools.buildAgent.taskInfo')"
+        >
+          <Descriptions.Item
+            :label="$t('deploy.tools.buildAgent.maxConcurrentTasks')"
+          >
             {{ agentDetail.maxConcurrentTasks }}
           </Descriptions.Item>
-          <Descriptions.Item :label="$t('deploy.tools.buildAgent.currentTasks')">
+          <Descriptions.Item
+            :label="$t('deploy.tools.buildAgent.currentTasks')"
+          >
             {{ agentDetail.currentTasks }}
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.totalTasks')">
             {{ agentDetail.totalTasks }}
           </Descriptions.Item>
-          <Descriptions.Item :label="$t('deploy.tools.buildAgent.successTasks')">
+          <Descriptions.Item
+            :label="$t('deploy.tools.buildAgent.successTasks')"
+          >
             <span class="text-green-500">{{ agentDetail.successTasks }}</span>
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.failedTasks')">
@@ -446,63 +519,124 @@ defineExpose({ open });
           </Descriptions.Item>
           <Descriptions.Item label="成功率">
             <span v-if="agentDetail.totalTasks > 0">
-              {{ ((agentDetail.successTasks / agentDetail.totalTasks) * 100).toFixed(1) }}%
+              {{
+                (
+                  (agentDetail.successTasks / agentDetail.totalTasks) *
+                  100
+                ).toFixed(1)
+              }}%
             </span>
             <span v-else>-</span>
           </Descriptions.Item>
         </Descriptions>
 
         <!-- 时间信息 -->
-        <Descriptions :column="2" bordered class="mt-4" size="small" :title="$t('deploy.tools.buildAgent.timeInfo')">
-          <Descriptions.Item :label="$t('deploy.tools.buildAgent.lastHeartbeatAt')">
+        <Descriptions
+          :column="2"
+          bordered
+          class="mt-4"
+          size="small"
+          :title="$t('deploy.tools.buildAgent.timeInfo')"
+        >
+          <Descriptions.Item
+            :label="$t('deploy.tools.buildAgent.lastHeartbeatAt')"
+          >
             {{ formatDateTime(agentDetail.lastHeartbeatAt) }}
           </Descriptions.Item>
-          <Descriptions.Item :label="$t('deploy.tools.buildAgent.registeredAt')">
+          <Descriptions.Item
+            :label="$t('deploy.tools.buildAgent.registeredAt')"
+          >
             {{ formatDateTime(agentDetail.registeredAt) }}
           </Descriptions.Item>
         </Descriptions>
 
         <!-- 描述 -->
-        <Descriptions v-if="agentDetail.description" :column="1" bordered class="mt-4" size="small" :title="$t('deploy.tools.buildAgent.description')">
+        <Descriptions
+          v-if="agentDetail.description"
+          :column="1"
+          bordered
+          class="mt-4"
+          size="small"
+          :title="$t('deploy.tools.buildAgent.description')"
+        >
           <Descriptions.Item>{{ agentDetail.description }}</Descriptions.Item>
         </Descriptions>
 
         <!-- 硬件信息 -->
-        <Descriptions :column="3" bordered class="mt-4" size="small" :title="$t('deploy.tools.buildAgent.hardwareInfo')">
+        <Descriptions
+          :column="3"
+          bordered
+          class="mt-4"
+          size="small"
+          :title="$t('deploy.tools.buildAgent.hardwareInfo')"
+        >
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.cpuCores')">
             {{ agentDetail.cpuCores }}核 ({{ agentDetail.cpuModel || '-' }})
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.cpuUsage')">
-            <Progress :percent="cpuUsagePercent" :stroke-color="usageColor(cpuUsagePercent)" />
+            <Progress
+              :percent="cpuUsagePercent"
+              :stroke-color="usageColor(cpuUsagePercent)"
+            />
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.loadAvg')">
-            {{ (latestStats?.load1 ?? agentDetail.loadAvg1)?.toFixed(2) || '-' }} / {{ (latestStats?.load5 ?? agentDetail.loadAvg5)?.toFixed(2) || '-' }} / {{ (latestStats?.load15 ?? agentDetail.loadAvg15)?.toFixed(2) || '-' }}
+            {{
+              (latestStats?.load1 ?? agentDetail.loadAvg1)?.toFixed(2) || '-'
+            }}
+            /
+            {{
+              (latestStats?.load5 ?? agentDetail.loadAvg5)?.toFixed(2) || '-'
+            }}
+            /
+            {{
+              (latestStats?.load15 ?? agentDetail.loadAvg15)?.toFixed(2) || '-'
+            }}
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.memoryTotal')">
             {{ formatBytes(agentDetail.memoryTotal) }}
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.memoryUsage')">
-            <Progress :percent="memoryUsagePercent" :stroke-color="usageColor(memoryUsagePercent)" />
+            <Progress
+              :percent="memoryUsagePercent"
+              :stroke-color="usageColor(memoryUsagePercent)"
+            />
           </Descriptions.Item>
-          <Descriptions.Item :label="$t('deploy.tools.buildAgent.networkBytesSent')">
-            ↓{{ formatNetworkBytes(latestStats?.netBytesRecv ?? agentDetail.networkBytesRecv) }} / ↑{{ formatNetworkBytes(latestStats?.netBytesSent ?? agentDetail.networkBytesSent) }}
+          <Descriptions.Item
+            :label="$t('deploy.tools.buildAgent.networkBytesSent')"
+          >
+            ↓{{
+              formatNetworkBytes(
+                latestStats?.netBytesRecv ?? agentDetail.networkBytesRecv,
+              )
+            }}
+            / ↑{{
+              formatNetworkBytes(
+                latestStats?.netBytesSent ?? agentDetail.networkBytesSent,
+              )
+            }}
           </Descriptions.Item>
           <Descriptions.Item :label="$t('deploy.tools.buildAgent.diskUsage')">
             <!-- 多块磁盘 -->
             <div v-if="diskList.length > 0" class="disk-list">
               <div v-for="disk in diskList" :key="disk.path" class="disk-item">
-                <div class="text-xs text-gray-400 mb-1">{{ disk.path }}</div>
+                <div class="mb-1 text-xs text-gray-400">{{ disk.path }}</div>
                 <Progress
                   :percent="Math.round(disk.usedPercent)"
                   :stroke-color="usageColor(Math.round(disk.usedPercent))"
                   :format="() => `${Math.round(disk.usedPercent)}%`"
                   size="small"
                 />
-                <div class="text-xs text-gray-500 mt-0.5">{{ formatBytes(disk.used) }} / {{ formatBytes(disk.total) }}</div>
+                <div class="mt-0.5 text-xs text-gray-500">
+                  {{ formatBytes(disk.used) }} / {{ formatBytes(disk.total) }}
+                </div>
               </div>
             </div>
             <!-- 兜底：无 stats 数据时用 agent 信息 -->
-            <Progress v-else :percent="diskUsagePercent" :stroke-color="usageColor(diskUsagePercent)" />
+            <Progress
+              v-else
+              :percent="diskUsagePercent"
+              :stroke-color="usageColor(diskUsagePercent)"
+            />
           </Descriptions.Item>
         </Descriptions>
       </div>
@@ -515,10 +649,21 @@ defineExpose({ open });
   padding: 16px 0;
 }
 
-.mt-4 { margin-top: 16px; }
-.ml-2 { margin-left: 8px; }
-.mb-1 { margin-bottom: 4px; }
-.mr-1 { margin-right: 4px; }
+.mt-4 {
+  margin-top: 16px;
+}
+
+.ml-2 {
+  margin-left: 8px;
+}
+
+.mb-1 {
+  margin-bottom: 4px;
+}
+
+.mr-1 {
+  margin-right: 4px;
+}
 
 .chart-grid {
   display: grid;
@@ -529,7 +674,7 @@ defineExpose({ open });
 .chart-box {
   width: 100%;
   height: 200px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgb(0 0 0 / 20%);
   border-radius: 6px;
 }
 
@@ -541,7 +686,7 @@ defineExpose({ open });
 
 .disk-item {
   padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgb(255 255 255 / 6%);
 }
 
 .disk-item:last-child {

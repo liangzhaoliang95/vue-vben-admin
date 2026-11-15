@@ -27,25 +27,33 @@ const columns = computed(() => [
   {
     dataIndex: 'projectName',
     key: 'projectName',
-    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.projectName'),
+    title: $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.projectName',
+    ),
     width: 200,
   },
   {
     dataIndex: 'projectType',
     key: 'projectType',
-    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.projectType'),
+    title: $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.projectType',
+    ),
     width: 120,
   },
   {
     dataIndex: 'version',
     key: 'version',
-    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.version'),
+    title: $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.version',
+    ),
     width: 150,
   },
   {
     dataIndex: 'deployedAt',
     key: 'deployedAt',
-    title: $t('deploy.packageDeployManagement.environmentConfig.versionModal.deployedAt'),
+    title: $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.deployedAt',
+    ),
     width: 180,
   },
 ]);
@@ -66,10 +74,14 @@ function getProjectTypeColor(type: string) {
 // 获取项目类型文本
 function getProjectTypeText(type: string) {
   if (type === 'frontend') {
-    return $t('deploy.packageDeployManagement.environmentConfig.versionModal.frontend');
+    return $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.frontend',
+    );
   }
   if (type === 'backend') {
-    return $t('deploy.packageDeployManagement.environmentConfig.versionModal.backend');
+    return $t(
+      'deploy.packageDeployManagement.environmentConfig.versionModal.backend',
+    );
   }
   return type;
 }
@@ -106,7 +118,12 @@ function handleClose() {
 <template>
   <Modal
     v-model:open="open"
-    :title="$t('deploy.packageDeployManagement.environmentConfig.versionModal.title', [environmentName])"
+    :title="
+      $t(
+        'deploy.packageDeployManagement.environmentConfig.versionModal.title',
+        [environmentName],
+      )
+    "
     width="800px"
     :footer="null"
     @cancel="handleClose"
@@ -131,8 +148,12 @@ function handleClose() {
         </template>
       </template>
       <template #emptyText>
-        <div style="padding: 40px 0; text-align: center; color: #999;">
-          {{ $t('deploy.packageDeployManagement.environmentConfig.versionModal.noData') }}
+        <div style="padding: 40px 0; color: #999; text-align: center">
+          {{
+            $t(
+              'deploy.packageDeployManagement.environmentConfig.versionModal.noData',
+            )
+          }}
         </div>
       </template>
     </Table>
@@ -145,28 +166,28 @@ function handleClose() {
 }
 
 :deep(.ant-table-thead > tr > th) {
-  background-color: #fafafa;
   font-weight: 600;
-  color: rgba(0, 0, 0, 0.85);
+  color: rgb(0 0 0 / 85%);
+  background-color: #fafafa;
   border-bottom: 1px solid #f0f0f0;
 }
 
 /* 深色模式 */
 :deep(.dark .ant-table-thead > tr > th) {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgb(255 255 255 / 85%);
+  background-color: rgb(255 255 255 / 8%);
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
 }
 
 :deep(.dark .ant-table) {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgb(255 255 255 / 85%);
 }
 
 :deep(.dark .ant-table-tbody > tr > td) {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgb(255 255 255 / 6%);
 }
 
 :deep(.dark .ant-table-tbody > tr:hover > td) {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgb(255 255 255 / 4%);
 }
 </style>

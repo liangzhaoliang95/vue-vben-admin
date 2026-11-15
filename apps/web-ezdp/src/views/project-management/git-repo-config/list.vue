@@ -14,7 +14,10 @@ import { useBusinessStore } from '@vben/stores';
 import { Button, message, Modal } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { deleteGitRepoConfig, getGitRepoConfigList } from '#/api/project-management/git-repo-config';
+import {
+  deleteGitRepoConfig,
+  getGitRepoConfigList,
+} from '#/api/project-management/git-repo-config';
 import { $t } from '#/locales';
 
 import { useColumns, useGridFormSchema } from './data';
@@ -152,11 +155,11 @@ function onCreate() {
 
 <style scoped>
 :deep(.vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.08) !important;
+  background-color: rgb(24 144 255 / 8%) !important;
   transition: background-color 0.2s ease;
 }
 
 :deep(.dark .vxe-table--body) .vxe-body--row:hover {
-  background-color: rgba(24, 144, 255, 0.15) !important;
+  background-color: rgb(24 144 255 / 15%) !important;
 }
 </style>

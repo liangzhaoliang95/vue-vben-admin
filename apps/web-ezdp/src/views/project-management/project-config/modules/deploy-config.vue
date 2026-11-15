@@ -49,28 +49,38 @@ const rules: Record<string, any> = computed(() => ({
   k8sName: [
     {
       required: true,
-      message: $t('deploy.projectManagement.projectConfig.deployConfig.k8sName') + $t('ui.inputRequired'),
+      message:
+        $t('deploy.projectManagement.projectConfig.deployConfig.k8sName') +
+        $t('ui.inputRequired'),
       trigger: 'blur',
     },
   ],
   containerName: [
     {
       required: true,
-      message: $t('deploy.projectManagement.projectConfig.deployConfig.containerName') + $t('ui.inputRequired'),
+      message:
+        $t(
+          'deploy.projectManagement.projectConfig.deployConfig.containerName',
+        ) + $t('ui.inputRequired'),
       trigger: 'blur',
     },
   ],
   ossName: [
     {
       required: true,
-      message: $t('deploy.projectManagement.projectConfig.deployConfig.ossName') + $t('ui.inputRequired'),
+      message:
+        $t('deploy.projectManagement.projectConfig.deployConfig.ossName') +
+        $t('ui.inputRequired'),
       trigger: 'blur',
     },
   ],
   scriptContent: [
     {
       required: true,
-      message: $t('deploy.projectManagement.projectConfig.deployConfig.scriptContent') + $t('ui.inputRequired'),
+      message:
+        $t(
+          'deploy.projectManagement.projectConfig.deployConfig.scriptContent',
+        ) + $t('ui.inputRequired'),
       trigger: 'blur',
     },
   ],
@@ -81,14 +91,23 @@ const deployTypeOptions = computed(() => {
   if (isFrontendProject.value) {
     // 前端项目支持对象存储发布和Shell发布
     return [
-      { label: $t('deploy.packageDeployManagement.deployHistory.type.ossutil'), value: 'ossutil' },
-      { label: $t('deploy.projectManagement.projectConfig.deployConfig.shell'), value: 'script' },
+      {
+        label: $t('deploy.packageDeployManagement.deployHistory.type.ossutil'),
+        value: 'ossutil',
+      },
+      {
+        label: $t('deploy.projectManagement.projectConfig.deployConfig.shell'),
+        value: 'script',
+      },
     ];
   }
   // 后端项目支持 K8s 发布和Shell发布
   return [
     { label: 'Kubernetes', value: 'k8s' },
-    { label: $t('deploy.projectManagement.projectConfig.deployConfig.shell'), value: 'script' },
+    {
+      label: $t('deploy.projectManagement.projectConfig.deployConfig.shell'),
+      value: 'script',
+    },
   ];
 });
 
@@ -172,12 +191,18 @@ onMounted(() => {
       class="max-w-3xl"
     >
       <FormItem
-        :label="$t('deploy.projectManagement.projectConfig.deployConfig.deployType')"
+        :label="
+          $t('deploy.projectManagement.projectConfig.deployConfig.deployType')
+        "
         name="deployType"
       >
         <Select
           v-model:value="formState.deployType"
-          :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.deployTypePlaceholder')"
+          :placeholder="
+            $t(
+              'deploy.projectManagement.projectConfig.deployConfig.deployTypePlaceholder',
+            )
+          "
         >
           <SelectOption
             v-for="option in deployTypeOptions"
@@ -192,12 +217,18 @@ onMounted(() => {
       <!-- K8s 发布配置 -->
       <template v-if="formState.deployType === 'k8s'">
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.deployConfig.k8sType')"
+          :label="
+            $t('deploy.projectManagement.projectConfig.deployConfig.k8sType')
+          "
           name="k8sType"
         >
           <Select
             v-model:value="formState.k8sType"
-            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.k8sTypePlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.k8sTypePlaceholder',
+              )
+            "
           >
             <SelectOption
               v-for="option in k8sTypeOptions"
@@ -210,25 +241,43 @@ onMounted(() => {
         </FormItem>
 
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.deployConfig.k8sName')"
+          :label="
+            $t('deploy.projectManagement.projectConfig.deployConfig.k8sName')
+          "
           name="k8sName"
         >
           <Input
             v-model:value="formState.k8sName"
-            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.k8sNamePlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.k8sNamePlaceholder',
+              )
+            "
           />
         </FormItem>
 
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.deployConfig.containerName')"
+          :label="
+            $t(
+              'deploy.projectManagement.projectConfig.deployConfig.containerName',
+            )
+          "
           name="containerName"
         >
           <Input
             v-model:value="formState.containerName"
-            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.containerNamePlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.containerNamePlaceholder',
+              )
+            "
           />
-          <div class="text-gray-500 text-xs mt-1">
-            {{ $t('deploy.projectManagement.projectConfig.deployConfig.containerNameTip') }}
+          <div class="mt-1 text-xs text-gray-500">
+            {{
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.containerNameTip',
+              )
+            }}
           </div>
         </FormItem>
       </template>
@@ -236,12 +285,18 @@ onMounted(() => {
       <!-- 对象存储发布配置 -->
       <template v-if="formState.deployType === 'ossutil'">
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.deployConfig.ossName')"
+          :label="
+            $t('deploy.projectManagement.projectConfig.deployConfig.ossName')
+          "
           name="ossName"
         >
           <Input
             v-model:value="formState.ossName"
-            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.ossNamePlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.ossNamePlaceholder',
+              )
+            "
           />
         </FormItem>
       </template>
@@ -249,25 +304,39 @@ onMounted(() => {
       <!-- 脚本发布配置 -->
       <template v-if="formState.deployType === 'script'">
         <FormItem
-          :label="$t('deploy.projectManagement.projectConfig.deployConfig.scriptContent')"
+          :label="
+            $t(
+              'deploy.projectManagement.projectConfig.deployConfig.scriptContent',
+            )
+          "
           name="scriptContent"
         >
           <Textarea
             v-model:value="formState.scriptContent"
-            :placeholder="$t('deploy.projectManagement.projectConfig.deployConfig.scriptContentPlaceholder')"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.scriptContentPlaceholder',
+              )
+            "
             :rows="10"
             :auto-size="{ minRows: 10, maxRows: 20 }"
-            style="font-family: 'Consolas', 'Monaco', 'Courier New', monospace"
+            style="font-family: Consolas, Monaco, 'Courier New', monospace"
           />
-          <div class="text-gray-500 text-xs mt-1">
-            {{ $t('deploy.projectManagement.projectConfig.deployConfig.scriptContentTip') }}
+          <div class="mt-1 text-xs text-gray-500">
+            {{
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.scriptContentTip',
+              )
+            }}
           </div>
         </FormItem>
       </template>
 
       <FormItem :wrapper-col="{ offset: 6, span: 18 }">
         <Button type="primary" :loading="loading" @click="handleSave">
-          {{ $t('deploy.projectManagement.projectConfig.deployConfig.saveConfig') }}
+          {{
+            $t('deploy.projectManagement.projectConfig.deployConfig.saveConfig')
+          }}
         </Button>
       </FormItem>
     </Form>

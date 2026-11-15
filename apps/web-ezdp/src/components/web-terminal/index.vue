@@ -5,12 +5,20 @@
         <span class="terminal-title">{{ title }}</span>
         <span v-if="connected" class="status-indicator connected"></span>
         <span v-else class="status-indicator disconnected"></span>
-        <span class="status-text">{{ connected ? $t('terminal.connected') : $t('terminal.disconnected') }}</span>
+        <span class="status-text">{{
+          connected ? $t('terminal.connected') : $t('terminal.disconnected')
+        }}</span>
       </div>
       <div class="header-right">
-        <a-button size="small" @click="handleClear">{{ $t('terminal.clear') }}</a-button>
-        <a-button size="small" @click="handleFullscreen">{{ $t('terminal.fullscreen') }}</a-button>
-        <a-button size="small" danger @click="handleClose">{{ $t('terminal.close') }}</a-button>
+        <a-button size="small" @click="handleClear">{{
+          $t('terminal.clear')
+        }}</a-button>
+        <a-button size="small" @click="handleFullscreen">{{
+          $t('terminal.fullscreen')
+        }}</a-button>
+        <a-button size="small" danger @click="handleClose">{{
+          $t('terminal.close')
+        }}</a-button>
       </div>
     </div>
     <div ref="terminalRef" class="terminal-content"></div>
@@ -62,7 +70,8 @@ const initTerminal = () => {
   terminal = new Terminal({
     cursorBlink: true,
     fontSize: 14,
-    fontFamily: '"JetBrainsMono Nerd Font", "JetBrains Mono", Menlo, Monaco, "Courier New", monospace',
+    fontFamily:
+      '"JetBrainsMono Nerd Font", "JetBrains Mono", Menlo, Monaco, "Courier New", monospace',
     theme: {
       background: '#1e1e1e',
       foreground: '#d4d4d4',
@@ -104,11 +113,13 @@ const initTerminal = () => {
       fitAddon.fit();
       // 发送窗口大小调整消息
       if (ws && ws.readyState === WebSocket.OPEN && sessionId) {
-        ws.send(JSON.stringify({
-          type: 'resize',
-          rows: terminal?.rows,
-          cols: terminal?.cols,
-        }));
+        ws.send(
+          JSON.stringify({
+            type: 'resize',
+            rows: terminal?.rows,
+            cols: terminal?.cols,
+          }),
+        );
       }
     }
   });
@@ -117,10 +128,12 @@ const initTerminal = () => {
   // 监听用户输入
   terminal.onData((data) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'data',
-        data: data,
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'data',
+          data: data,
+        }),
+      );
     }
   });
 
@@ -165,12 +178,14 @@ const connectWebSocket = () => {
     terminal?.writeln('');
 
     // 创建PTY会话
-    ws?.send(JSON.stringify({
-      type: 'create',
-      rows: terminal?.rows || 24,
-      cols: terminal?.cols || 80,
-      shell: '',  // 让服务端自动选择合适的 shell
-    }));
+    ws?.send(
+      JSON.stringify({
+        type: 'create',
+        rows: terminal?.rows || 24,
+        cols: terminal?.cols || 80,
+        shell: '', // 让服务端自动选择合适的 shell
+      }),
+    );
 
     // 启动心跳检测（客户端主动发送 ping）
     startHeartbeat();
@@ -192,7 +207,9 @@ const connectWebSocket = () => {
           terminal?.writeln(`\x1b[1;31mError: ${msg.data.message}\x1b[0m`);
           break;
         case 'closed':
-          terminal?.writeln(`\x1b[1;33m\nSession closed: ${msg.data.reason}\x1b[0m`);
+          terminal?.writeln(
+            `\x1b[1;33m\nSession closed: ${msg.data.reason}\x1b[0m`,
+          );
           connected.value = false;
           break;
         case 'pong':
@@ -219,7 +236,9 @@ const connectWebSocket = () => {
     // 非正常关闭且未超过重连次数，尝试重连
     if (!event.wasClean && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
       reconnectAttempts++;
-      terminal?.writeln(`\x1b[1;33mReconnecting (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...\x1b[0m`);
+      terminal?.writeln(
+        `\x1b[1;33mReconnecting (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...\x1b[0m`,
+      );
       reconnectTimer = window.setTimeout(() => {
         connectWebSocket();
       }, 3000);
@@ -235,9 +254,11 @@ const startHeartbeat = () => {
   // 每 25 秒发送一次心跳（比服务端 30 秒间隔短）
   heartbeatTimer = window.setInterval(() => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'ping',
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'ping',
+        }),
+      );
       console.log('💓 发送心跳 ping');
     }
   }, 25000);
@@ -274,9 +295,11 @@ const handleFullscreen = () => {
 // 关闭终端
 const handleClose = () => {
   if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({
-      type: 'close',
-    }));
+    ws.send(
+      JSON.stringify({
+        type: 'close',
+      }),
+    );
   }
   emit('close');
 };
@@ -306,11 +329,14 @@ onUnmounted(() => {
 });
 
 // 监听serverId变化
-watch(() => props.serverId, () => {
-  cleanup();
-  initTerminal();
-  connectWebSocket();
-});
+watch(
+  () => props.serverId,
+  () => {
+    cleanup();
+    initTerminal();
+    connectWebSocket();
+  },
+);
 </script>
 
 <style scoped lang="less">
@@ -385,9 +411,9 @@ watch(() => props.serverId, () => {
 <style>
 @font-face {
   font-family: 'JetBrainsMono Nerd Font';
-  src: url('/fonts/JetBrainsMonoNerdFont-Regular.ttf') format('truetype');
-  font-weight: normal;
   font-style: normal;
+  font-weight: normal;
+  src: url('/fonts/JetBrainsMonoNerdFont-Regular.ttf') format('truetype');
   font-display: swap;
 }
 </style>

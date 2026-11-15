@@ -109,20 +109,35 @@ async function loadDoc(docId: string) {
 
     // 如果是 DeployAgent 概述页面，使用系统配置替换域名
     if (docId === 'deployAgent-overview' && systemConfig.value) {
-      const platformDomain = systemConfig.value.platformDomain || 'https://simple.plaso.cn';
+      const platformDomain =
+        systemConfig.value.platformDomain || 'https://simple.plaso.cn';
       const apiPrefix = systemConfig.value.apiPrefix || '/server/ezdp';
       const fullApiUrl = `${platformDomain}${apiPrefix}`;
 
       // 替换域名占位符
-      htmlContent = htmlContent.replace(/https:\/\/simple\.plaso\.cn/g, platformDomain);
+      htmlContent = htmlContent.replace(
+        /https:\/\/simple\.plaso\.cn/g,
+        platformDomain,
+      );
       htmlContent = htmlContent.replace(/\/server\/ezdp/g, apiPrefix);
-      htmlContent = htmlContent.replace(/https:\/\/simple\.plaso\.cn\/server\/ezdp/g, fullApiUrl);
+      htmlContent = htmlContent.replace(
+        /https:\/\/simple\.plaso\.cn\/server\/ezdp/g,
+        fullApiUrl,
+      );
     }
 
     // 如果是 ServerAgent 文档，使用系统配置替换连接地址
-    if ((docId === 'serverAgent-overview' || docId === 'serverAgent-authentication') && systemConfig.value) {
-      const serverAgentAddr = systemConfig.value.serverAgentAddr || 'your-ezdp-server.com:82';
-      htmlContent = htmlContent.replace(/your-ezdp-server\.com:82/g, serverAgentAddr);
+    if (
+      (docId === 'serverAgent-overview' ||
+        docId === 'serverAgent-authentication') &&
+      systemConfig.value
+    ) {
+      const serverAgentAddr =
+        systemConfig.value.serverAgentAddr || 'your-ezdp-server.com:82';
+      htmlContent = htmlContent.replace(
+        /your-ezdp-server\.com:82/g,
+        serverAgentAddr,
+      );
     }
 
     tocItems.value = extractToc(htmlContent);
@@ -185,7 +200,8 @@ function onTreeSelect(selectedKeys: (string | number)[]) {
 
 function findFirstSelectableDoc(items: DocItem[]): DocItem | null {
   for (const item of items) {
-    if (!item.isCategory && (item.fileName || item.apiType === 'event')) return item;
+    if (!item.isCategory && (item.fileName || item.apiType === 'event'))
+      return item;
     if (item.children) {
       const found = findFirstSelectableDoc(item.children);
       if (found) return found;
@@ -210,7 +226,9 @@ watch(searchKeyword, (val) => {
 });
 
 function handleContentClick(e: MouseEvent) {
-  const card = (e.target as HTMLElement).closest('[data-event-id]') as HTMLElement | null;
+  const card = (e.target as HTMLElement).closest(
+    '[data-event-id]',
+  ) as HTMLElement | null;
   if (!card) return;
   const eventId = card.dataset.eventId;
   if (eventId) loadDoc(eventId);
@@ -300,7 +318,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <Page :title="$t('page.docs.title')" :description="$t('page.docs.description')">
+  <Page
+    :title="$t('page.docs.title')"
+    :description="$t('page.docs.description')"
+  >
     <div class="doc-layout">
       <!-- 左侧导航 -->
       <aside class="doc-sidebar">
@@ -312,7 +333,14 @@ onMounted(async () => {
             size="small"
           >
             <template #prefix>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
@@ -330,15 +358,36 @@ onMounted(async () => {
             @select="onTreeSelect"
           >
             <template #title="{ title, isCategory }">
-              <span :class="['tree-node', isCategory ? 'tree-category' : 'tree-leaf']">
+              <span
+                :class="[
+                  'tree-node',
+                  isCategory ? 'tree-category' : 'tree-leaf',
+                ]"
+              >
                 <span v-if="isCategory" class="tree-icon category-icon">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"
+                    />
                   </svg>
                 </span>
                 <span v-else class="tree-icon leaf-icon">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    ></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
                   </svg>
                 </span>
@@ -355,7 +404,10 @@ onMounted(async () => {
           <div v-if="state.error" class="doc-empty-state">
             <Empty :description="state.error" />
           </div>
-          <div v-else-if="!currentDoc && !state.loading" class="doc-empty-state">
+          <div
+            v-else-if="!currentDoc && !state.loading"
+            class="doc-empty-state"
+          >
             <div class="welcome-box">
               <div class="welcome-icon">📚</div>
               <h2>Agent 接入文档中心</h2>
@@ -363,22 +415,38 @@ onMounted(async () => {
             </div>
           </div>
           <!-- HTTP API 文档 - Apifox 风格 -->
-          <div v-else-if="currentDoc?.apiType === 'httpApi' && currentDoc.httpApiData" class="api-doc">
+          <div
+            v-else-if="
+              currentDoc?.apiType === 'httpApi' && currentDoc.httpApiData
+            "
+            class="api-doc"
+          >
             <!-- 顶部 API 信息栏 -->
             <div class="api-header">
               <div class="api-header-left">
                 <div class="api-title-row">
                   <span class="api-method-badge method-up">POST</span>
-                  <h1 class="api-title">{{ currentDoc.httpApiData.apiName }}</h1>
+                  <h1 class="api-title">
+                    {{ currentDoc.httpApiData.apiName }}
+                  </h1>
                 </div>
                 <div class="api-event-path">
                   <span class="event-path-label">接口路径</span>
-                  <code class="event-path-value">{{ currentDoc.httpApiData.apiPath }}</code>
+                  <code class="event-path-value">{{
+                    currentDoc.httpApiData.apiPath
+                  }}</code>
                 </div>
               </div>
               <div class="api-header-right">
                 <span class="api-direction-badge server-to-client">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
                     <path d="M5 12h14"></path>
                     <path d="M12 5l7 7-7 7"></path>
                   </svg>
@@ -397,12 +465,18 @@ onMounted(async () => {
                 <div v-if="currentDoc.httpApiData.request" class="params-block">
                   <div class="params-block-header">
                     <span class="params-block-title">请求参数</span>
-                    <span class="params-schema-name">{{ currentDoc.httpApiData.request.name }}</span>
+                    <span class="params-schema-name">{{
+                      currentDoc.httpApiData.request.name
+                    }}</span>
                   </div>
                   <div class="params-table-wrap">
                     <Table
                       :columns="paramColumns"
-                      :data-source="transformFieldsToTreeData(currentDoc.httpApiData.request.fields)"
+                      :data-source="
+                        transformFieldsToTreeData(
+                          currentDoc.httpApiData.request.fields,
+                        )
+                      "
                       :pagination="false"
                       :default-expand-all-rows="false"
                       size="small"
@@ -411,19 +485,29 @@ onMounted(async () => {
                       <template #bodyCell="{ column, record }">
                         <template v-if="column.key === 'name'">
                           <div class="param-name-cell">
-                            <span v-if="record.required" class="required-dot">*</span>
+                            <span v-if="record.required" class="required-dot"
+                              >*</span
+                            >
                             <code class="param-name">{{ record.name }}</code>
                           </div>
                         </template>
                         <template v-else-if="column.key === 'type'">
-                          <span class="type-pill" :class="'type-' + record.type">{{ record.type }}</span>
+                          <span
+                            class="type-pill"
+                            :class="'type-' + record.type"
+                            >{{ record.type }}</span
+                          >
                         </template>
                         <template v-else-if="column.key === 'required'">
-                          <span v-if="record.required" class="req-yes">必填</span>
+                          <span v-if="record.required" class="req-yes"
+                            >必填</span
+                          >
                           <span v-else class="req-no">可选</span>
                         </template>
                         <template v-else-if="column.key === 'description'">
-                          <span class="param-desc">{{ record.description }}</span>
+                          <span class="param-desc">{{
+                            record.description
+                          }}</span>
                           <span v-if="record.enumValues" class="enum-values">
                             枚举值: {{ record.enumValues.join(' | ') }}
                           </span>
@@ -434,15 +518,25 @@ onMounted(async () => {
                 </div>
 
                 <!-- 响应参数区块 -->
-                <div v-if="currentDoc.httpApiData.response" class="params-block" style="margin-top: 24px;">
+                <div
+                  v-if="currentDoc.httpApiData.response"
+                  class="params-block"
+                  style="margin-top: 24px"
+                >
                   <div class="params-block-header">
                     <span class="params-block-title">响应参数</span>
-                    <span class="params-schema-name">{{ currentDoc.httpApiData.response.name }}</span>
+                    <span class="params-schema-name">{{
+                      currentDoc.httpApiData.response.name
+                    }}</span>
                   </div>
                   <div class="params-table-wrap">
                     <Table
                       :columns="paramColumns"
-                      :data-source="transformFieldsToTreeData(currentDoc.httpApiData.response.fields)"
+                      :data-source="
+                        transformFieldsToTreeData(
+                          currentDoc.httpApiData.response.fields,
+                        )
+                      "
                       :pagination="false"
                       :default-expand-all-rows="false"
                       size="small"
@@ -451,19 +545,29 @@ onMounted(async () => {
                       <template #bodyCell="{ column, record }">
                         <template v-if="column.key === 'name'">
                           <div class="param-name-cell">
-                            <span v-if="record.required" class="required-dot">*</span>
+                            <span v-if="record.required" class="required-dot"
+                              >*</span
+                            >
                             <code class="param-name">{{ record.name }}</code>
                           </div>
                         </template>
                         <template v-else-if="column.key === 'type'">
-                          <span class="type-pill" :class="'type-' + record.type">{{ record.type }}</span>
+                          <span
+                            class="type-pill"
+                            :class="'type-' + record.type"
+                            >{{ record.type }}</span
+                          >
                         </template>
                         <template v-else-if="column.key === 'required'">
-                          <span v-if="record.required" class="req-yes">必填</span>
+                          <span v-if="record.required" class="req-yes"
+                            >必填</span
+                          >
                           <span v-else class="req-no">可选</span>
                         </template>
                         <template v-else-if="column.key === 'description'">
-                          <span class="param-desc">{{ record.description }}</span>
+                          <span class="param-desc">{{
+                            record.description
+                          }}</span>
                           <span v-if="record.enumValues" class="enum-values">
                             枚举值: {{ record.enumValues.join(' | ') }}
                           </span>
@@ -476,7 +580,10 @@ onMounted(async () => {
 
               <!-- 右栏：JSON 示例 -->
               <div class="api-examples-col">
-                <div v-if="currentDoc.httpApiData.request" class="example-block">
+                <div
+                  v-if="currentDoc.httpApiData.request"
+                  class="example-block"
+                >
                   <div class="example-header">
                     <span class="example-title">请求示例</span>
                     <span class="example-lang">JSON</span>
@@ -484,19 +591,43 @@ onMounted(async () => {
                   <div class="code-box">
                     <div class="code-box-header">
                       <span class="code-box-title">application/json</span>
-                      <button class="copy-btn" @click="copyCode(currentDoc.httpApiData.request.example)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      <button
+                        class="copy-btn"
+                        @click="
+                          copyCode(currentDoc.httpApiData.request.example)
+                        "
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <rect
+                            x="9"
+                            y="9"
+                            width="13"
+                            height="13"
+                            rx="2"
+                            ry="2"
+                          ></rect>
+                          <path
+                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                          ></path>
                         </svg>
                         复制
                       </button>
                     </div>
-                    <pre class="code-box"><code>{{ currentDoc.httpApiData.request.example }}</code></pre>
+                    <pre
+                      class="code-box"
+                    ><code>{{ currentDoc.httpApiData.request.example }}</code></pre>
                   </div>
                 </div>
 
-                <div v-if="currentDoc.httpApiData.response" class="example-block">
+                <div
+                  v-if="currentDoc.httpApiData.response"
+                  class="example-block"
+                >
                   <div class="example-header">
                     <span class="example-title">响应示例</span>
                     <span class="example-lang">JSON</span>
@@ -504,43 +635,102 @@ onMounted(async () => {
                   <div class="code-box">
                     <div class="code-box-header">
                       <span class="code-box-title">application/json</span>
-                      <button class="copy-btn" @click="copyCode(currentDoc.httpApiData.response ? currentDoc.httpApiData.response.example : currentDoc.httpApiData.example)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      <button
+                        class="copy-btn"
+                        @click="
+                          copyCode(
+                            currentDoc.httpApiData.response
+                              ? currentDoc.httpApiData.response.example
+                              : currentDoc.httpApiData.example,
+                          )
+                        "
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <rect
+                            x="9"
+                            y="9"
+                            width="13"
+                            height="13"
+                            rx="2"
+                            ry="2"
+                          ></rect>
+                          <path
+                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                          ></path>
                         </svg>
                         复制
                       </button>
                     </div>
-                    <pre class="code-box"><code>{{ currentDoc.httpApiData.response ? currentDoc.httpApiData.response.example : currentDoc.httpApiData.example }}</code></pre>
+                    <pre
+                      class="code-box"
+                    ><code>{{ currentDoc.httpApiData.response ? currentDoc.httpApiData.response.example : currentDoc.httpApiData.example }}</code></pre>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <!-- Event API 文档 - Apifox 风格 -->
-          <div v-else-if="currentDoc?.apiType === 'event' && currentDoc.eventData" class="api-doc">
+          <div
+            v-else-if="currentDoc?.apiType === 'event' && currentDoc.eventData"
+            class="api-doc"
+          >
             <!-- 顶部事件信息栏 -->
             <div class="api-header">
               <div class="api-header-left">
                 <div class="api-title-row">
-                  <span class="api-method-badge" :class="currentDoc.eventData.direction === 'client-to-server' ? 'method-up' : 'method-down'">
-                    {{ currentDoc.eventData.direction === 'client-to-server' ? 'EMIT' : 'ON' }}
+                  <span
+                    class="api-method-badge"
+                    :class="
+                      currentDoc.eventData.direction === 'client-to-server'
+                        ? 'method-up'
+                        : 'method-down'
+                    "
+                  >
+                    {{
+                      currentDoc.eventData.direction === 'client-to-server'
+                        ? 'EMIT'
+                        : 'ON'
+                    }}
                   </span>
                   <h1 class="api-title">{{ currentDoc.title }}</h1>
                 </div>
                 <div class="api-event-path">
                   <span class="event-path-label">事件名称</span>
-                  <code class="event-path-value">{{ currentDoc.eventData.eventName }}</code>
-                  <span v-if="currentDoc.eventData.pairedEvent" class="event-paired-label">
-                    配对响应: <code>{{ currentDoc.eventData.pairedEvent }}</code>
+                  <code class="event-path-value">{{
+                    currentDoc.eventData.eventName
+                  }}</code>
+                  <span
+                    v-if="currentDoc.eventData.pairedEvent"
+                    class="event-paired-label"
+                  >
+                    配对响应:
+                    <code>{{ currentDoc.eventData.pairedEvent }}</code>
                   </span>
                 </div>
               </div>
               <div class="api-header-right">
-                <span class="api-direction-badge" :class="currentDoc.eventData.direction">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <template v-if="currentDoc.eventData.direction === 'client-to-server'">
+                <span
+                  class="api-direction-badge"
+                  :class="currentDoc.eventData.direction"
+                >
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                  >
+                    <template
+                      v-if="
+                        currentDoc.eventData.direction === 'client-to-server'
+                      "
+                    >
                       <line x1="5" y1="12" x2="19" y2="12"></line>
                       <polyline points="12 5 19 12 12 19"></polyline>
                     </template>
@@ -549,7 +739,11 @@ onMounted(async () => {
                       <polyline points="12 19 5 12 12 5"></polyline>
                     </template>
                   </svg>
-                  {{ currentDoc.eventData.direction === 'client-to-server' ? '客户端 → 服务端' : '服务端 → 客户端' }}
+                  {{
+                    currentDoc.eventData.direction === 'client-to-server'
+                      ? '客户端 → 服务端'
+                      : '服务端 → 客户端'
+                  }}
                 </span>
               </div>
             </div>
@@ -563,13 +757,23 @@ onMounted(async () => {
                 <!-- 请求参数区块 -->
                 <div v-if="currentDoc.eventData.request" class="params-block">
                   <div class="params-block-header">
-                    <span class="params-block-title">{{ currentDoc.eventData.direction === 'client-to-server' ? '请求参数' : '消息结构' }}</span>
-                    <span class="params-schema-name">{{ currentDoc.eventData.request.name }}</span>
+                    <span class="params-block-title">{{
+                      currentDoc.eventData.direction === 'client-to-server'
+                        ? '请求参数'
+                        : '消息结构'
+                    }}</span>
+                    <span class="params-schema-name">{{
+                      currentDoc.eventData.request.name
+                    }}</span>
                   </div>
                   <div class="params-table-wrap">
                     <Table
                       :columns="paramColumns"
-                      :data-source="transformFieldsToTreeData(currentDoc.eventData.request.fields)"
+                      :data-source="
+                        transformFieldsToTreeData(
+                          currentDoc.eventData.request.fields,
+                        )
+                      "
                       :pagination="false"
                       :default-expand-all-rows="false"
                       size="small"
@@ -578,19 +782,29 @@ onMounted(async () => {
                       <template #bodyCell="{ column, record }">
                         <template v-if="column.key === 'name'">
                           <div class="param-name-cell">
-                            <span v-if="record.required" class="required-dot">*</span>
+                            <span v-if="record.required" class="required-dot"
+                              >*</span
+                            >
                             <code class="param-name">{{ record.name }}</code>
                           </div>
                         </template>
                         <template v-else-if="column.key === 'type'">
-                          <span class="type-pill" :class="'type-' + record.type">{{ record.type }}</span>
+                          <span
+                            class="type-pill"
+                            :class="'type-' + record.type"
+                            >{{ record.type }}</span
+                          >
                         </template>
                         <template v-else-if="column.key === 'required'">
-                          <span v-if="record.required" class="req-yes">必填</span>
+                          <span v-if="record.required" class="req-yes"
+                            >必填</span
+                          >
                           <span v-else class="req-no">可选</span>
                         </template>
                         <template v-else-if="column.key === 'description'">
-                          <span class="param-desc">{{ record.description }}</span>
+                          <span class="param-desc">{{
+                            record.description
+                          }}</span>
                           <span v-if="record.enumValues" class="enum-values">
                             枚举值: {{ record.enumValues.join(' | ') }}
                           </span>
@@ -601,15 +815,29 @@ onMounted(async () => {
                 </div>
 
                 <!-- 响应参数区块 -->
-                <div v-if="currentDoc.eventData.response" class="params-block" style="margin-top: 24px;">
+                <div
+                  v-if="currentDoc.eventData.response"
+                  class="params-block"
+                  style="margin-top: 24px"
+                >
                   <div class="params-block-header">
-                    <span class="params-block-title">{{ currentDoc.eventData.direction === 'server-to-client' ? '请求参数' : '响应参数' }}</span>
-                    <span class="params-schema-name">{{ currentDoc.eventData.response.name }}</span>
+                    <span class="params-block-title">{{
+                      currentDoc.eventData.direction === 'server-to-client'
+                        ? '请求参数'
+                        : '响应参数'
+                    }}</span>
+                    <span class="params-schema-name">{{
+                      currentDoc.eventData.response.name
+                    }}</span>
                   </div>
                   <div class="params-table-wrap">
                     <Table
                       :columns="paramColumns"
-                      :data-source="transformFieldsToTreeData(currentDoc.eventData.response.fields)"
+                      :data-source="
+                        transformFieldsToTreeData(
+                          currentDoc.eventData.response.fields,
+                        )
+                      "
                       :pagination="false"
                       :default-expand-all-rows="false"
                       size="small"
@@ -618,19 +846,29 @@ onMounted(async () => {
                       <template #bodyCell="{ column, record }">
                         <template v-if="column.key === 'name'">
                           <div class="param-name-cell">
-                            <span v-if="record.required" class="required-dot">*</span>
+                            <span v-if="record.required" class="required-dot"
+                              >*</span
+                            >
                             <code class="param-name">{{ record.name }}</code>
                           </div>
                         </template>
                         <template v-else-if="column.key === 'type'">
-                          <span class="type-pill" :class="'type-' + record.type">{{ record.type }}</span>
+                          <span
+                            class="type-pill"
+                            :class="'type-' + record.type"
+                            >{{ record.type }}</span
+                          >
                         </template>
                         <template v-else-if="column.key === 'required'">
-                          <span v-if="record.required" class="req-yes">必填</span>
+                          <span v-if="record.required" class="req-yes"
+                            >必填</span
+                          >
                           <span v-else class="req-no">可选</span>
                         </template>
                         <template v-else-if="column.key === 'description'">
-                          <span class="param-desc">{{ record.description }}</span>
+                          <span class="param-desc">{{
+                            record.description
+                          }}</span>
                           <span v-if="record.enumValues" class="enum-values">
                             枚举值: {{ record.enumValues.join(' | ') }}
                           </span>
@@ -646,44 +884,90 @@ onMounted(async () => {
                 <div v-if="currentDoc.eventData.request" class="example-block">
                   <div class="example-header">
                     <span class="example-title">
-                      {{ currentDoc.eventData.direction === 'client-to-server' ? '请求示例' : '消息示例' }}
+                      {{
+                        currentDoc.eventData.direction === 'client-to-server'
+                          ? '请求示例'
+                          : '消息示例'
+                      }}
                     </span>
                     <span class="example-lang">JSON</span>
                   </div>
                   <div class="code-box">
                     <div class="code-box-header">
                       <span class="code-box-title">application/json</span>
-                      <button class="copy-btn" @click="copyCode(currentDoc.eventData.request.example)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      <button
+                        class="copy-btn"
+                        @click="copyCode(currentDoc.eventData.request.example)"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <rect
+                            x="9"
+                            y="9"
+                            width="13"
+                            height="13"
+                            rx="2"
+                            ry="2"
+                          ></rect>
+                          <path
+                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                          ></path>
                         </svg>
                         复制
                       </button>
                     </div>
-                    <pre class="code-box"><code>{{ currentDoc.eventData.request.example }}</code></pre>
+                    <pre
+                      class="code-box"
+                    ><code>{{ currentDoc.eventData.request.example }}</code></pre>
                   </div>
                 </div>
 
                 <div v-if="currentDoc.eventData.response" class="example-block">
                   <div class="example-header">
                     <span class="example-title">
-                      {{ currentDoc.eventData.direction === 'server-to-client' ? '请求示例' : '响应示例' }}
+                      {{
+                        currentDoc.eventData.direction === 'server-to-client'
+                          ? '请求示例'
+                          : '响应示例'
+                      }}
                     </span>
                     <span class="example-lang">JSON</span>
                   </div>
                   <div class="code-box">
                     <div class="code-box-header">
                       <span class="code-box-title">application/json</span>
-                      <button class="copy-btn" @click="copyCode(currentDoc.eventData.response.example)">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      <button
+                        class="copy-btn"
+                        @click="copyCode(currentDoc.eventData.response.example)"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                        >
+                          <rect
+                            x="9"
+                            y="9"
+                            width="13"
+                            height="13"
+                            rx="2"
+                            ry="2"
+                          ></rect>
+                          <path
+                            d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                          ></path>
                         </svg>
                         复制
                       </button>
                     </div>
-                    <pre class="code-box"><code>{{ currentDoc.eventData.response.example }}</code></pre>
+                    <pre
+                      class="code-box"
+                    ><code>{{ currentDoc.eventData.response.example }}</code></pre>
                   </div>
                 </div>
               </div>
@@ -691,7 +975,11 @@ onMounted(async () => {
           </div>
           <!-- HTML 文档 -->
           <article v-else-if="state.content" class="doc-article">
-            <div ref="contentRef" v-html="state.content" @click="handleContentClick" />
+            <div
+              ref="contentRef"
+              v-html="state.content"
+              @click="handleContentClick"
+            />
           </article>
         </Spin>
       </main>
@@ -703,7 +991,11 @@ onMounted(async () => {
           <li
             v-for="item in tocItems"
             :key="item.id"
-            :class="['toc-item', `toc-h${item.level}`, { active: activeHeading === item.id }]"
+            :class="[
+              'toc-item',
+              `toc-h${item.level}`,
+              { active: activeHeading === item.id },
+            ]"
             @click="scrollToHeading(item.id)"
           >
             {{ item.text }}
@@ -715,6 +1007,134 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+@keyframes card-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 0.15;
+  }
+}
+
+@keyframes card-pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+@media (max-width: 768px) {
+  :deep(.ws-protocol-grid) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  :deep(.ws-event-card) {
+    padding: 20px;
+  }
+}
+
+/* 响应式 - Event 文档 */
+@media (max-width: 768px) {
+  .event-doc {
+    padding: 16px;
+  }
+
+  .event-header h1 {
+    font-size: 24px;
+  }
+
+  .fields-table {
+    font-size: 12px;
+  }
+
+  .fields-table th,
+  .fields-table td {
+    padding: 8px 12px;
+  }
+}
+
+/* 响应式 */
+@media (max-width: 1400px) {
+  .doc-toc {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .doc-layout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .doc-sidebar {
+    width: 100%;
+    height: 300px;
+  }
+
+  .doc-main {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .api-body {
+    grid-template-columns: 1fr;
+  }
+
+  .api-params-col {
+    border-right: none;
+    border-bottom: 1px solid #262626;
+  }
+}
+
+@media (max-width: 768px) {
+  .api-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+
+  .api-title {
+    font-size: 20px;
+  }
+
+  .api-desc {
+    padding: 12px 20px;
+  }
+
+  .api-params-col,
+  .api-examples-col {
+    padding: 16px 20px;
+  }
+
+  .params-table th,
+  .params-table td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
 .doc-layout {
   display: flex;
   gap: 24px;
@@ -724,14 +1144,14 @@ onMounted(async () => {
 
 /* 左侧导航 */
 .doc-sidebar {
-  width: 280px;
-  flex-shrink: 0;
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
-  background: var(--vben-background-color);
-  border-radius: 8px;
-  border: 1px solid var(--vben-border-color);
+  width: 280px;
   overflow: hidden;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 8px;
 }
 
 .sidebar-search {
@@ -745,14 +1165,14 @@ onMounted(async () => {
 
 .sidebar-tree {
   flex: 1;
-  overflow-y: auto;
   padding: 8px;
+  overflow-y: auto;
 }
 
 .tree-node {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
   padding: 4px 8px;
   border-radius: 4px;
   transition: all 0.2s;
@@ -782,8 +1202,8 @@ onMounted(async () => {
 }
 
 :deep(.ant-tree-node-selected) .tree-node {
-  background: var(--vben-primary-color-light);
   color: var(--vben-primary-color);
+  background: var(--vben-primary-color-light);
 }
 
 :deep(.ant-tree-node-selected) .tree-icon {
@@ -794,11 +1214,11 @@ onMounted(async () => {
 .doc-main {
   flex: 1;
   min-width: 0;
-  background: var(--vben-background-color);
-  border-radius: 8px;
-  border: 1px solid var(--vben-border-color);
-  overflow-y: auto;
   padding: 32px;
+  overflow-y: auto;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 8px;
 }
 
 .doc-empty-state {
@@ -813,14 +1233,14 @@ onMounted(async () => {
 }
 
 .welcome-icon {
-  font-size: 64px;
   margin-bottom: 16px;
+  font-size: 64px;
 }
 
 .welcome-box h2 {
+  margin-bottom: 8px;
   font-size: 24px;
   font-weight: 600;
-  margin-bottom: 8px;
   color: var(--vben-text-color);
 }
 
@@ -838,36 +1258,36 @@ onMounted(async () => {
 /* ===== HTML 文档内容样式 ===== */
 :deep(.page-doc) {
   max-width: 860px;
-  margin: 0 auto;
   padding: 8px 0;
-  color: var(--vben-text-color);
+  margin: 0 auto;
   line-height: 1.7;
+  color: var(--vben-text-color);
 }
 
 :deep(.page-hero) {
-  text-align: center;
   padding: 48px 24px 40px;
   margin-bottom: 40px;
+  text-align: center;
   border-bottom: 1px solid var(--vben-border-color);
 }
 
 :deep(.page-hero-icon) {
-  font-size: 56px;
   margin-bottom: 16px;
+  font-size: 56px;
   line-height: 1;
 }
 
 :deep(.page-hero h1) {
+  margin: 0 0 12px;
   font-size: 32px;
   font-weight: 700;
-  margin: 0 0 12px;
   color: var(--vben-text-color);
 }
 
 :deep(.page-hero p) {
+  margin: 0;
   font-size: 15px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 :deep(.page-section) {
@@ -875,27 +1295,27 @@ onMounted(async () => {
 }
 
 :deep(.page-section h2) {
+  padding-bottom: 10px;
+  margin: 0 0 16px;
   font-size: 20px;
   font-weight: 600;
-  margin: 0 0 16px;
   color: var(--vben-text-color);
-  padding-bottom: 10px;
   border-bottom: 2px solid var(--vben-border-color);
 }
 
 :deep(.page-section-desc) {
+  margin-bottom: 16px;
   font-size: 14px;
   color: var(--vben-text-color-secondary);
-  margin-bottom: 16px;
 }
 
 :deep(.page-section code) {
   padding: 2px 6px;
-  background: var(--vben-background-color-deep);
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
   font-size: 13px;
   color: #e83e8c;
+  background: var(--vben-background-color-deep);
+  border-radius: 3px;
 }
 
 /* 卡片网格 */
@@ -908,43 +1328,45 @@ onMounted(async () => {
 
 :deep(.page-card) {
   display: flex;
-  align-items: flex-start;
   gap: 14px;
+  align-items: flex-start;
   padding: 18px;
+  background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 8px;
-  background: var(--vben-background-color);
-  transition: box-shadow 0.2s, border-color 0.2s;
+  transition:
+    box-shadow 0.2s,
+    border-color 0.2s;
 }
 
 :deep(.page-card:hover) {
   border-color: #1890ff;
-  box-shadow: 0 2px 12px rgba(24, 144, 255, 0.1);
+  box-shadow: 0 2px 12px rgb(24 144 255 / 10%);
 }
 
 :deep(.page-card-icon) {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
   font-size: 20px;
-  flex-shrink: 0;
+  border-radius: 8px;
 }
 
 :deep(.page-card-body h3) {
+  margin: 0 0 4px;
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 4px;
   color: var(--vben-text-color);
 }
 
 :deep(.page-card-body p) {
-  font-size: 13px;
-  color: var(--vben-text-color-secondary);
   margin: 0;
+  font-size: 13px;
   line-height: 1.5;
+  color: var(--vben-text-color-secondary);
 }
 
 /* WebSocket 协议网格 - 现代动画卡片 */
@@ -955,67 +1377,38 @@ onMounted(async () => {
   padding: 0;
 }
 
-@keyframes cardSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes glowPulse {
-  0%, 100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.15;
-  }
-}
-
-@keyframes cardPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.6;
-  }
-}
-
 :deep(.ws-event-card) {
   position: relative;
   padding: 24px;
+  overflow: hidden;
+  cursor: pointer;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 12px;
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  cursor: pointer;
-  overflow: hidden;
-  animation: cardSlideIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation: card-slide-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
   animation-delay: var(--delay);
 }
 
 :deep(.ws-event-card::before) {
-  content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg,
-    rgba(24, 144, 255, 0.05) 0%,
-    rgba(82, 196, 26, 0.05) 100%);
+  content: '';
+  background: linear-gradient(
+    135deg,
+    rgb(24 144 255 / 5%) 0%,
+    rgb(82 196 26 / 5%) 100%
+  );
   opacity: 0;
   transition: opacity 0.4s;
 }
 
 :deep(.ws-event-card:hover) {
-  transform: translateY(-8px) scale(1.02);
-  border-color: rgba(24, 144, 255, 0.4);
+  border-color: rgb(24 144 255 / 40%);
   box-shadow:
-    0 12px 24px rgba(0, 0, 0, 0.12),
-    0 0 0 1px rgba(24, 144, 255, 0.1);
+    0 12px 24px rgb(0 0 0 / 12%),
+    0 0 0 1px rgb(24 144 255 / 10%);
+  transform: translateY(-8px) scale(1.02);
 }
 
 :deep(.ws-event-card:hover::before) {
@@ -1025,13 +1418,13 @@ onMounted(async () => {
 :deep(.ws-card-glow) {
   position: absolute;
   inset: -2px;
+  z-index: -1;
   background: linear-gradient(135deg, #1890ff, #52c41a);
   border-radius: 12px;
   opacity: 0;
   filter: blur(12px);
   transition: opacity 0.4s;
-  z-index: -1;
-  animation: glowPulse 3s ease-in-out infinite;
+  animation: glow-pulse 3s ease-in-out infinite;
 }
 
 :deep(.ws-event-card:hover .ws-card-glow) {
@@ -1041,23 +1434,23 @@ onMounted(async () => {
 :deep(.ws-card-pulse) {
   position: absolute;
   inset: 0;
-  border: 2px solid rgba(24, 144, 255, 0.3);
+  pointer-events: none;
+  border: 2px solid rgb(24 144 255 / 30%);
   border-radius: 12px;
   opacity: 0;
-  pointer-events: none;
 }
 
 :deep(.ws-event-card:hover .ws-card-pulse) {
-  animation: cardPulse 2s ease-out infinite;
+  animation: card-pulse 2s ease-out infinite;
 }
 
 :deep(.ws-card-header) {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
   position: relative;
   z-index: 1;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 :deep(.ws-direction-icon) {
@@ -1071,27 +1464,35 @@ onMounted(async () => {
 }
 
 :deep(.ws-card-up .ws-direction-icon) {
-  background: linear-gradient(135deg, rgba(24, 144, 255, 0.15), rgba(9, 109, 217, 0.1));
   color: #40a9ff;
-  border: 1px solid rgba(24, 144, 255, 0.3);
+  background: linear-gradient(
+    135deg,
+    rgb(24 144 255 / 15%),
+    rgb(9 109 217 / 10%)
+  );
+  border: 1px solid rgb(24 144 255 / 30%);
 }
 
 :deep(.ws-card-down .ws-direction-icon) {
-  background: linear-gradient(135deg, rgba(82, 196, 26, 0.15), rgba(56, 158, 13, 0.1));
   color: #73d13d;
-  border: 1px solid rgba(82, 196, 26, 0.3);
+  background: linear-gradient(
+    135deg,
+    rgb(82 196 26 / 15%),
+    rgb(56 158 13 / 10%)
+  );
+  border: 1px solid rgb(82 196 26 / 30%);
 }
 
 :deep(.ws-event-card:hover .ws-direction-icon) {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
   transform: scale(1.15) rotate(5deg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 :deep(.ws-direction-label) {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.3px;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
   transition: all 0.3s;
 }
 
@@ -1104,13 +1505,13 @@ onMounted(async () => {
 }
 
 :deep(.ws-event-name) {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 8px;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
   font-size: 16px;
   font-weight: 700;
   color: var(--vben-text-color);
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 1;
   transition: all 0.3s;
 }
 
@@ -1120,11 +1521,11 @@ onMounted(async () => {
 }
 
 :deep(.ws-event-desc) {
+  position: relative;
+  z-index: 1;
   font-size: 13px;
   line-height: 1.6;
   color: var(--vben-text-color-secondary);
-  position: relative;
-  z-index: 1;
   transition: color 0.3s;
 }
 
@@ -1132,59 +1533,48 @@ onMounted(async () => {
   color: var(--vben-text-color);
 }
 
-@media (max-width: 768px) {
-  :deep(.ws-protocol-grid) {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  :deep(.ws-event-card) {
-    padding: 20px;
-  }
-}
-
 /* 步骤列表 */
 :deep(.steps-list) {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0;
-  position: relative;
   padding-left: 48px;
 }
 
 :deep(.steps-list::before) {
-  content: '';
   position: absolute;
-  left: 16px;
   top: 20px;
   bottom: 20px;
+  left: 16px;
   width: 2px;
+  content: '';
   background: var(--vben-border-color);
 }
 
 :deep(.step-item) {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 24px;
   position: relative;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 24px;
 }
 
 :deep(.step-num) {
   position: absolute;
   left: -48px;
-  width: 32px;
-  height: 32px;
-  background: #1890ff;
-  color: white;
-  border-radius: 50%;
+  z-index: 1;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
   font-size: 14px;
   font-weight: 700;
-  flex-shrink: 0;
-  z-index: 1;
+  color: white;
+  background: #1890ff;
+  border-radius: 50%;
 }
 
 :deep(.step-body) {
@@ -1196,76 +1586,76 @@ onMounted(async () => {
 }
 
 :deep(.step-body h4) {
+  margin: 0 0 6px;
   font-size: 15px;
   font-weight: 600;
-  margin: 0 0 6px;
   color: var(--vben-text-color);
 }
 
 :deep(.step-body p) {
+  margin: 0;
   font-size: 13px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 :deep(.step-body code) {
   padding: 1px 5px;
-  background: var(--vben-background-color-deep);
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   color: #e83e8c;
+  background: var(--vben-background-color-deep);
+  border-radius: 3px;
 }
 
 /* 代码块 */
 :deep(.code-block) {
-  border-radius: 8px;
+  margin-bottom: 16px;
   overflow: hidden;
   border: 1px solid #3e3e3e;
-  margin-bottom: 16px;
+  border-radius: 8px;
 }
 
 :deep(.code-header) {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 16px;
   background: #2d2d2d;
   border-bottom: 1px solid #3e3e3e;
 }
 
 :deep(.code-lang) {
-  color: #888;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  color: #888;
 }
 
 :deep(.copy-btn) {
   padding: 3px 10px;
+  font-size: 12px;
+  color: #aaa;
+  cursor: pointer;
   background: transparent;
   border: 1px solid #555;
   border-radius: 4px;
-  color: #aaa;
-  font-size: 12px;
-  cursor: pointer;
   transition: all 0.2s;
 }
 
 :deep(.copy-btn:hover) {
-  background: #3e3e3e;
   color: #fff;
+  background: #3e3e3e;
   border-color: #666;
 }
 
 :deep(.code-block pre) {
-  margin: 0;
   padding: 16px;
-  background: #1e1e1e;
+  margin: 0;
   overflow-x: auto;
+  background: #1e1e1e;
 }
 
 :deep(.code-block code) {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.6;
   color: #d4d4d4;
@@ -1280,20 +1670,20 @@ onMounted(async () => {
 }
 
 :deep(.run-option h4) {
+  margin: 0 0 10px;
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 10px;
   color: var(--vben-text-color);
 }
 
 /* 提示框 */
 :deep(.alert) {
   display: flex;
-  align-items: flex-start;
   gap: 12px;
+  align-items: flex-start;
   padding: 16px;
-  border-radius: 8px;
   margin-bottom: 16px;
+  border-radius: 8px;
 }
 
 :deep(.alert-success) {
@@ -1307,23 +1697,23 @@ onMounted(async () => {
 }
 
 :deep(.alert-icon) {
-  font-size: 20px;
   flex-shrink: 0;
+  font-size: 20px;
   line-height: 1.4;
 }
 
 :deep(.alert strong) {
   display: block;
+  margin-bottom: 4px;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 4px;
   color: var(--vben-text-color);
 }
 
 :deep(.alert p) {
+  margin: 0;
   font-size: 13px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 /* 结果卡片 */
@@ -1335,8 +1725,8 @@ onMounted(async () => {
 
 :deep(.result-card) {
   padding: 24px;
-  border-radius: 8px;
   text-align: center;
+  border-radius: 8px;
 }
 
 :deep(.result-success) {
@@ -1350,30 +1740,30 @@ onMounted(async () => {
 }
 
 :deep(.result-icon) {
-  font-size: 32px;
   margin-bottom: 12px;
+  font-size: 32px;
 }
 
 :deep(.result-card h4) {
+  margin: 0 0 8px;
   font-size: 16px;
   font-weight: 600;
-  margin: 0 0 8px;
   color: var(--vben-text-color);
 }
 
 :deep(.result-card p) {
+  margin: 0;
   font-size: 13px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 :deep(.result-card code) {
   padding: 1px 5px;
-  background: rgba(0,0,0,0.06);
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   color: #e83e8c;
+  background: rgb(0 0 0 / 6%);
+  border-radius: 3px;
 }
 
 /* 安全提示 */
@@ -1385,40 +1775,40 @@ onMounted(async () => {
 
 :deep(.tip-item) {
   display: flex;
-  align-items: flex-start;
   gap: 14px;
+  align-items: flex-start;
   padding: 16px;
+  background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 8px;
-  background: var(--vben-background-color);
 }
 
 :deep(.tip-icon) {
-  font-size: 22px;
   flex-shrink: 0;
+  font-size: 22px;
   line-height: 1.3;
 }
 
 :deep(.tip-item h4) {
+  margin: 0 0 4px;
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 4px;
   color: var(--vben-text-color);
 }
 
 :deep(.tip-item p) {
+  margin: 0;
   font-size: 13px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 :deep(.tip-item code) {
   padding: 1px 5px;
-  background: var(--vben-background-color-deep);
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   color: #e83e8c;
+  background: var(--vben-background-color-deep);
+  border-radius: 3px;
 }
 
 /* 鉴权结果网格 */
@@ -1432,24 +1822,24 @@ onMounted(async () => {
 :deep(.auth-result-card) {
   position: relative;
   padding: 24px;
-  border-radius: 12px;
-  border: 2px solid;
-  background: var(--vben-background-color);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
+  background: var(--vben-background-color);
+  border: 2px solid;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 :deep(.auth-result-card::before) {
-  content: '';
   position: absolute;
   inset: 0;
+  content: '';
   opacity: 0.05;
   transition: opacity 0.3s;
 }
 
 :deep(.auth-result-card:hover) {
+  box-shadow: 0 12px 24px rgb(0 0 0 / 15%);
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
 }
 
 :deep(.auth-result-card:hover::before) {
@@ -1473,22 +1863,22 @@ onMounted(async () => {
 }
 
 :deep(.auth-result-header) {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
   position: relative;
   z-index: 1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 :deep(.auth-result-icon) {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
   transition: transform 0.3s;
 }
 
@@ -1497,19 +1887,19 @@ onMounted(async () => {
 }
 
 :deep(.auth-success .auth-result-icon) {
-  background: rgba(82, 196, 26, 0.15);
   color: #52c41a;
+  background: rgb(82 196 26 / 15%);
 }
 
 :deep(.auth-fail .auth-result-icon) {
-  background: rgba(255, 77, 79, 0.15);
   color: #ff4d4f;
+  background: rgb(255 77 79 / 15%);
 }
 
 :deep(.auth-result-header h4) {
+  margin: 0;
   font-size: 16px;
   font-weight: 600;
-  margin: 0;
   color: var(--vben-text-color);
 }
 
@@ -1519,9 +1909,9 @@ onMounted(async () => {
 }
 
 :deep(.auth-result-body > p) {
+  margin: 0 0 12px;
   font-size: 13px;
   color: var(--vben-text-color-secondary);
-  margin: 0 0 12px;
 }
 
 :deep(.auth-result-fields) {
@@ -1536,22 +1926,22 @@ onMounted(async () => {
   justify-content: space-between;
   padding: 8px 12px;
   background: var(--vben-background-color-deep);
-  border-radius: 6px;
   border: 1px solid var(--vben-border-color);
+  border-radius: 6px;
 }
 
 :deep(.auth-field-key) {
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
-  color: var(--vben-text-color-secondary);
   font-weight: 500;
+  color: var(--vben-text-color-secondary);
 }
 
 :deep(.auth-field-value) {
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
-  color: var(--vben-text-color);
   font-weight: 600;
+  color: var(--vben-text-color);
 }
 
 :deep(.auth-value-true) {
@@ -1570,30 +1960,34 @@ onMounted(async () => {
 }
 
 :deep(.security-card) {
+  position: relative;
   display: flex;
   gap: 14px;
   padding: 20px;
+  overflow: hidden;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 10px;
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  position: relative;
-  overflow: hidden;
 }
 
 :deep(.security-card::before) {
-  content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.03) 100%);
+  content: '';
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgb(255 255 255 / 3%) 100%
+  );
   opacity: 0;
   transition: opacity 0.3s;
 }
 
 :deep(.security-card:hover) {
+  border-color: rgb(24 144 255 / 40%);
+  box-shadow: 0 8px 16px rgb(0 0 0 / 10%);
   transform: translateY(-4px);
-  border-color: rgba(24, 144, 255, 0.4);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
 :deep(.security-card:hover::before) {
@@ -1601,13 +1995,13 @@ onMounted(async () => {
 }
 
 :deep(.security-card-icon) {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
   transition: transform 0.3s;
 }
 
@@ -1616,61 +2010,45 @@ onMounted(async () => {
 }
 
 :deep(.security-card-body) {
-  flex: 1;
   position: relative;
   z-index: 1;
+  flex: 1;
 }
 
 :deep(.security-card-body h4) {
+  margin: 0 0 6px;
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 6px;
   color: var(--vben-text-color);
 }
 
 :deep(.security-card-body p) {
-  font-size: 13px;
-  color: var(--vben-text-color-secondary);
   margin: 0;
+  font-size: 13px;
   line-height: 1.6;
+  color: var(--vben-text-color-secondary);
 }
 
 :deep(.security-card-body code) {
   padding: 1px 5px;
-  background: var(--vben-background-color-deep);
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   color: #e83e8c;
-}
-
-/* 响应式 - Event 文档 */
-@media (max-width: 768px) {
-  .event-doc {
-    padding: 16px;
-  }
-
-  .event-header h1 {
-    font-size: 24px;
-  }
-
-  .fields-table {
-    font-size: 12px;
-  }
-
-  .fields-table th,
-  .fields-table td {
-    padding: 8px 12px;
-  }
+  background: var(--vben-background-color-deep);
+  border-radius: 3px;
 }
 
 /* Hero Section */
 .hero-section {
-  text-align: center;
   padding: 60px 24px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-radius: 16px;
   margin-bottom: 48px;
+  text-align: center;
+  background: linear-gradient(
+    135deg,
+    rgb(102 126 234 / 10%) 0%,
+    rgb(118 75 162 / 10%) 100%
+  );
+  border-radius: 16px;
 }
 
 .hero-icon {
@@ -1679,10 +2057,10 @@ onMounted(async () => {
   justify-content: center;
   width: 96px;
   height: 96px;
+  margin-bottom: 24px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 24px rgb(102 126 234 / 30%);
 }
 
 .hero-icon svg {
@@ -1690,19 +2068,18 @@ onMounted(async () => {
 }
 
 .hero-section h1 {
+  margin-bottom: 16px;
   font-size: 48px;
   font-weight: 800;
-  margin-bottom: 16px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .hero-subtitle {
+  margin: 0;
   font-size: 18px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 /* Feature Grid */
@@ -1715,41 +2092,41 @@ onMounted(async () => {
 
 .feature-card {
   padding: 32px 24px;
+  cursor: pointer;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 12px;
   transition: all 0.3s ease;
-  cursor: pointer;
 }
 
 .feature-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
   border-color: #667eea;
+  box-shadow: 0 12px 24px rgb(0 0 0 / 10%);
+  transform: translateY(-4px);
 }
 
 .feature-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 56px;
+  height: 56px;
   margin-bottom: 20px;
+  border-radius: 12px;
 }
 
 .feature-card h3 {
+  margin-bottom: 12px;
   font-size: 20px;
   font-weight: 600;
-  margin-bottom: 12px;
   color: var(--vben-text-color);
 }
 
 .feature-card p {
-  font-size: 14px;
-  color: var(--vben-text-color-secondary);
-  line-height: 1.6;
   margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--vben-text-color-secondary);
 }
 
 /* Protocol Section */
@@ -1777,18 +2154,18 @@ onMounted(async () => {
 .config-section h2,
 .run-section h2 {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
+  margin-bottom: 24px;
   font-size: 28px;
   font-weight: 700;
-  margin-bottom: 24px;
   color: var(--vben-text-color);
 }
 
 .section-desc {
+  margin-bottom: 24px;
   font-size: 16px;
   color: var(--vben-text-color-secondary);
-  margin-bottom: 24px;
 }
 
 .protocol-grid {
@@ -1798,43 +2175,43 @@ onMounted(async () => {
 }
 
 .protocol-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 20px;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   transition: all 0.2s;
 }
 
 .protocol-item:hover {
   border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 4px 12px rgb(102 126 234 / 10%);
 }
 
 .protocol-badge {
   display: inline-block;
+  width: fit-content;
   padding: 4px 12px;
-  border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  width: fit-content;
+  border-radius: 12px;
 }
 
 .protocol-badge.client {
-  background: #e6f7ff;
   color: #1890ff;
+  background: #e6f7ff;
 }
 
 .protocol-badge.server {
-  background: #f6ffed;
   color: #52c41a;
+  background: #f6ffed;
 }
 
 .protocol-badge.bidirectional {
-  background: #fff7e6;
   color: #fa8c16;
+  background: #fff7e6;
 }
 
 .protocol-item strong {
@@ -1854,36 +2231,36 @@ onMounted(async () => {
 }
 
 .timeline::before {
-  content: '';
   position: absolute;
-  left: 15px;
   top: 0;
   bottom: 0;
+  left: 15px;
   width: 2px;
+  content: '';
   background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
 }
 
 .timeline-item {
   position: relative;
-  margin-bottom: 32px;
   display: flex;
   gap: 20px;
+  margin-bottom: 32px;
 }
 
 .timeline-marker {
   position: absolute;
   left: -40px;
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: 700;
+  width: 32px;
+  height: 32px;
   font-size: 14px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgb(102 126 234 / 30%);
 }
 
 .timeline-content {
@@ -1895,16 +2272,16 @@ onMounted(async () => {
 }
 
 .timeline-content h4 {
+  margin-bottom: 8px;
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 8px;
   color: var(--vben-text-color);
 }
 
 .timeline-content p {
+  margin: 0;
   font-size: 14px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 /* Requirements Grid */
@@ -1917,10 +2294,10 @@ onMounted(async () => {
 
 .requirement-card {
   padding: 24px;
+  text-align: center;
   background: var(--vben-background-color);
   border: 2px solid var(--vben-border-color);
   border-radius: 12px;
-  text-align: center;
   transition: all 0.3s;
 }
 
@@ -1930,14 +2307,18 @@ onMounted(async () => {
 }
 
 .requirement-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 16px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 16px;
+  background: linear-gradient(
+    135deg,
+    rgb(102 126 234 / 10%) 0%,
+    rgb(118 75 162 / 10%) 100%
+  );
+  border-radius: 16px;
 }
 
 .requirement-icon svg {
@@ -1945,16 +2326,16 @@ onMounted(async () => {
 }
 
 .requirement-card h4 {
+  margin-bottom: 8px;
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 8px;
   color: var(--vben-text-color);
 }
 
 .requirement-card p {
+  margin: 0;
   font-size: 14px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 /* Run Options */
@@ -1966,28 +2347,32 @@ onMounted(async () => {
 
 .run-option h4 {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 16px;
   color: var(--vben-text-color);
 }
 
 /* Success Banner */
 .success-banner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
   padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(82, 196, 26, 0.1) 0%, rgba(82, 196, 26, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(82 196 26 / 10%) 0%,
+    rgb(82 196 26 / 5%) 100%
+  );
   border-left: 4px solid #52c41a;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
 }
 
 .success-banner svg {
-  color: #52c41a;
   flex-shrink: 0;
+  color: #52c41a;
 }
 
 .success-banner p {
@@ -1998,19 +2383,23 @@ onMounted(async () => {
 
 /* Info Banner */
 .info-banner {
+  display: flex;
+  gap: 16px;
+  align-items: center;
   padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.05) 100%);
+  margin-bottom: 32px;
+  background: linear-gradient(
+    135deg,
+    rgb(24 144 255 / 10%) 0%,
+    rgb(24 144 255 / 5%) 100%
+  );
   border-left: 4px solid #1890ff;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 32px;
 }
 
 .info-banner svg {
-  color: #1890ff;
   flex-shrink: 0;
+  color: #1890ff;
 }
 
 .info-banner p {
@@ -2028,32 +2417,40 @@ onMounted(async () => {
 
 .result-card {
   padding: 32px 24px;
-  border-radius: 12px;
   text-align: center;
+  border-radius: 12px;
 }
 
 .result-card.success {
-  background: linear-gradient(135deg, rgba(82, 196, 26, 0.1) 0%, rgba(82, 196, 26, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(82 196 26 / 10%) 0%,
+    rgb(82 196 26 / 5%) 100%
+  );
   border: 2px solid #52c41a;
 }
 
 .result-card.failure {
-  background: linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(245, 34, 45, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgb(245 34 45 / 10%) 0%,
+    rgb(245 34 45 / 5%) 100%
+  );
   border: 2px solid #f5222d;
 }
 
 .result-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 64px;
   height: 64px;
   margin: 0 auto 16px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .result-card.success .result-icon {
-  background: rgba(82, 196, 26, 0.2);
+  background: rgb(82 196 26 / 20%);
 }
 
 .result-card.success .result-icon svg {
@@ -2061,7 +2458,7 @@ onMounted(async () => {
 }
 
 .result-card.failure .result-icon {
-  background: rgba(245, 34, 45, 0.2);
+  background: rgb(245 34 45 / 20%);
 }
 
 .result-card.failure .result-icon svg {
@@ -2069,16 +2466,16 @@ onMounted(async () => {
 }
 
 .result-card h4 {
+  margin-bottom: 12px;
   font-size: 20px;
   font-weight: 600;
-  margin-bottom: 12px;
   color: var(--vben-text-color);
 }
 
 .result-card p {
+  margin: 0;
   font-size: 14px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 /* Security Tips */
@@ -2088,27 +2485,27 @@ onMounted(async () => {
 }
 
 .security-tip {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
   padding: 20px;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 8px;
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
 }
 
 .tip-icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
 .tip-icon.warning {
-  background: rgba(250, 140, 22, 0.1);
+  background: rgb(250 140 22 / 10%);
 }
 
 .tip-icon.warning svg {
@@ -2116,7 +2513,7 @@ onMounted(async () => {
 }
 
 .tip-icon.info {
-  background: rgba(24, 144, 255, 0.1);
+  background: rgb(24 144 255 / 10%);
 }
 
 .tip-icon.info svg {
@@ -2124,7 +2521,7 @@ onMounted(async () => {
 }
 
 .tip-icon.success {
-  background: rgba(82, 196, 26, 0.1);
+  background: rgb(82 196 26 / 10%);
 }
 
 .tip-icon.success svg {
@@ -2132,45 +2529,45 @@ onMounted(async () => {
 }
 
 .security-tip h4 {
+  margin-bottom: 4px;
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 4px;
   color: var(--vben-text-color);
 }
 
 .security-tip p {
+  margin: 0;
   font-size: 14px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 /* 右侧目录 */
 .doc-toc {
-  width: 220px;
-  flex-shrink: 0;
-  background: var(--vben-background-color);
-  border-radius: 8px;
-  border: 1px solid var(--vben-border-color);
-  padding: 16px;
-  max-height: calc(100vh - 180px);
-  overflow-y: auto;
   position: sticky;
   top: 0;
+  flex-shrink: 0;
+  width: 220px;
+  max-height: calc(100vh - 180px);
+  padding: 16px;
+  overflow-y: auto;
+  background: var(--vben-background-color);
+  border: 1px solid var(--vben-border-color);
+  border-radius: 8px;
 }
 
 .toc-title {
+  padding-bottom: 8px;
+  margin-bottom: 12px;
   font-size: 14px;
   font-weight: 600;
   color: var(--vben-text-color);
-  margin-bottom: 12px;
-  padding-bottom: 8px;
   border-bottom: 1px solid var(--vben-border-color);
 }
 
 .toc-list {
-  list-style: none;
   padding: 0;
   margin: 0;
+  list-style: none;
 }
 
 .toc-item {
@@ -2178,21 +2575,21 @@ onMounted(async () => {
   font-size: 13px;
   color: var(--vben-text-color-secondary);
   cursor: pointer;
+  border-left: 2px solid transparent;
   border-radius: 4px;
   transition: all 0.2s;
-  border-left: 2px solid transparent;
 }
 
 .toc-item:hover {
-  background: var(--vben-background-color-deep);
   color: var(--vben-text-color);
+  background: var(--vben-background-color-deep);
 }
 
 .toc-item.active {
+  font-weight: 500;
   color: var(--vben-primary-color);
   background: var(--vben-primary-color-light);
   border-left-color: var(--vben-primary-color);
-  font-weight: 500;
 }
 
 .toc-h1 {
@@ -2213,60 +2610,37 @@ onMounted(async () => {
   font-size: 12px;
 }
 
-/* 响应式 */
-@media (max-width: 1400px) {
-  .doc-toc {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .doc-layout {
-    flex-direction: column;
-    height: auto;
-  }
-
-  .doc-sidebar {
-    width: 100%;
-    height: 300px;
-  }
-
-  .doc-main {
-    padding: 16px;
-  }
-}
-
 /* HTML 文档内容样式 */
 .doc-content {
   max-width: 900px;
-  margin: 0 auto;
   padding: 24px;
+  margin: 0 auto;
   line-height: 1.8;
   color: var(--vben-text-color);
 }
 
 .doc-content h1 {
+  padding-bottom: 12px;
+  margin-bottom: 24px;
   font-size: 32px;
   font-weight: 700;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid var(--vben-border-color);
   color: var(--vben-text-color);
+  border-bottom: 2px solid var(--vben-border-color);
 }
 
 .doc-content h2 {
-  font-size: 24px;
-  font-weight: 600;
   margin-top: 40px;
   margin-bottom: 16px;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--vben-text-color);
 }
 
 .doc-content h3 {
-  font-size: 20px;
-  font-weight: 600;
   margin-top: 32px;
   margin-bottom: 12px;
+  font-size: 20px;
+  font-weight: 600;
   color: var(--vben-text-color);
 }
 
@@ -2277,11 +2651,11 @@ onMounted(async () => {
 
 .doc-content code {
   padding: 2px 6px;
-  background: var(--vben-background-color-deep);
-  border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: Consolas, Monaco, monospace;
   font-size: 14px;
   color: #e83e8c;
+  background: var(--vben-background-color-deep);
+  border-radius: 3px;
 }
 
 .doc-content .doc-section {
@@ -2291,8 +2665,8 @@ onMounted(async () => {
 .doc-content .feature-list,
 .doc-content .protocol-list,
 .doc-content .steps-list {
-  margin: 16px 0;
   padding-left: 24px;
+  margin: 16px 0;
 }
 
 .doc-content .feature-list li,
@@ -2308,38 +2682,38 @@ onMounted(async () => {
 
 .doc-content .code-block {
   margin: 20px 0;
+  overflow: hidden;
   background: #1e1e1e;
   border-radius: 8px;
-  overflow: hidden;
 }
 
 .doc-content .code-block-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 12px 16px;
   background: #2d2d2d;
   border-bottom: 1px solid #3e3e3e;
 }
 
 .doc-content .code-lang {
-  color: #d4d4d4;
+  font-family: Consolas, Monaco, monospace;
   font-size: 13px;
   font-weight: 500;
-  font-family: 'Consolas', 'Monaco', monospace;
+  color: #d4d4d4;
 }
 
 .doc-content .copy-btn {
   display: flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
   padding: 4px 10px;
+  font-size: 12px;
+  color: #d4d4d4;
+  cursor: pointer;
   background: transparent;
   border: 1px solid #3e3e3e;
   border-radius: 4px;
-  color: #d4d4d4;
-  font-size: 12px;
-  cursor: pointer;
   transition: all 0.2s;
 }
 
@@ -2349,33 +2723,33 @@ onMounted(async () => {
 }
 
 .doc-content .code-block pre {
-  margin: 0;
   padding: 16px;
+  margin: 0;
   overflow-x: auto;
   background: #1e1e1e;
 }
 
 .doc-content .code-block code {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  padding: 0;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.6;
   color: #d4d4d4;
   background: transparent;
-  padding: 0;
 }
 
 /* ========== Apifox 风格 API 文档样式 ========== */
 
 .api-doc {
+  min-height: 100%;
   padding: 0;
   background: #0a0a0a;
-  min-height: 100%;
 }
 
 .api-header {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
+  justify-content: space-between;
   padding: 24px 32px;
   background: linear-gradient(135deg, #141414 0%, #1a1a1a 100%);
   border-bottom: 1px solid #262626;
@@ -2387,8 +2761,8 @@ onMounted(async () => {
 
 .api-title-row {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
   margin-bottom: 12px;
 }
 
@@ -2399,38 +2773,38 @@ onMounted(async () => {
   min-width: 56px;
   height: 28px;
   padding: 0 12px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   font-weight: 700;
-  font-family: 'Consolas', 'Monaco', monospace;
-  border-radius: 4px;
   letter-spacing: 0.5px;
+  border-radius: 4px;
 }
 
 .api-method-badge.method-up {
-  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+  background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+  box-shadow: 0 2px 8px rgb(24 144 255 / 30%);
 }
 
 .api-method-badge.method-down {
-  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
   color: #fff;
-  box-shadow: 0 2px 8px rgba(82, 196, 26, 0.3);
+  background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);
+  box-shadow: 0 2px 8px rgb(82 196 26 / 30%);
 }
 
 .api-title {
+  margin: 0;
   font-size: 24px;
   font-weight: 600;
-  margin: 0;
   color: #fff;
   letter-spacing: -0.3px;
 }
 
 .api-event-path {
   display: flex;
-  align-items: center;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
 }
 
 .event-path-label {
@@ -2439,30 +2813,30 @@ onMounted(async () => {
 }
 
 .event-path-value {
-  font-family: 'Consolas', 'Monaco', monospace;
+  padding: 4px 10px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 14px;
   color: #52c41a;
-  background: rgba(82, 196, 26, 0.1);
-  padding: 4px 10px;
+  background: rgb(82 196 26 / 10%);
+  border: 1px solid rgb(82 196 26 / 20%);
   border-radius: 4px;
-  border: 1px solid rgba(82, 196, 26, 0.2);
 }
 
 .event-paired-label {
+  margin-left: 12px;
   font-size: 13px;
   color: #8c8c8c;
-  margin-left: 12px;
 }
 
 .event-paired-label code {
-  font-family: 'Consolas', 'Monaco', monospace;
+  padding: 3px 8px;
+  margin-left: 4px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 13px;
   color: #faad14;
-  background: rgba(250, 173, 20, 0.1);
-  padding: 3px 8px;
+  background: rgb(250 173 20 / 10%);
+  border: 1px solid rgb(250 173 20 / 20%);
   border-radius: 4px;
-  border: 1px solid rgba(250, 173, 20, 0.2);
-  margin-left: 4px;
 }
 
 .api-header-right {
@@ -2472,25 +2846,25 @@ onMounted(async () => {
 
 .api-direction-badge {
   display: inline-flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
   padding: 6px 14px;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 6px;
   white-space: nowrap;
+  border-radius: 6px;
 }
 
 .api-direction-badge.client-to-server {
-  background: rgba(24, 144, 255, 0.12);
   color: #1890ff;
-  border: 1px solid rgba(24, 144, 255, 0.3);
+  background: rgb(24 144 255 / 12%);
+  border: 1px solid rgb(24 144 255 / 30%);
 }
 
 .api-direction-badge.server-to-client {
-  background: rgba(82, 196, 26, 0.12);
   color: #52c41a;
-  border: 1px solid rgba(82, 196, 26, 0.3);
+  background: rgb(82 196 26 / 12%);
+  border: 1px solid rgb(82 196 26 / 30%);
 }
 
 .api-desc {
@@ -2511,15 +2885,15 @@ onMounted(async () => {
 
 .api-params-col {
   padding: 24px 32px;
+  overflow-y: auto;
   background: #0a0a0a;
   border-right: 1px solid #262626;
-  overflow-y: auto;
 }
 
 .api-examples-col {
   padding: 24px 32px;
-  background: #000;
   overflow-y: auto;
+  background: #000;
 }
 
 .params-block {
@@ -2534,8 +2908,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
   padding-bottom: 12px;
+  margin-bottom: 16px;
   border-bottom: 2px solid #1890ff;
 }
 
@@ -2546,20 +2920,20 @@ onMounted(async () => {
 }
 
 .params-schema-name {
-  font-family: 'Consolas', 'Monaco', monospace;
+  padding: 4px 10px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   color: #1890ff;
-  background: rgba(24, 144, 255, 0.1);
-  padding: 4px 10px;
+  background: rgb(24 144 255 / 10%);
+  border: 1px solid rgb(24 144 255 / 25%);
   border-radius: 4px;
-  border: 1px solid rgba(24, 144, 255, 0.25);
 }
 
 .params-table-wrap {
+  overflow: visible;
   background: #141414;
   border: 1px solid #262626;
   border-radius: 6px;
-  overflow: visible;
 }
 
 .params-table {
@@ -2573,10 +2947,10 @@ onMounted(async () => {
 
 .params-table th {
   padding: 10px 14px;
-  text-align: left;
   font-size: 12px;
   font-weight: 600;
   color: #8c8c8c;
+  text-align: left;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid #262626;
@@ -2622,17 +2996,17 @@ onMounted(async () => {
 }
 
 .nested-param {
-  padding-left: 24px;
   position: relative;
+  padding-left: 24px;
 }
 
 .nested-param::before {
-  content: '';
   position: absolute;
-  left: 12px;
   top: 50%;
+  left: 12px;
   width: 6px;
   height: 1px;
+  content: '';
   background: #434343;
 }
 
@@ -2644,23 +3018,23 @@ onMounted(async () => {
 
 .param-name-cell {
   display: flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
 }
 
 .required-dot {
-  color: #ff4d4f;
   font-size: 14px;
   font-weight: bold;
   line-height: 1;
+  color: #ff4d4f;
 }
 
 .param-name {
-  font-family: 'Consolas', 'Monaco', monospace;
+  padding: 2px 6px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 13px;
   color: #d4d4d4;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2px 6px;
+  background: rgb(255 255 255 / 5%);
   border-radius: 3px;
 }
 
@@ -2674,93 +3048,93 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   padding: 3px 8px;
-  border-radius: 3px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 11px;
   font-weight: 600;
-  font-family: 'Consolas', 'Monaco', monospace;
   text-transform: uppercase;
   letter-spacing: 0.3px;
+  border-radius: 3px;
 }
 
 .type-pill.type-string {
-  background: rgba(24, 144, 255, 0.15);
   color: #40a9ff;
-  border: 1px solid rgba(24, 144, 255, 0.3);
+  background: rgb(24 144 255 / 15%);
+  border: 1px solid rgb(24 144 255 / 30%);
 }
 
 .type-pill.type-number,
 .type-pill.type-int,
 .type-pill.type-int64 {
-  background: rgba(82, 196, 26, 0.15);
   color: #73d13d;
-  border: 1px solid rgba(82, 196, 26, 0.3);
+  background: rgb(82 196 26 / 15%);
+  border: 1px solid rgb(82 196 26 / 30%);
 }
 
 .type-pill.type-boolean,
 .type-pill.type-bool {
-  background: rgba(250, 173, 20, 0.15);
   color: #ffc53d;
-  border: 1px solid rgba(250, 173, 20, 0.3);
+  background: rgb(250 173 20 / 15%);
+  border: 1px solid rgb(250 173 20 / 30%);
 }
 
 .type-pill.type-object {
-  background: rgba(114, 46, 209, 0.15);
   color: #b37feb;
-  border: 1px solid rgba(114, 46, 209, 0.3);
+  background: rgb(114 46 209 / 15%);
+  border: 1px solid rgb(114 46 209 / 30%);
 }
 
 .type-pill.type-array {
-  background: rgba(255, 77, 79, 0.15);
   color: #ff7875;
-  border: 1px solid rgba(255, 77, 79, 0.3);
+  background: rgb(255 77 79 / 15%);
+  border: 1px solid rgb(255 77 79 / 30%);
 }
 
 .req-yes {
   display: inline-flex;
   align-items: center;
   padding: 2px 6px;
-  background: rgba(255, 77, 79, 0.12);
-  color: #ff4d4f;
-  border-radius: 3px;
   font-size: 11px;
   font-weight: 600;
+  color: #ff4d4f;
+  background: rgb(255 77 79 / 12%);
+  border-radius: 3px;
 }
 
 .req-no {
-  color: #595959;
   font-size: 12px;
+  color: #595959;
 }
 
 .param-desc {
-  color: #d4d4d4;
   line-height: 1.6;
+  color: #d4d4d4;
 }
 
 .enum-values {
   display: block;
-  margin-top: 6px;
   padding: 6px 10px;
-  background: rgba(250, 173, 20, 0.08);
-  border-left: 2px solid #faad14;
+  margin-top: 6px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   color: #faad14;
-  font-family: 'Consolas', 'Monaco', monospace;
+  background: rgb(250 173 20 / 8%);
+  border-left: 2px solid #faad14;
   border-radius: 3px;
 }
 
 .nested-schema {
-  margin-top: 12px;
   padding: 12px;
+  margin-top: 12px;
   background: #0a0a0a;
   border: 1px solid #262626;
   border-radius: 4px;
 }
 
 .nested-schema-title {
+  margin-bottom: 8px;
   font-size: 12px;
   font-weight: 600;
   color: #8c8c8c;
-  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -2800,8 +3174,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
   padding-bottom: 10px;
+  margin-bottom: 12px;
   border-bottom: 2px solid #52c41a;
 }
 
@@ -2812,29 +3186,29 @@ onMounted(async () => {
 }
 
 .example-lang {
-  font-family: 'Consolas', 'Monaco', monospace;
+  padding: 4px 10px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 11px;
   color: #52c41a;
-  background: rgba(82, 196, 26, 0.1);
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid rgba(82, 196, 26, 0.25);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  background: rgb(82 196 26 / 10%);
+  border: 1px solid rgb(82 196 26 / 25%);
+  border-radius: 4px;
 }
 
 .code-box {
   position: relative;
+  overflow: hidden;
   background: #0a0a0a;
   border: 1px solid #262626;
   border-radius: 6px;
-  overflow: hidden;
 }
 
 .code-box-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 16px;
   background: #141414;
   border-bottom: 1px solid #262626;
@@ -2842,29 +3216,29 @@ onMounted(async () => {
 
 .code-box-title {
   font-size: 12px;
-  color: #8c8c8c;
   font-weight: 500;
+  color: #8c8c8c;
 }
 
 .copy-btn {
   display: flex;
-  align-items: center;
   gap: 6px;
+  align-items: center;
   padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #8c8c8c;
+  cursor: pointer;
   background: transparent;
   border: 1px solid #262626;
   border-radius: 4px;
-  color: #8c8c8c;
-  font-size: 11px;
-  cursor: pointer;
   transition: all 0.2s;
-  font-weight: 500;
 }
 
 .copy-btn:hover {
+  color: #fff;
   background: #1a1a1a;
   border-color: #404040;
-  color: #fff;
 }
 
 .copy-btn svg {
@@ -2873,55 +3247,17 @@ onMounted(async () => {
 }
 
 .code-box pre {
-  margin: 0;
   padding: 16px;
+  margin: 0;
   overflow-x: auto;
   background: #0a0a0a;
 }
 
 .code-box code {
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-family: Consolas, Monaco, 'Courier New', monospace;
   font-size: 13px;
   line-height: 1.7;
   color: #d4d4d4;
-}
-
-@media (max-width: 1200px) {
-  .api-body {
-    grid-template-columns: 1fr;
-  }
-
-  .api-params-col {
-    border-right: none;
-    border-bottom: 1px solid #262626;
-  }
-}
-
-@media (max-width: 768px) {
-  .api-header {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px 20px;
-  }
-
-  .api-title {
-    font-size: 20px;
-  }
-
-  .api-desc {
-    padding: 12px 20px;
-  }
-
-  .api-params-col,
-  .api-examples-col {
-    padding: 16px 20px;
-  }
-
-  .params-table th,
-  .params-table td {
-    padding: 8px 10px;
-    font-size: 12px;
-  }
 }
 
 /* Ant Design Vue Table 树形表格样式覆盖 */
@@ -2930,27 +3266,27 @@ onMounted(async () => {
 }
 
 :deep(.params-tree-table .ant-table) {
-  background: transparent;
   color: var(--vben-text-color);
+  background: transparent;
 }
 
 :deep(.params-tree-table .ant-table-thead > tr > th) {
-  background: #1a1a1a;
-  color: #8c8c8c;
-  border-bottom: 1px solid #262626;
   padding: 10px 14px;
   font-size: 12px;
   font-weight: 600;
+  color: #8c8c8c;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #262626;
 }
 
 :deep(.params-tree-table .ant-table-tbody > tr > td) {
-  background: transparent;
-  border-bottom: 1px solid #1a1a1a;
   padding: 12px 14px;
   font-size: 13px;
   color: var(--vben-text-color);
+  background: transparent;
+  border-bottom: 1px solid #1a1a1a;
 }
 
 :deep(.params-tree-table .ant-table-tbody > tr:hover > td) {
@@ -2959,8 +3295,8 @@ onMounted(async () => {
 
 :deep(.params-tree-table .ant-table-row-expand-icon) {
   color: #8c8c8c;
-  border: 1px solid #434343;
   background: transparent;
+  border: 1px solid #434343;
 }
 
 :deep(.params-tree-table .ant-table-row-expand-icon:hover) {
@@ -2970,52 +3306,62 @@ onMounted(async () => {
 
 :deep(.params-tree-table .ant-table-row-expand-icon::before),
 :deep(.params-tree-table .ant-table-row-expand-icon::after) {
-  background: currentColor;
+  background: currentcolor;
 }
 
 :deep(.params-tree-table .ant-table-tbody > tr.ant-table-row-level-1 > td) {
   background: #0d0d0d;
 }
 
-:deep(.params-tree-table .ant-table-tbody > tr.ant-table-row-level-1:hover > td) {
+:deep(
+  .params-tree-table .ant-table-tbody > tr.ant-table-row-level-1:hover > td
+) {
   background: #121212 !important;
 }
 
-:deep(.params-tree-table .ant-table-tbody > tr.ant-table-row-level-1 > td:first-child) {
+:deep(
+  .params-tree-table
+    .ant-table-tbody
+    > tr.ant-table-row-level-1
+    > td:first-child
+) {
   border-left: 3px solid #1890ff;
 }
 
 /* ===== DeployAgent 概述页面样式 ===== */
 :deep(.deploy-agent-overview) {
   max-width: 1000px;
-  margin: 0 auto;
   padding: 24px;
+  margin: 0 auto;
 }
 
 :deep(.overview-header) {
-  text-align: center;
   padding: 40px 20px 32px;
   margin-bottom: 32px;
-  background: linear-gradient(135deg, rgba(24, 144, 255, 0.05) 0%, rgba(82, 196, 26, 0.05) 100%);
+  text-align: center;
+  background: linear-gradient(
+    135deg,
+    rgb(24 144 255 / 5%) 0%,
+    rgb(82 196 26 / 5%) 100%
+  );
   border-radius: 16px;
 }
 
 :deep(.overview-header h1) {
+  margin: 0 0 16px;
   font-size: 36px;
   font-weight: 700;
-  margin: 0 0 16px;
   background: linear-gradient(135deg, #1890ff 0%, #52c41a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 :deep(.overview-desc) {
-  font-size: 16px;
-  color: var(--vben-text-color-secondary);
   max-width: 600px;
   margin: 0 auto;
+  font-size: 16px;
   line-height: 1.6;
+  color: var(--vben-text-color-secondary);
 }
 
 /* 特性网格 */
@@ -3030,8 +3376,8 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
   padding: 24px 20px;
+  text-align: center;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 12px;
@@ -3039,34 +3385,34 @@ onMounted(async () => {
 }
 
 :deep(.feature-item:hover) {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
   border-color: transparent;
+  box-shadow: 0 12px 28px rgb(0 0 0 / 12%);
+  transform: translateY(-8px);
 }
 
 :deep(.feature-icon) {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  width: 64px;
+  height: 64px;
   margin-bottom: 16px;
+  font-size: 28px;
+  border-radius: 16px;
 }
 
 :deep(.feature-content h3) {
+  margin: 0 0 8px;
   font-size: 18px;
   font-weight: 600;
-  margin: 0 0 8px;
   color: var(--vben-text-color);
 }
 
 :deep(.feature-content p) {
-  font-size: 14px;
-  color: var(--vben-text-color-secondary);
-  line-height: 1.5;
   margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--vben-text-color-secondary);
 }
 
 /* 快速开始 */
@@ -3075,9 +3421,9 @@ onMounted(async () => {
 }
 
 :deep(.quick-start h2) {
+  margin: 0 0 24px;
   font-size: 24px;
   font-weight: 600;
-  margin: 0 0 24px;
   color: var(--vben-text-color);
 }
 
@@ -3089,8 +3435,8 @@ onMounted(async () => {
 
 :deep(.start-step) {
   display: flex;
-  align-items: flex-start;
   gap: 20px;
+  align-items: flex-start;
   padding: 24px;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
@@ -3100,35 +3446,35 @@ onMounted(async () => {
 
 :deep(.start-step:hover) {
   border-color: #1890ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
+  box-shadow: 0 4px 12px rgb(24 144 255 / 10%);
 }
 
 :deep(.step-number) {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #1890ff 0%, #52c41a 100%);
-  color: white;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  width: 48px;
+  height: 48px;
   font-size: 20px;
   font-weight: 700;
-  flex-shrink: 0;
+  color: white;
+  background: linear-gradient(135deg, #1890ff 0%, #52c41a 100%);
+  border-radius: 12px;
 }
 
 :deep(.step-text h4) {
+  margin: 0 0 8px;
   font-size: 16px;
   font-weight: 600;
-  margin: 0 0 8px;
   color: var(--vben-text-color);
 }
 
 :deep(.step-text p) {
-  font-size: 14px;
-  color: var(--vben-text-color-secondary);
-  line-height: 1.5;
   margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--vben-text-color-secondary);
 }
 
 /* 通信协议 */
@@ -3137,9 +3483,9 @@ onMounted(async () => {
 }
 
 :deep(.protocol-section h2) {
+  margin: 0 0 20px;
   font-size: 24px;
   font-weight: 600;
-  margin: 0 0 20px;
   color: var(--vben-text-color);
 }
 
@@ -3151,10 +3497,10 @@ onMounted(async () => {
 
 :deep(.protocol-item) {
   padding: 20px;
+  text-align: center;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 10px;
-  text-align: center;
   transition: all 0.3s ease;
 }
 
@@ -3164,9 +3510,9 @@ onMounted(async () => {
 }
 
 :deep(.protocol-label) {
+  margin-bottom: 8px;
   font-size: 12px;
   color: var(--vben-text-color-secondary);
-  margin-bottom: 8px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -3183,9 +3529,9 @@ onMounted(async () => {
 }
 
 :deep(.access-info h2) {
+  margin: 0 0 20px;
   font-size: 24px;
   font-weight: 600;
-  margin: 0 0 20px;
   color: var(--vben-text-color);
 }
 
@@ -3197,8 +3543,8 @@ onMounted(async () => {
 
 :deep(.access-card) {
   display: flex;
-  align-items: center;
   gap: 16px;
+  align-items: center;
   padding: 20px;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
@@ -3208,43 +3554,43 @@ onMounted(async () => {
 
 :deep(.access-card:hover) {
   border-color: #1890ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.1);
+  box-shadow: 0 4px 12px rgb(24 144 255 / 10%);
 }
 
 :deep(.access-icon) {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background: rgba(24, 144, 255, 0.1);
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  width: 48px;
+  height: 48px;
   font-size: 24px;
-  flex-shrink: 0;
+  background: rgb(24 144 255 / 10%);
+  border-radius: 10px;
 }
 
 :deep(.access-content h4) {
+  margin: 0 0 8px;
   font-size: 14px;
   font-weight: 600;
-  margin: 0 0 8px;
   color: var(--vben-text-color);
 }
 
 :deep(.access-content code) {
   display: block;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-family: Consolas, Monaco, monospace;
   font-size: 13px;
   color: #1890ff;
-  background: rgba(24, 144, 255, 0.05);
-  padding: 4px 8px;
+  background: rgb(24 144 255 / 5%);
   border-radius: 4px;
-  margin-bottom: 4px;
-  font-family: 'Consolas', 'Monaco', monospace;
 }
 
 :deep(.access-content p) {
+  margin: 0;
   font-size: 12px;
   color: var(--vben-text-color-secondary);
-  margin: 0;
 }
 
 /* 部署方式 */
@@ -3253,9 +3599,9 @@ onMounted(async () => {
 }
 
 :deep(.deploy-types h2) {
+  margin: 0 0 20px;
   font-size: 24px;
   font-weight: 600;
-  margin: 0 0 20px;
   color: var(--vben-text-color);
 }
 
@@ -3267,10 +3613,10 @@ onMounted(async () => {
 
 :deep(.deploy-type) {
   padding: 20px;
+  text-align: center;
   background: var(--vben-background-color);
   border: 1px solid var(--vben-border-color);
   border-radius: 10px;
-  text-align: center;
   transition: all 0.3s ease;
 }
 
@@ -3280,21 +3626,21 @@ onMounted(async () => {
 }
 
 :deep(.deploy-type-icon) {
-  font-size: 32px;
   margin-bottom: 12px;
+  font-size: 32px;
 }
 
 :deep(.deploy-type h4) {
+  margin: 0 0 8px;
   font-size: 16px;
   font-weight: 600;
-  margin: 0 0 8px;
   color: var(--vben-text-color);
 }
 
 :deep(.deploy-type p) {
-  font-size: 13px;
-  color: var(--vben-text-color-secondary);
-  line-height: 1.5;
   margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--vben-text-color-secondary);
 }
 </style>

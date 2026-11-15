@@ -63,7 +63,8 @@ const timeRange = computed<{ startMs: number; endMs: number }>(() => {
       endMs: customRange.value[1].valueOf(),
     };
   }
-  const hours = rangePreset.value === '1h' ? 1 : rangePreset.value === '6h' ? 6 : 24;
+  const hours =
+    rangePreset.value === '1h' ? 1 : rangePreset.value === '6h' ? 6 : 24;
   return { startMs: now - hours * 3600 * 1000, endMs: now };
 });
 
@@ -154,9 +155,12 @@ function buildLineOption(
 }
 
 function initCharts() {
-  if (cpuChartRef.value && !cpuChart) cpuChart = echarts.init(cpuChartRef.value);
-  if (memChartRef.value && !memChart) memChart = echarts.init(memChartRef.value);
-  if (netChartRef.value && !netChart) netChart = echarts.init(netChartRef.value);
+  if (cpuChartRef.value && !cpuChart)
+    cpuChart = echarts.init(cpuChartRef.value);
+  if (memChartRef.value && !memChart)
+    memChart = echarts.init(memChartRef.value);
+  if (netChartRef.value && !netChart)
+    netChart = echarts.init(netChartRef.value);
 }
 
 function disposeCharts() {
@@ -172,10 +176,22 @@ function renderCharts() {
   const list = historyList.value;
   if (!list.length) return;
 
-  const cpuData: [number, number][] = list.map((r) => [r.timestamp, r.cpuUsage]);
-  const memData: [number, number][] = list.map((r) => [r.timestamp, r.memUsedPct]);
-  const recvData: [number, number][] = list.map((r) => [r.timestamp, r.netBytesRecv]);
-  const sentData: [number, number][] = list.map((r) => [r.timestamp, r.netBytesSent]);
+  const cpuData: [number, number][] = list.map((r) => [
+    r.timestamp,
+    r.cpuUsage,
+  ]);
+  const memData: [number, number][] = list.map((r) => [
+    r.timestamp,
+    r.memUsedPct,
+  ]);
+  const recvData: [number, number][] = list.map((r) => [
+    r.timestamp,
+    r.netBytesRecv,
+  ]);
+  const sentData: [number, number][] = list.map((r) => [
+    r.timestamp,
+    r.netBytesSent,
+  ]);
 
   cpuChart?.setOption(
     buildLineOption(
@@ -205,7 +221,9 @@ function renderCharts() {
 async function loadSnapshot() {
   statsLoading.value = true;
   try {
-    const res = await ServerManagementApi.getServerStats({ serverId: props.serverId });
+    const res = await ServerManagementApi.getServerStats({
+      serverId: props.serverId,
+    });
     statsData.value = res.stats;
   } catch {
     // ignore
@@ -224,7 +242,9 @@ async function loadHistory() {
       endMs,
       limit: 500,
     });
-    historyList.value = (res.list || []).sort((a, b) => a.timestamp - b.timestamp);
+    historyList.value = (res.list || []).sort(
+      (a, b) => a.timestamp - b.timestamp,
+    );
     await nextTick();
     initCharts();
     renderCharts();
@@ -284,7 +304,7 @@ onUnmounted(() => {
   >
     <div class="monitor-body">
       <!-- 顶部工具栏 -->
-      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
         <Space wrap>
           <RadioGroup
             v-model:value="rangePreset"
@@ -306,7 +326,11 @@ onUnmounted(() => {
             @change="onCustomRangeChange"
           />
         </Space>
-        <Button size="small" :loading="statsLoading || historyLoading" @click="refresh">
+        <Button
+          size="small"
+          :loading="statsLoading || historyLoading"
+          @click="refresh"
+        >
           刷新
         </Button>
       </div>
@@ -321,11 +345,15 @@ onUnmounted(() => {
             </DescriptionsItem>
             <DescriptionsItem label="操作系统">
               {{ props.server.osVersion || props.server.os || '-' }}
-              <span v-if="props.server.arch" class="text-gray-400 ml-1">({{ props.server.arch }})</span>
+              <span v-if="props.server.arch" class="ml-1 text-gray-400"
+                >({{ props.server.arch }})</span
+              >
             </DescriptionsItem>
             <DescriptionsItem label="公网 IP">
               {{ props.server.publicIp || props.server.ip || '-' }}
-              <span v-if="props.server.ipLocation" class="text-gray-400 ml-1">({{ props.server.ipLocation }})</span>
+              <span v-if="props.server.ipLocation" class="ml-1 text-gray-400"
+                >({{ props.server.ipLocation }})</span
+              >
             </DescriptionsItem>
             <DescriptionsItem label="内网 IP">
               {{ props.server.privateIps || '-' }}
@@ -352,7 +380,9 @@ onUnmounted(() => {
               <DescriptionsItem label="运行时间">
                 {{ formatUptime(statsData.uptime) }}
               </DescriptionsItem>
-              <DescriptionsItem label="进程数">{{ statsData.processCount }}</DescriptionsItem>
+              <DescriptionsItem label="进程数">{{
+                statsData.processCount
+              }}</DescriptionsItem>
               <DescriptionsItem label="系统负载 (1/5/15min)">
                 {{ statsData.loadAvg?.load1?.toFixed(2) }} /
                 {{ statsData.loadAvg?.load5?.toFixed(2) }} /
@@ -364,14 +394,17 @@ onUnmounted(() => {
               </DescriptionsItem>
             </Descriptions>
           </div>
-          <div v-else-if="!statsLoading" class="text-center text-gray-400 py-4 text-sm">
+          <div
+            v-else-if="!statsLoading"
+            class="py-4 text-center text-sm text-gray-400"
+          >
             暂无快照数据
           </div>
         </Spin>
 
         <!-- 历史图表 -->
         <Spin :spinning="historyLoading">
-          <div v-if="historyList.length > 0" class="space-y-4 mb-4">
+          <div v-if="historyList.length > 0" class="mb-4 space-y-4">
             <div class="chart-section">
               <div class="chart-title">CPU 使用率 (%)</div>
               <div ref="cpuChartRef" class="chart-canvas" />
@@ -385,31 +418,38 @@ onUnmounted(() => {
               <div ref="netChartRef" class="chart-canvas" />
             </div>
           </div>
-          <div v-else-if="!historyLoading" class="text-center text-gray-400 py-6 text-sm">
+          <div
+            v-else-if="!historyLoading"
+            class="py-6 text-center text-sm text-gray-400"
+          >
             暂无历史数据
           </div>
         </Spin>
 
         <!-- 当前 CPU / 内存进度条 -->
         <Spin :spinning="statsLoading">
-          <div v-if="statsData" class="space-y-3 mb-4">
+          <div v-if="statsData" class="mb-4 space-y-3">
             <div>
-              <div class="text-xs text-gray-400 mb-1">
+              <div class="mb-1 text-xs text-gray-400">
                 CPU 使用率 ({{ statsData.cpu?.coreCount }} 核)
               </div>
               <Progress
                 :percent="Math.round(statsData.cpu?.usagePercent || 0)"
-                :stroke-color="statsData.cpu?.usagePercent > 80 ? '#ff4d4f' : '#1677ff'"
+                :stroke-color="
+                  statsData.cpu?.usagePercent > 80 ? '#ff4d4f' : '#1677ff'
+                "
               />
             </div>
             <div>
-              <div class="text-xs text-gray-400 mb-1">
+              <div class="mb-1 text-xs text-gray-400">
                 内存使用率 — {{ formatBytes(statsData.memory?.used) }} /
                 {{ formatBytes(statsData.memory?.total) }}
               </div>
               <Progress
                 :percent="Math.round(statsData.memory?.usedPercent || 0)"
-                :stroke-color="statsData.memory?.usedPercent > 80 ? '#ff4d4f' : '#52c41a'"
+                :stroke-color="
+                  statsData.memory?.usedPercent > 80 ? '#ff4d4f' : '#52c41a'
+                "
               />
             </div>
           </div>
@@ -418,10 +458,11 @@ onUnmounted(() => {
         <!-- 磁盘 -->
         <Spin :spinning="statsLoading">
           <div v-if="statsData?.disk?.length">
-            <div class="text-xs text-gray-400 mb-2">磁盘</div>
+            <div class="mb-2 text-xs text-gray-400">磁盘</div>
             <div v-for="d in statsData.disk" :key="d.path" class="mb-2">
-              <div class="text-xs text-gray-500 mb-1">
-                {{ d.path }} — {{ formatBytes(d.used) }} / {{ formatBytes(d.total) }}
+              <div class="mb-1 text-xs text-gray-500">
+                {{ d.path }} — {{ formatBytes(d.used) }} /
+                {{ formatBytes(d.total) }}
               </div>
               <Progress
                 :percent="Math.round(d.usedPercent || 0)"
@@ -445,25 +486,24 @@ onUnmounted(() => {
 
 .monitor-scroll {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
   padding-right: 4px;
+  overflow: hidden auto;
 }
 
 .chart-section {
+  padding: 8px 12px 4px;
   background: rgb(255 255 255 / 3%);
   border-radius: 6px;
-  padding: 8px 12px 4px;
 }
 
 .chart-title {
+  margin-bottom: 4px;
   font-size: 12px;
   color: #aaa;
-  margin-bottom: 4px;
 }
 
 .chart-canvas {
-  height: 180px;
   width: 100%;
+  height: 180px;
 }
 </style>

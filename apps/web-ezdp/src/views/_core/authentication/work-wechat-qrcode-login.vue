@@ -99,7 +99,10 @@ async function handleLoginSuccess(accessToken: string) {
 }
 
 // 初始化企业微信登录组件
-async function initWorkWechatLogin(config: { agentId: string; corpId: string }) {
+async function initWorkWechatLogin(config: {
+  agentId: string;
+  corpId: string;
+}) {
   // 先设置为 false，让容器渲染出来
   isLoading.value = false;
 
@@ -174,7 +177,9 @@ const canBackToLogin = computed(() => {
   if (sessionStorage.getItem(SESSION_KEY) === '1') return true;
   const hostname = window.location.hostname;
   if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
-  return /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+|\d+\.\d+\.\d+\.\d+)$/.test(hostname);
+  return /^(10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|192\.168\.\d+\.\d+|\d+\.\d+\.\d+\.\d+)$/.test(
+    hostname,
+  );
 });
 
 // 挂载到 window，供控制台调用：ezdp.enableLogin()
@@ -345,8 +350,8 @@ onMounted(async () => {
 <style scoped>
 .ww-login-container {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   min-height: 300px;
 }
 </style>

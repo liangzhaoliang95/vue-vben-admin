@@ -87,7 +87,7 @@ interface SingleDragState {
 }
 type DropTarget =
   | { type: 'edge'; parentNode: TreeNode; childNode: TreeNode }
-  | { type: 'node-left'; targetNode: TreeNode }  // 拖到节点左侧：成为目标父级（目标继承拖拽节点）
+  | { type: 'node-left'; targetNode: TreeNode } // 拖到节点左侧：成为目标父级（目标继承拖拽节点）
   | { type: 'node-right'; targetNode: TreeNode } // 拖到节点右侧：成为目标子级（拖拽节点继承目标）
   | { type: 'root' };
 
@@ -120,7 +120,14 @@ const groupDrag: GroupConnDrag = {
 function buildTree(): TreeNode[] {
   const map = new Map<string, TreeNode>();
   for (const b of props.branches) {
-    map.set(b.id, { branch: b, children: [], x: 0, y: 0, subtreeWidth: 0, depth: 0 });
+    map.set(b.id, {
+      branch: b,
+      children: [],
+      x: 0,
+      y: 0,
+      subtreeWidth: 0,
+      depth: 0,
+    });
   }
   const roots: TreeNode[] = [];
   for (const b of props.branches) {
@@ -132,7 +139,9 @@ function buildTree(): TreeNode[] {
     }
   }
   function sortChildren(node: TreeNode) {
-    node.children.sort((a, b) => (a.branch.sortOrder ?? 0) - (b.branch.sortOrder ?? 0));
+    node.children.sort(
+      (a, b) => (a.branch.sortOrder ?? 0) - (b.branch.sortOrder ?? 0),
+    );
     for (const child of node.children) sortChildren(child);
   }
   roots.sort((a, b) => (a.branch.sortOrder ?? 0) - (b.branch.sortOrder ?? 0));
@@ -141,7 +150,10 @@ function buildTree(): TreeNode[] {
 }
 
 function calcSubtreeHeight(node: TreeNode): number {
-  if (node.children.length === 0) { node.subtreeWidth = NODE_H; return NODE_H; }
+  if (node.children.length === 0) {
+    node.subtreeWidth = NODE_H;
+    return NODE_H;
+  }
   let total = 0;
   for (let i = 0; i < node.children.length; i++) {
     total += calcSubtreeHeight(node.children[i]!);
@@ -167,7 +179,10 @@ function collectNodes(node: TreeNode, out: TreeNode[]) {
   for (const c of node.children) collectNodes(c, out);
 }
 
-function collectEdges(node: TreeNode, out: { parent: TreeNode; child: TreeNode }[]) {
+function collectEdges(
+  node: TreeNode,
+  out: { parent: TreeNode; child: TreeNode }[],
+) {
   for (const child of node.children) {
     out.push({ parent: node, child });
     collectEdges(child, out);
@@ -178,7 +193,14 @@ function isDark(): boolean {
   return document.documentElement.classList.contains('dark');
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.lineTo(x + w - r, y);
@@ -192,10 +214,15 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-function truncateText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
+function truncateText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+): string {
   if (ctx.measureText(text).width <= maxWidth) return text;
   let result = text;
-  while (result.length > 0 && ctx.measureText(result + '…').width > maxWidth) result = result.slice(0, -1);
+  while (result.length > 0 && ctx.measureText(result + '…').width > maxWidth)
+    result = result.slice(0, -1);
   return result + '…';
 }
 
@@ -211,36 +238,66 @@ function screenToCanvas(clientX: number, clientY: number) {
 
 function hitTestNode(cx: number, cy: number): TreeNode | null {
   for (const node of cachedNodes) {
-    if (cx >= node.x && cx <= node.x + NODE_W && cy >= node.y && cy <= node.y + NODE_H) return node;
+    if (
+      cx >= node.x &&
+      cx <= node.x + NODE_W &&
+      cy >= node.y &&
+      cy <= node.y + NODE_H
+    )
+      return node;
   }
   return null;
 }
 
-function pointToEdgeDist(px: number, py: number, edge: { parent: TreeNode; child: TreeNode }): number {
+function pointToEdgeDist(
+  px: number,
+  py: number,
+  edge: { parent: TreeNode; child: TreeNode },
+): number {
   const { parent, child } = edge;
-  const x0 = parent.x + NODE_W, y0 = parent.y + NODE_H / 2;
-  const x1 = child.x, y1 = child.y + NODE_H / 2;
+  const x0 = parent.x + NODE_W,
+    y0 = parent.y + NODE_H / 2;
+  const x1 = child.x,
+    y1 = child.y + NODE_H / 2;
   const midX = (x0 + x1) / 2;
   let minDist = Number.POSITIVE_INFINITY;
   for (let t = 0; t <= 1; t += 0.05) {
-    const bx = (1-t)**3*x0 + 3*(1-t)**2*t*midX + 3*(1-t)*t**2*midX + t**3*x1;
-    const by = (1-t)**3*y0 + 3*(1-t)**2*t*y0   + 3*(1-t)*t**2*y1   + t**3*y1;
+    const bx =
+      (1 - t) ** 3 * x0 +
+      3 * (1 - t) ** 2 * t * midX +
+      3 * (1 - t) * t ** 2 * midX +
+      t ** 3 * x1;
+    const by =
+      (1 - t) ** 3 * y0 +
+      3 * (1 - t) ** 2 * t * y0 +
+      3 * (1 - t) * t ** 2 * y1 +
+      t ** 3 * y1;
     const d = Math.hypot(px - bx, py - by);
     if (d < minDist) minDist = d;
   }
   return minDist;
 }
 
-function hitTestEdge(cx: number, cy: number): { parent: TreeNode; child: TreeNode } | null {
+function hitTestEdge(
+  cx: number,
+  cy: number,
+): { parent: TreeNode; child: TreeNode } | null {
   const threshold = 15;
   let best: { parent: TreeNode; child: TreeNode } | null = null;
   let bestDist = Number.POSITIVE_INFINITY;
   for (const edge of cachedEdges) {
     if (singleDrag.node) {
-      if (edge.parent.branch.id === singleDrag.node.branch.id || edge.child.branch.id === singleDrag.node.branch.id) continue;
+      if (
+        edge.parent.branch.id === singleDrag.node.branch.id ||
+        edge.child.branch.id === singleDrag.node.branch.id
+      )
+        continue;
     }
     const d = pointToEdgeDist(cx, cy, edge);
-    if (d < threshold && d < bestDist) { bestDist = d; best = edge; }
+    if (d < threshold && d < bestDist) {
+      bestDist = d;
+      best = edge;
+    }
   }
   return best;
 }
@@ -270,7 +327,12 @@ function detectDropTarget(cx: number, cy: number): DropTarget | null {
 
   // 2. 检测是否悬停在边上（插入到边中间）
   const hitEdge = hitTestEdge(cx, cy);
-  if (hitEdge) return { type: 'edge', parentNode: hitEdge.parent, childNode: hitEdge.child };
+  if (hitEdge)
+    return {
+      type: 'edge',
+      parentNode: hitEdge.parent,
+      childNode: hitEdge.child,
+    };
 
   // 3. 空白区域 → 变为根节点
   console.log('[拖拽检测] 空白区域，设为根节点', { cx, cy });
@@ -279,7 +341,9 @@ function detectDropTarget(cx: number, cy: number): DropTarget | null {
 
 function isDescendant(ancestorId: string, targetId: string): boolean {
   const map = new Map<string, string>();
-  for (const b of props.branches) { if (b.parentBranchId) map.set(b.id, b.parentBranchId); }
+  for (const b of props.branches) {
+    if (b.parentBranchId) map.set(b.id, b.parentBranchId);
+  }
   let current = targetId;
   const visited = new Set<string>();
   while (current) {
@@ -292,10 +356,18 @@ function isDescendant(ancestorId: string, targetId: string): boolean {
 }
 
 // ── 选中组的包围盒和连接点 ────────────────────────────────
-function getSelectionBounds(): { minX: number; minY: number; maxX: number; maxY: number } | null {
-  const nodes = cachedNodes.filter(n => selectedNodes.has(n.branch.id));
+function getSelectionBounds(): {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+} | null {
+  const nodes = cachedNodes.filter((n) => selectedNodes.has(n.branch.id));
   if (nodes.length === 0) return null;
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let minX = Infinity,
+    minY = Infinity,
+    maxX = -Infinity,
+    maxY = -Infinity;
   for (const n of nodes) {
     minX = Math.min(minX, n.x);
     minY = Math.min(minY, n.y);
@@ -330,13 +402,16 @@ function hitTestConnPoint(cx: number, cy: number): 'left' | 'right' | null {
 
 // 选中组中深度最浅的节点（作为整组的"根"，用于右侧连接点）
 function getGroupRootNode(): TreeNode | null {
-  const nodes = cachedNodes.filter(n => selectedNodes.has(n.branch.id));
+  const nodes = cachedNodes.filter((n) => selectedNodes.has(n.branch.id));
   if (nodes.length === 0) return null;
   return nodes.reduce((a, b) => (a.depth < b.depth ? a : b));
 }
 
 // ── 执行放置（单节点/选中组）────────────────────────────
-async function executeDrop(target: DropTarget | TreeNode | null, mode: 'single' | 'groupLeft' | 'groupRight') {
+async function executeDrop(
+  target: DropTarget | TreeNode | null,
+  mode: 'single' | 'groupLeft' | 'groupRight',
+) {
   console.log('[executeDrop] 开始执行', { mode, target });
   if (mode === 'single') {
     const dragNode = singleDrag.node;
@@ -353,7 +428,10 @@ async function executeDrop(target: DropTarget | TreeNode | null, mode: 'single' 
     } else if (t.type === 'node-left') {
       // 拖到节点左侧：成为目标父级（目标继承拖拽节点）
       newParentBranchId = '';
-      needUpdateChild = { childId: t.targetNode.branch.id, newParentId: dragId };
+      needUpdateChild = {
+        childId: t.targetNode.branch.id,
+        newParentId: dragId,
+      };
     } else if (t.type === 'node-right') {
       // 拖到节点右侧：成为目标子级（拖拽节点继承目标）
       newParentBranchId = t.targetNode.branch.id;
@@ -364,18 +442,30 @@ async function executeDrop(target: DropTarget | TreeNode | null, mode: 'single' 
 
     // 检查循环依赖
     if (newParentBranchId === dragId) {
-      message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+      message.warning(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf',
+        ),
+      );
       return;
     }
     // 检查：目标节点不能是拖拽节点自己（这个在前面已经排除了，但再检查一次以防万一）
     if (needUpdateChild && needUpdateChild.childId === dragId) {
-      message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+      message.warning(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf',
+        ),
+      );
       return;
     }
 
     // 情况1: 拖拽节点继承某个节点 → 检查目标节点是否是拖拽节点的后代
     if (newParentBranchId && isDescendant(dragId, newParentBranchId)) {
-      message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+      message.warning(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf',
+        ),
+      );
       return;
     }
 
@@ -387,11 +477,17 @@ async function executeDrop(target: DropTarget | TreeNode | null, mode: 'single' 
         dragId,
         targetId: needUpdateChild.childId,
         isCircular,
-        dragNodeName: props.branches.find(b => b.id === dragId)?.name,
-        targetNodeName: props.branches.find(b => b.id === needUpdateChild.childId)?.name,
+        dragNodeName: props.branches.find((b) => b.id === dragId)?.name,
+        targetNodeName: props.branches.find(
+          (b) => b.id === needUpdateChild.childId,
+        )?.name,
       });
       if (isCircular) {
-        message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+        message.warning(
+          $t(
+            'deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf',
+          ),
+        );
         return;
       }
       // 检查：如果拖拽节点和目标节点在同一个继承链中，重新排列也可能形成循环
@@ -403,31 +499,47 @@ async function executeDrop(target: DropTarget | TreeNode | null, mode: 'single' 
         dragId,
         newParentBranchId,
         needUpdateChild,
-        dragNodeName: props.branches.find(b => b.id === dragId)?.name,
-        targetNodeName: needUpdateChild ? props.branches.find(b => b.id === needUpdateChild.childId)?.name : 'none',
+        dragNodeName: props.branches.find((b) => b.id === dragId)?.name,
+        targetNodeName: needUpdateChild
+          ? props.branches.find((b) => b.id === needUpdateChild.childId)?.name
+          : 'none',
       });
 
       // 如果是左侧拖拽（需要两次更新），先断开目标节点的原有父关系
       if (needUpdateChild) {
         // 先把目标节点设为根节点，断开原有关系
-        await updateBranchManagement(needUpdateChild.childId, { parentBranchId: '' });
+        await updateBranchManagement(needUpdateChild.childId, {
+          parentBranchId: '',
+        });
         console.log('[拖拽执行] 断开目标节点原有关系完成');
       }
 
       // 更新拖拽节点的 parentBranchId
-      await updateBranchManagement(dragId, { parentBranchId: newParentBranchId });
+      await updateBranchManagement(dragId, {
+        parentBranchId: newParentBranchId,
+      });
       console.log('[拖拽执行] 更新拖拽节点完成');
 
       // 如果需要，建立新的父子关系
       if (needUpdateChild) {
-        await updateBranchManagement(needUpdateChild.childId, { parentBranchId: needUpdateChild.newParentId });
+        await updateBranchManagement(needUpdateChild.childId, {
+          parentBranchId: needUpdateChild.newParentId,
+        });
         console.log('[拖拽执行] 建立新父子关系完成');
       }
 
-      message.success($t('deploy.packageDeployManagement.branchManagement.topologyDragSuccess'));
+      message.success(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragSuccess',
+        ),
+      );
       emits('refresh');
     } catch {
-      message.error($t('deploy.packageDeployManagement.branchManagement.topologyDragFailed'));
+      message.error(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragFailed',
+        ),
+      );
     }
   } else if (mode === 'groupLeft') {
     // 整组继承某个父节点
@@ -438,24 +550,42 @@ async function executeDrop(target: DropTarget | TreeNode | null, mode: 'single' 
 
     // 检查是否形成循环
     if (selectedNodes.has(dropNode.branch.id)) {
-      message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+      message.warning(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf',
+        ),
+      );
       return;
     }
     if (isDescendant(groupRoot.branch.id, dropNode.branch.id)) {
-      message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+      message.warning(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf',
+        ),
+      );
       return;
     }
 
     try {
       // 所有选中节点都改为继承 dropNode
       for (const id of selectedNodes) {
-        await updateBranchManagement(id, { parentBranchId: dropNode.branch.id });
+        await updateBranchManagement(id, {
+          parentBranchId: dropNode.branch.id,
+        });
       }
-      message.success($t('deploy.packageDeployManagement.branchManagement.topologyDragSuccess'));
+      message.success(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragSuccess',
+        ),
+      );
       selectedNodes.clear();
       emits('refresh');
     } catch {
-      message.error($t('deploy.packageDeployManagement.branchManagement.topologyDragFailed'));
+      message.error(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragFailed',
+        ),
+      );
     }
   } else if (mode === 'groupRight') {
     // 某个节点继承整组（整组的根节点作为父）
@@ -466,22 +596,40 @@ async function executeDrop(target: DropTarget | TreeNode | null, mode: 'single' 
 
     // 检查是否形成循环
     if (selectedNodes.has(dropNode.branch.id)) {
-      message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+      message.warning(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf',
+        ),
+      );
       return;
     }
     if (isDescendant(groupRoot.branch.id, dropNode.branch.id)) {
-      message.warning($t('deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf'));
+      message.warning(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragCannotSelf',
+        ),
+      );
       return;
     }
 
     try {
       // dropNode 继承 groupRoot
-      await updateBranchManagement(dropNode.branch.id, { parentBranchId: groupRoot.branch.id });
-      message.success($t('deploy.packageDeployManagement.branchManagement.topologyDragSuccess'));
+      await updateBranchManagement(dropNode.branch.id, {
+        parentBranchId: groupRoot.branch.id,
+      });
+      message.success(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragSuccess',
+        ),
+      );
       selectedNodes.clear();
       emits('refresh');
     } catch {
-      message.error($t('deploy.packageDeployManagement.branchManagement.topologyDragFailed'));
+      message.error(
+        $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragFailed',
+        ),
+      );
     }
   }
 }
@@ -492,7 +640,8 @@ function redraw() {
   if (!canvas || contentW === 0) return;
   const dark = isDark();
   const dpr = window.devicePixelRatio || 1;
-  const viewW = canvas.width / dpr, viewH = canvas.height / dpr;
+  const viewW = canvas.width / dpr,
+    viewH = canvas.height / dpr;
   const ctx = canvas.getContext('2d')!;
   ctx.save();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -523,8 +672,10 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
   // 绘制连线（箭头从子指向父）
   function drawEdges(node: TreeNode) {
     for (const child of node.children) {
-      const x0 = child.x, y0 = child.y + NODE_H / 2; // 子节点左侧
-      const x1 = node.x + NODE_W, y1 = node.y + NODE_H / 2; // 父节点右侧
+      const x0 = child.x,
+        y0 = child.y + NODE_H / 2; // 子节点左侧
+      const x1 = node.x + NODE_W,
+        y1 = node.y + NODE_H / 2; // 父节点右侧
       const midX = (x0 + x1) / 2;
 
       const isHighlighted =
@@ -556,15 +707,27 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
       ctx.lineTo(x1 - arrowSize, y1 - arrowSize * 0.5);
       ctx.lineTo(x1 - arrowSize, y1 + arrowSize * 0.5);
       ctx.closePath();
-      ctx.fillStyle = isHighlighted ? '#f59e0b' : (dark ? '#4a6fa5' : '#93c5fd');
+      ctx.fillStyle = isHighlighted ? '#f59e0b' : dark ? '#4a6fa5' : '#93c5fd';
       ctx.fill();
 
       if (isHighlighted) {
-        const labelX = (x0 + x1) / 2, labelY = (y0 + y1) / 2;
-        const label = $t('deploy.packageDeployManagement.branchManagement.topologyDragInsert');
-        ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        const textW = ctx.measureText(label).width, pad = 6;
-        roundRect(ctx, labelX - textW / 2 - pad, labelY - 10 - pad, textW + pad * 2, 20 + pad, 4);
+        const labelX = (x0 + x1) / 2,
+          labelY = (y0 + y1) / 2;
+        const label = $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragInsert',
+        );
+        ctx.font =
+          'bold 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        const textW = ctx.measureText(label).width,
+          pad = 6;
+        roundRect(
+          ctx,
+          labelX - textW / 2 - pad,
+          labelY - 10 - pad,
+          textW + pad * 2,
+          20 + pad,
+          4,
+        );
         ctx.fillStyle = '#f59e0b';
         ctx.fill();
         ctx.fillStyle = '#ffffff';
@@ -591,7 +754,8 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
 
   // 绘制节点
   function drawNode(node: TreeNode) {
-    const isDragSource = singleDrag.active && singleDrag.node?.branch.id === node.branch.id;
+    const isDragSource =
+      singleDrag.active && singleDrag.node?.branch.id === node.branch.id;
     const isSelected = selectedNodes.has(node.branch.id);
     if (isDragSource) ctx.globalAlpha = 0.35;
 
@@ -632,7 +796,13 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
       ctx.lineWidth = 3;
       ctx.setLineDash([]);
     } else {
-      ctx.strokeStyle = isRoot ? (dark ? '#60a5fa' : '#93c5fd') : (dark ? '#3b82f6' : '#bfdbfe');
+      ctx.strokeStyle = isRoot
+        ? dark
+          ? '#60a5fa'
+          : '#93c5fd'
+        : dark
+          ? '#3b82f6'
+          : '#bfdbfe';
       ctx.lineWidth = isRoot ? 2 : 1.5;
       ctx.setLineDash([]);
     }
@@ -652,7 +822,11 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
   }
 
   // 绘制节点高亮区域（左右侧提示）
-  function drawNodeHighlight(node: TreeNode, ctx: CanvasRenderingContext2D, dark: boolean) {
+  function drawNodeHighlight(
+    node: TreeNode,
+    ctx: CanvasRenderingContext2D,
+    dark: boolean,
+  ) {
     const isHighlight = node.branch.id === highlightNodeId;
     if (!isHighlight || !highlightSide) return;
 
@@ -736,7 +910,8 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
 
   // 绘制单节点拖拽幽灵
   if (singleDrag.active && singleDrag.node) {
-    const gx = singleDrag.ghostX - NODE_W / 2, gy = singleDrag.ghostY - NODE_H / 2;
+    const gx = singleDrag.ghostX - NODE_W / 2,
+      gy = singleDrag.ghostY - NODE_H / 2;
     ctx.globalAlpha = 0.85;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
     ctx.shadowBlur = 12;
@@ -756,7 +931,8 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.font =
+      'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const label = truncateText(ctx, singleDrag.node.branch.name, NODE_W - 20);
@@ -766,16 +942,26 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
     if (singleDrag.dropTarget) {
       let tip = '';
       if (singleDrag.dropTarget.type === 'root') {
-        tip = $t('deploy.packageDeployManagement.branchManagement.topologyDragToRoot');
+        tip = $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragToRoot',
+        );
       } else if (singleDrag.dropTarget.type === 'node-left') {
-        tip = $t('deploy.packageDeployManagement.branchManagement.topologyDragToParent', { name: singleDrag.dropTarget.targetNode.branch.name });
+        tip = $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragToParent',
+          { name: singleDrag.dropTarget.targetNode.branch.name },
+        );
       } else if (singleDrag.dropTarget.type === 'node-right') {
-        tip = $t('deploy.packageDeployManagement.branchManagement.topologyDragToChild', { name: singleDrag.dropTarget.targetNode.branch.name });
+        tip = $t(
+          'deploy.packageDeployManagement.branchManagement.topologyDragToChild',
+          { name: singleDrag.dropTarget.targetNode.branch.name },
+        );
       }
       if (tip) {
-        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.font =
+          '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         const tipW = ctx.measureText(tip).width;
-        const tipX = gx + NODE_W / 2, tipY = gy + NODE_H + 8;
+        const tipX = gx + NODE_W / 2,
+          tipY = gy + NODE_H + 8;
         roundRect(ctx, tipX - tipW / 2 - 6, tipY - 2, tipW + 12, 20, 4);
         ctx.fillStyle = dark ? 'rgba(30,30,30,0.9)' : 'rgba(0,0,0,0.75)';
         ctx.fill();
@@ -789,7 +975,8 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
 
   // 绘制选中组连接点拖拽幽灵
   if (groupDrag.active && groupDrag.side) {
-    const gx = groupDrag.ghostX, gy = groupDrag.ghostY;
+    const gx = groupDrag.ghostX,
+      gy = groupDrag.ghostY;
     ctx.globalAlpha = 0.85;
     ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
     ctx.shadowBlur = 10;
@@ -813,7 +1000,14 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
       ctx.strokeStyle = groupDrag.side === 'left' ? '#10b981' : '#8b5cf6';
       ctx.lineWidth = 3;
       ctx.setLineDash([4, 3]);
-      roundRect(ctx, groupDrag.dropNode.x, groupDrag.dropNode.y, NODE_W, NODE_H, 8);
+      roundRect(
+        ctx,
+        groupDrag.dropNode.x,
+        groupDrag.dropNode.y,
+        NODE_W,
+        NODE_H,
+        8,
+      );
       ctx.stroke();
       ctx.setLineDash([]);
     }
@@ -821,7 +1015,8 @@ function drawContent(ctx: CanvasRenderingContext2D, dark: boolean) {
 }
 
 function initCanvas() {
-  const canvas = canvasRef.value, container = containerRef.value;
+  const canvas = canvasRef.value,
+    container = containerRef.value;
   if (!canvas || !container) return;
   const roots = buildTree();
   if (roots.length === 0) return;
@@ -841,19 +1036,21 @@ function initCanvas() {
 
   const allNodes: TreeNode[] = [];
   for (const r of roots) collectNodes(r, allNodes);
-  const maxDepth = Math.max(...allNodes.map(n => n.depth));
+  const maxDepth = Math.max(...allNodes.map((n) => n.depth));
   const totalWidth = PADDING * 2 + (maxDepth + 1) * (NODE_W + H_GAP) - H_GAP;
 
   contentW = totalWidth;
 
   const dpr = window.devicePixelRatio || 1;
-  const viewW = container.clientWidth, viewH = container.clientHeight;
+  const viewW = container.clientWidth,
+    viewH = container.clientHeight;
   canvas.width = viewW * dpr;
   canvas.height = viewH * dpr;
   canvas.style.width = `${viewW}px`;
   canvas.style.height = `${viewH}px`;
 
-  const scaleX = viewW / totalWidth, scaleY = viewH / totalHeight;
+  const scaleX = viewW / totalWidth,
+    scaleY = viewH / totalHeight;
   scale = Math.min(scaleX, scaleY, 1) * 0.9;
 
   offsetX = (viewW - totalWidth * scale) / 2;
@@ -867,7 +1064,8 @@ function onWheel(e: WheelEvent) {
   const canvas = canvasRef.value;
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
-  const mouseX = e.clientX - rect.left, mouseY = e.clientY - rect.top;
+  const mouseX = e.clientX - rect.left,
+    mouseY = e.clientY - rect.top;
   const delta = e.deltaY > 0 ? 0.9 : 1.1;
   const newScale = Math.min(Math.max(scale * delta, 0.1), 5);
   offsetX = mouseX - (mouseX - offsetX) * (newScale / scale);
@@ -1002,7 +1200,12 @@ function onMouseUp(e: MouseEvent) {
 
       selectedNodes.clear();
       for (const node of cachedNodes) {
-        if (node.x + NODE_W >= x1 && node.x <= x2 && node.y + NODE_H >= y1 && node.y <= y2) {
+        if (
+          node.x + NODE_W >= x1 &&
+          node.x <= x2 &&
+          node.y + NODE_H >= y1 &&
+          node.y <= y2
+        ) {
           selectedNodes.add(node.branch.id);
         }
       }
@@ -1027,7 +1230,10 @@ function onMouseUp(e: MouseEvent) {
     // 选中组连接点拖拽结束
     if (groupDrag.active && groupDrag.side) {
       if (groupDrag.dropNode) {
-        executeDrop(groupDrag.dropNode, groupDrag.side === 'left' ? 'groupLeft' : 'groupRight');
+        executeDrop(
+          groupDrag.dropNode,
+          groupDrag.side === 'left' ? 'groupLeft' : 'groupRight',
+        );
       }
       groupDrag.active = false;
       groupDrag.side = null;
@@ -1038,7 +1244,9 @@ function onMouseUp(e: MouseEvent) {
   }
 }
 
-function onContextMenu(e: MouseEvent) { e.preventDefault(); }
+function onContextMenu(e: MouseEvent) {
+  e.preventDefault();
+}
 
 function bindEvents() {
   const canvas = canvasRef.value;
@@ -1060,30 +1268,40 @@ function unbindEvents() {
   canvas.removeEventListener('contextmenu', onContextMenu);
 }
 
-watch(() => props.open, async (val) => {
-  if (val) {
-    await nextTick();
-    scale = 1; offsetX = 0; offsetY = 0;
-    selectedNodes.clear();
-    selBox.active = false;
-    singleDrag.active = false;
-    groupDrag.active = false;
-    initCanvas();
-    bindEvents();
-  } else {
-    unbindEvents();
-  }
-});
+watch(
+  () => props.open,
+  async (val) => {
+    if (val) {
+      await nextTick();
+      scale = 1;
+      offsetX = 0;
+      offsetY = 0;
+      selectedNodes.clear();
+      selBox.active = false;
+      singleDrag.active = false;
+      groupDrag.active = false;
+      initCanvas();
+      bindEvents();
+    } else {
+      unbindEvents();
+    }
+  },
+);
 
-watch(() => props.branches, async () => {
-  if (props.open) {
-    await nextTick();
-    selectedNodes.clear();
-    initCanvas();
-  }
-});
+watch(
+  () => props.branches,
+  async () => {
+    if (props.open) {
+      await nextTick();
+      selectedNodes.clear();
+      initCanvas();
+    }
+  },
+);
 
-onUnmounted(() => { unbindEvents(); });
+onUnmounted(() => {
+  unbindEvents();
+});
 </script>
 
 <template>
@@ -1100,30 +1318,56 @@ onUnmounted(() => { unbindEvents(); });
       <div class="topology-legend">
         <span class="legend-item">
           <span class="legend-dot" style="background: #0ea5e9" />
-          {{ $t('deploy.packageDeployManagement.branchManagement.topologyLeafBranch') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.topologyLeafBranch',
+            )
+          }}
         </span>
         <span class="legend-item">
           <span class="legend-dot" style="background: #3b82f6" />
-          {{ $t('deploy.packageDeployManagement.branchManagement.topologyChildBranch') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.topologyChildBranch',
+            )
+          }}
         </span>
         <span class="legend-item">
           <span class="legend-dot" style="background: #1d4ed8" />
-          {{ $t('deploy.packageDeployManagement.branchManagement.topologyRootBranch') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.topologyRootBranch',
+            )
+          }}
         </span>
         <span class="legend-item">
           <span class="legend-dot" style="background: #9ca3af" />
-          {{ $t('deploy.packageDeployManagement.branchManagement.topologyDisabledBranch') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.topologyDisabledBranch',
+            )
+          }}
         </span>
         <span class="legend-item">
           <span class="legend-conn" style="background: #10b981" />
-          {{ $t('deploy.packageDeployManagement.branchManagement.topologyLeftConn') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.topologyLeftConn',
+            )
+          }}
         </span>
         <span class="legend-item">
           <span class="legend-conn" style="background: #8b5cf6" />
-          {{ $t('deploy.packageDeployManagement.branchManagement.topologyRightConn') }}
+          {{
+            $t(
+              'deploy.packageDeployManagement.branchManagement.topologyRightConn',
+            )
+          }}
         </span>
         <span class="legend-tip">
-          {{ $t('deploy.packageDeployManagement.branchManagement.topologyTip') }}
+          {{
+            $t('deploy.packageDeployManagement.branchManagement.topologyTip')
+          }}
         </span>
       </div>
     </div>
@@ -1161,22 +1405,22 @@ onUnmounted(() => { unbindEvents(); });
   gap: 12px;
   align-items: center;
   padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 6px;
   font-size: 12px;
   color: #6b7280;
+  background: rgb(255 255 255 / 85%);
+  border-radius: 6px;
   backdrop-filter: blur(4px);
 }
 
 :global(.dark) .topology-legend {
-  background: rgba(30, 30, 30, 0.85);
   color: #9ca3af;
+  background: rgb(30 30 30 / 85%);
 }
 
 .legend-item {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
 }
 
 .legend-dot {
@@ -1194,7 +1438,7 @@ onUnmounted(() => { unbindEvents(); });
 }
 
 .legend-tip {
-  color: #9ca3af;
   font-size: 11px;
+  color: #9ca3af;
 }
 </style>

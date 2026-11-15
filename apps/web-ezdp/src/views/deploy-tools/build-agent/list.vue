@@ -57,7 +57,8 @@ const businessStore = useBusinessStore();
 
 // 打开文档中心
 function openDocs() {
-  const baseUrl = window.location.origin + window.location.pathname.replace(/\/$/, '');
+  const baseUrl =
+    window.location.origin + window.location.pathname.replace(/\/$/, '');
   window.open(`${baseUrl}#/docs?doc=buildAgent-overview`, '_blank');
 }
 
@@ -184,7 +185,10 @@ function setSortKey(key: string) {
 
 // 点击外部关闭排序下拉
 function handleClickOutside(e: MouseEvent) {
-  if (sortDropdownRef.value && !sortDropdownRef.value.contains(e.target as Node)) {
+  if (
+    sortDropdownRef.value &&
+    !sortDropdownRef.value.contains(e.target as Node)
+  ) {
     sortDropdownOpen.value = false;
   }
 }
@@ -360,13 +364,17 @@ function handleUpgradeAgent(agent: BuildAgentApi.BuildAgent) {
     onOk: async () => {
       try {
         const result = await upgradeBuildAgent(agent.id);
-        message.success(result.message || $t('deploy.tools.buildAgent.upgradeSuccess'));
+        message.success(
+          result.message || $t('deploy.tools.buildAgent.upgradeSuccess'),
+        );
         // 延迟刷新，等待 Agent 重启
         setTimeout(() => {
           loadAgentList();
         }, 5000);
       } catch (error: any) {
-        message.error(error.message || $t('deploy.tools.buildAgent.upgradeFailed'));
+        message.error(
+          error.message || $t('deploy.tools.buildAgent.upgradeFailed'),
+        );
       }
     },
   });
@@ -399,25 +407,34 @@ function handleToggleEnabled(agent: BuildAgentApi.BuildAgent) {
 
 function getStatusColor(status: number): string {
   switch (status) {
-    case 1: return 'success';
-    case 2: return 'processing';
-    case 3: return 'default';
-    default: return 'error';
+    case 1:
+      return 'success';
+    case 2:
+      return 'processing';
+    case 3:
+      return 'default';
+    default:
+      return 'error';
   }
 }
 
 function getStatusText(status: number): string {
   switch (status) {
-    case 1: return $t('deploy.tools.buildAgent.statusOnline');
-    case 2: return $t('deploy.tools.buildAgent.statusBusy');
-    case 3: return $t('deploy.tools.buildAgent.statusDisabled');
-    default: return $t('deploy.tools.buildAgent.statusOffline');
+    case 1:
+      return $t('deploy.tools.buildAgent.statusOnline');
+    case 2:
+      return $t('deploy.tools.buildAgent.statusBusy');
+    case 3:
+      return $t('deploy.tools.buildAgent.statusDisabled');
+    default:
+      return $t('deploy.tools.buildAgent.statusOffline');
   }
 }
 
 function getOsIcon(os: string): string {
   const lower = (os || '').toLowerCase();
-  if (lower.includes('darwin') || lower.includes('mac')) return 'simple-icons:apple';
+  if (lower.includes('darwin') || lower.includes('mac'))
+    return 'simple-icons:apple';
   if (lower.includes('ubuntu')) return 'simple-icons:ubuntu';
   if (lower.includes('debian')) return 'simple-icons:debian';
   if (lower.includes('centos')) return 'simple-icons:centos';
@@ -452,7 +469,8 @@ function formatNetworkBytes(bytes: number): string {
   if (!bytes) return '0 B';
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
   return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`;
 }
 
@@ -485,11 +503,17 @@ function usageColor(percent: number): string {
     <!-- Grid 卡片视图 -->
     <div v-if="isGridView">
       <!-- 顶部工具栏 -->
-      <div class="agent-page-header flex items-center justify-between mb-4">
-        <h2 class="text-base font-semibold m-0">{{ $t('deploy.tools.buildAgent.title') }}</h2>
+      <div class="agent-page-header mb-4 flex items-center justify-between">
+        <h2 class="m-0 text-base font-semibold">
+          {{ $t('deploy.tools.buildAgent.title') }}
+        </h2>
         <div class="flex items-center gap-2">
           <Button type="default" @click="openDocs">
-            <IconifyIcon icon="mdi:file-document-outline" class="mr-1 size-4" aria-hidden="true" />
+            <IconifyIcon
+              icon="mdi:file-document-outline"
+              class="mr-1 size-4"
+              aria-hidden="true"
+            />
             {{ $t('page.docs.title') }}
           </Button>
           <Button type="primary" @click="onCreate">
@@ -497,7 +521,9 @@ function usageColor(percent: number): string {
             {{ $t('common.create') }}
           </Button>
           <!-- 视图切换 -->
-          <div class="view-toggle flex rounded overflow-hidden border border-gray-600">
+          <div
+            class="view-toggle flex overflow-hidden rounded border border-gray-600"
+          >
             <button
               class="view-toggle-btn"
               :class="{ active: isGridView }"
@@ -516,7 +542,11 @@ function usageColor(percent: number): string {
             </button>
           </div>
           <Button type="default" @click="loadAgentList">
-            <IconifyIcon icon="mdi:refresh" class="size-4" :class="{ 'animate-spin': agentListLoading }" />
+            <IconifyIcon
+              icon="mdi:refresh"
+              class="size-4"
+              :class="{ 'animate-spin': agentListLoading }"
+            />
           </Button>
         </div>
       </div>
@@ -554,7 +584,9 @@ function usageColor(percent: number): string {
                   : opt.value === 'online'
                     ? agentList.filter((a) => a.status === 1).length
                     : opt.value === 'offline'
-                      ? agentList.filter((a) => a.status === 0 || a.status === 3).length
+                      ? agentList.filter(
+                          (a) => a.status === 0 || a.status === 3,
+                        ).length
                       : agentList.filter((a) => a.status === 2).length
               }}
             </span>
@@ -578,12 +610,15 @@ function usageColor(percent: number): string {
         <!-- 排序 -->
         <div class="filter-sort-wrap">
           <div ref="sortDropdownRef" class="sort-dropdown-anchor">
-            <button class="sort-btn" @click="sortDropdownOpen = !sortDropdownOpen">
+            <button
+              class="sort-btn"
+              @click="sortDropdownOpen = !sortDropdownOpen"
+            >
               <IconifyIcon icon="mdi:sort" class="size-4" />
               排序：{{ sortOptions.find((o) => o.value === sortKey)?.label }}
               <IconifyIcon
                 :icon="sortOrder === 'asc' ? 'mdi:arrow-up' : 'mdi:arrow-down'"
-                class="size-3.5 ml-0.5"
+                class="ml-0.5 size-3.5"
               />
             </button>
             <div v-if="sortDropdownOpen" class="sort-dropdown">
@@ -597,10 +632,12 @@ function usageColor(percent: number): string {
               >
                 <IconifyIcon
                   v-if="sortKey === opt.value"
-                  :icon="sortOrder === 'asc' ? 'mdi:arrow-up' : 'mdi:arrow-down'"
-                  class="size-3.5 mr-1"
+                  :icon="
+                    sortOrder === 'asc' ? 'mdi:arrow-up' : 'mdi:arrow-down'
+                  "
+                  class="mr-1 size-3.5"
                 />
-                <span v-else class="size-3.5 mr-1 inline-block" />
+                <span v-else class="mr-1 inline-block size-3.5" />
                 {{ opt.label }}
               </button>
             </div>
@@ -610,12 +647,24 @@ function usageColor(percent: number): string {
 
       <!-- 卡片网格 -->
       <Spin :spinning="agentListLoading">
-        <div v-if="agentList.length === 0 && !agentListLoading" class="empty-state flex flex-col items-center justify-center py-20 text-gray-400">
-          <IconifyIcon icon="mdi:robot-off-outline" class="size-16 mb-4 opacity-30" />
+        <div
+          v-if="agentList.length === 0 && !agentListLoading"
+          class="empty-state flex flex-col items-center justify-center py-20 text-gray-400"
+        >
+          <IconifyIcon
+            icon="mdi:robot-off-outline"
+            class="mb-4 size-16 opacity-30"
+          />
           <p class="text-sm">暂无构建代理，点击「新建」添加</p>
         </div>
-        <div v-else-if="filteredAgentList.length === 0" class="empty-state flex flex-col items-center justify-center py-20 text-gray-400">
-          <IconifyIcon icon="mdi:filter-off-outline" class="size-16 mb-4 opacity-30" />
+        <div
+          v-else-if="filteredAgentList.length === 0"
+          class="empty-state flex flex-col items-center justify-center py-20 text-gray-400"
+        >
+          <IconifyIcon
+            icon="mdi:filter-off-outline"
+            class="mb-4 size-16 opacity-30"
+          />
           <p class="text-sm">没有匹配的构建代理</p>
         </div>
         <div v-else class="agent-grid">
@@ -638,43 +687,75 @@ function usageColor(percent: number): string {
                   class="size-9"
                   :style="{
                     color: getOsIconColor(agent.os),
-                    filter: agent.status === 1 ? `drop-shadow(0 0 6px ${getOsIconColor(agent.os)}80)` : 'none',
+                    filter:
+                      agent.status === 1
+                        ? `drop-shadow(0 0 6px ${getOsIconColor(agent.os)}80)`
+                        : 'none',
                     transition: 'color 0.3s, filter 0.3s',
                   }"
                 />
               </div>
-              <div class="agent-card__title-area flex-1 min-w-0">
+              <div class="agent-card__title-area min-w-0 flex-1">
                 <Tooltip>
                   <template #title>
                     <div style="padding: 4px">
-                      <div><strong>主机名:</strong> {{ agent.hostname || '-' }}</div>
-                      <div><strong>版本:</strong> {{ agent.version || '-' }}</div>
-                      <div><strong>CPU:</strong> {{ agent.cpuModel || '-' }}</div>
+                      <div>
+                        <strong>主机名:</strong> {{ agent.hostname || '-' }}
+                      </div>
+                      <div>
+                        <strong>版本:</strong> {{ agent.version || '-' }}
+                      </div>
+                      <div>
+                        <strong>CPU:</strong> {{ agent.cpuModel || '-' }}
+                      </div>
                     </div>
                   </template>
                   <div
-                    class="agent-card__name truncate cursor-pointer"
+                    class="agent-card__name cursor-pointer truncate"
                     :title="agent.name"
                     @click="onDetail(agent)"
-                  >{{ agent.name }}</div>
+                  >
+                    {{ agent.name }}
+                  </div>
                 </Tooltip>
-                <div class="agent-card__sub truncate text-xs text-gray-400">{{ agent.hostname || '-' }}</div>
+                <div class="agent-card__sub truncate text-xs text-gray-400">
+                  {{ agent.hostname || '-' }}
+                </div>
               </div>
-              <Tag :color="getStatusColor(agent.status)" class="agent-card__status-tag shrink-0">
+              <Tag
+                :color="getStatusColor(agent.status)"
+                class="agent-card__status-tag shrink-0"
+              >
                 {{ getStatusText(agent.status) }}
               </Tag>
               <!-- 版本标签 + 升级提示 -->
-              <Tooltip v-if="agent.version" :title="needsUpdate(agent.version) ? `${$t('deploy.tools.buildAgent.latestVersion')}: ${latestVersion}` : ''">
+              <Tooltip
+                v-if="agent.version"
+                :title="
+                  needsUpdate(agent.version)
+                    ? `${$t('deploy.tools.buildAgent.latestVersion')}: ${latestVersion}`
+                    : ''
+                "
+              >
                 <Tag
                   class="agent-card__version-tag shrink-0 cursor-pointer"
                   :color="needsUpdate(agent.version) ? 'warning' : 'default'"
-                  @click="needsUpdate(agent.version) && handleUpgradeAgent(agent)"
+                  @click="
+                    needsUpdate(agent.version) && handleUpgradeAgent(agent)
+                  "
                 >
                   v{{ agent.version }}
-                  <span v-if="needsUpdate(agent.version)" class="upgrade-dot"></span>
+                  <span
+                    v-if="needsUpdate(agent.version)"
+                    class="upgrade-dot"
+                  ></span>
                 </Tag>
               </Tooltip>
-              <Tag v-if="agent.sharedEnabled" color="purple" class="agent-card__status-tag shrink-0">
+              <Tag
+                v-if="agent.sharedEnabled"
+                color="purple"
+                class="agent-card__status-tag shrink-0"
+              >
                 {{ $t('deploy.tools.buildAgent.sharedTag') }}
               </Tag>
             </div>
@@ -683,35 +764,69 @@ function usageColor(percent: number): string {
             <div class="agent-card__body">
               <div class="agent-card__info">
                 <div class="agent-card__info-row">
-                  <IconifyIcon icon="mdi:ip-network" class="size-3.5 shrink-0 text-gray-400" />
-                  <span class="truncate text-xs" :title="agent.publicIp">{{ agent.publicIp || agent.ipAddress || '-' }}</span>
+                  <IconifyIcon
+                    icon="mdi:ip-network"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
+                  <span class="truncate text-xs" :title="agent.publicIp">{{
+                    agent.publicIp || agent.ipAddress || '-'
+                  }}</span>
                 </div>
                 <div v-if="agent.privateIps" class="agent-card__info-row">
-                  <IconifyIcon icon="mdi:lan" class="size-3.5 shrink-0 text-gray-400" />
-                  <span class="truncate text-xs" :title="agent.privateIps">{{ agent.privateIps }}</span>
+                  <IconifyIcon
+                    icon="mdi:lan"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
+                  <span class="truncate text-xs" :title="agent.privateIps">{{
+                    agent.privateIps
+                  }}</span>
                 </div>
                 <div class="agent-card__info-row">
-                  <IconifyIcon icon="mdi:chip" class="size-3.5 shrink-0 text-gray-400" />
-                  <span class="truncate text-xs font-mono">{{ [agent.os, agent.arch].filter(Boolean).join('/') || '-' }}</span>
+                  <IconifyIcon
+                    icon="mdi:chip"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
+                  <span class="truncate font-mono text-xs">{{
+                    [agent.os, agent.arch].filter(Boolean).join('/') || '-'
+                  }}</span>
                 </div>
                 <div class="agent-card__info-row">
-                  <IconifyIcon icon="mdi:memory" class="size-3.5 shrink-0 text-gray-400" />
-                  <span class="truncate text-xs">{{ formatBytes(agent.memoryTotal) }}</span>
+                  <IconifyIcon
+                    icon="mdi:memory"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
+                  <span class="truncate text-xs">{{
+                    formatBytes(agent.memoryTotal)
+                  }}</span>
                 </div>
                 <div class="agent-card__info-row">
-                  <IconifyIcon icon="mdi:harddisk" class="size-3.5 shrink-0 text-gray-400" />
-                  <span class="truncate text-xs">{{ formatBytes(agent.diskTotal) }}</span>
+                  <IconifyIcon
+                    icon="mdi:harddisk"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
+                  <span class="truncate text-xs">{{
+                    formatBytes(agent.diskTotal)
+                  }}</span>
                 </div>
                 <div class="agent-card__info-row">
-                  <IconifyIcon icon="mdi:hammer-wrench" class="size-3.5 shrink-0 text-gray-400" />
+                  <IconifyIcon
+                    icon="mdi:hammer-wrench"
+                    class="size-3.5 shrink-0 text-gray-400"
+                  />
                   <span class="truncate text-xs">
-                    {{ $t('deploy.tools.buildAgent.tasks') }}: {{ agent.currentTasks ?? 0 }}/{{ agent.maxConcurrentTasks ?? 1 }}
+                    {{ $t('deploy.tools.buildAgent.tasks') }}:
+                    {{ agent.currentTasks ?? 0 }}/{{
+                      agent.maxConcurrentTasks ?? 1
+                    }}
                   </span>
                 </div>
               </div>
 
               <!-- 资源使用仪表盘（在线时显示） -->
-              <div v-if="agent.status === 1 || agent.status === 2" class="agent-card__gauges">
+              <div
+                v-if="agent.status === 1 || agent.status === 2"
+                class="agent-card__gauges"
+              >
                 <!-- CPU 迷你仪表 -->
                 <div class="mini-gauge-wrap">
                   <svg viewBox="0 0 72 72" width="60" height="60">
@@ -725,17 +840,41 @@ function usageColor(percent: number): string {
                     <path
                       v-if="cpuUsagePercent(agent) > 0"
                       :d="`M 8 54 A 28 28 0 0 1 ${
-                        36 + 28 * Math.cos(Math.PI - (cpuUsagePercent(agent) / 100) * Math.PI)
+                        36 +
+                        28 *
+                          Math.cos(
+                            Math.PI - (cpuUsagePercent(agent) / 100) * Math.PI,
+                          )
                       } ${
-                        54 - 28 * Math.sin((cpuUsagePercent(agent) / 100) * Math.PI)
+                        54 -
+                        28 * Math.sin((cpuUsagePercent(agent) / 100) * Math.PI)
                       }`"
                       fill="none"
                       :stroke="usageColor(cpuUsagePercent(agent))"
                       stroke-width="5"
                       stroke-linecap="round"
                     />
-                    <text x="36" y="38" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="600" :fill="usageColor(cpuUsagePercent(agent))">{{ cpuUsagePercent(agent) }}%</text>
-                    <text x="36" y="50" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="rgba(255,255,255,0.4)">CPU</text>
+                    <text
+                      x="36"
+                      y="38"
+                      text-anchor="middle"
+                      dominant-baseline="middle"
+                      font-size="11"
+                      font-weight="600"
+                      :fill="usageColor(cpuUsagePercent(agent))"
+                    >
+                      {{ cpuUsagePercent(agent) }}%
+                    </text>
+                    <text
+                      x="36"
+                      y="50"
+                      text-anchor="middle"
+                      dominant-baseline="middle"
+                      font-size="8"
+                      fill="rgba(255,255,255,0.4)"
+                    >
+                      CPU
+                    </text>
                   </svg>
                 </div>
                 <!-- MEM 迷你仪表 -->
@@ -751,17 +890,41 @@ function usageColor(percent: number): string {
                     <path
                       v-if="memUsagePercent(agent) > 0"
                       :d="`M 8 54 A 28 28 0 0 1 ${
-                        36 + 28 * Math.cos(Math.PI - (memUsagePercent(agent) / 100) * Math.PI)
+                        36 +
+                        28 *
+                          Math.cos(
+                            Math.PI - (memUsagePercent(agent) / 100) * Math.PI,
+                          )
                       } ${
-                        54 - 28 * Math.sin((memUsagePercent(agent) / 100) * Math.PI)
+                        54 -
+                        28 * Math.sin((memUsagePercent(agent) / 100) * Math.PI)
                       }`"
                       fill="none"
                       :stroke="usageColor(memUsagePercent(agent))"
                       stroke-width="5"
                       stroke-linecap="round"
                     />
-                    <text x="36" y="38" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="600" :fill="usageColor(memUsagePercent(agent))">{{ memUsagePercent(agent) }}%</text>
-                    <text x="36" y="50" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="rgba(255,255,255,0.4)">MEM</text>
+                    <text
+                      x="36"
+                      y="38"
+                      text-anchor="middle"
+                      dominant-baseline="middle"
+                      font-size="11"
+                      font-weight="600"
+                      :fill="usageColor(memUsagePercent(agent))"
+                    >
+                      {{ memUsagePercent(agent) }}%
+                    </text>
+                    <text
+                      x="36"
+                      y="50"
+                      text-anchor="middle"
+                      dominant-baseline="middle"
+                      font-size="8"
+                      fill="rgba(255,255,255,0.4)"
+                    >
+                      MEM
+                    </text>
                   </svg>
                 </div>
               </div>
@@ -772,13 +935,24 @@ function usageColor(percent: number): string {
               <Button
                 type="primary"
                 size="small"
-                style="flex: 1; min-width: 0;"
+                style="flex: 1; min-width: 0"
                 @click="onDetail(agent)"
               >
-                <IconifyIcon icon="mdi:information-outline" class="size-3.5 mr-1" />
+                <IconifyIcon
+                  icon="mdi:information-outline"
+                  class="mr-1 size-3.5"
+                />
                 {{ $t('common.detail') }}
               </Button>
-              <Button v-if="needsUpdate(agent.version) && (agent.status === 1 || agent.status === 2)" size="small" type="primary" @click="handleUpgradeAgent(agent)">
+              <Button
+                v-if="
+                  needsUpdate(agent.version) &&
+                  (agent.status === 1 || agent.status === 2)
+                "
+                size="small"
+                type="primary"
+                @click="handleUpgradeAgent(agent)"
+              >
                 <IconifyIcon icon="mdi:arrow-up-bold" class="size-3.5" />
               </Button>
               <Button v-if="agent.enabled" size="small" @click="onEdit(agent)">
@@ -789,7 +963,10 @@ function usageColor(percent: number): string {
                 size="small"
                 @click="handleToggleEnabled(agent)"
               >
-                <IconifyIcon :icon="agent.enabled ? 'mdi:pause' : 'mdi:play'" class="size-3.5" />
+                <IconifyIcon
+                  :icon="agent.enabled ? 'mdi:pause' : 'mdi:play'"
+                  class="size-3.5"
+                />
               </Button>
               <Button danger size="small" @click="onDelete(agent)">
                 <IconifyIcon icon="mdi:delete" class="size-3.5" />
@@ -804,7 +981,11 @@ function usageColor(percent: number): string {
     <Grid v-if="isListView" :table-title="$t('deploy.tools.buildAgent.title')">
       <template #toolbar-tools>
         <Button type="default" class="mr-3" @click="openDocs">
-          <IconifyIcon icon="mdi:file-document-outline" class="mr-1 size-4" aria-hidden="true" />
+          <IconifyIcon
+            icon="mdi:file-document-outline"
+            class="mr-1 size-4"
+            aria-hidden="true"
+          />
           {{ $t('page.docs.title') }}
         </Button>
         <Button type="primary" @click="onCreate">
@@ -812,7 +993,9 @@ function usageColor(percent: number): string {
           {{ $t('common.create') }}
         </Button>
         <!-- 视图切换 -->
-        <div class="view-toggle flex rounded overflow-hidden border border-gray-600 ml-3">
+        <div
+          class="view-toggle ml-3 flex overflow-hidden rounded border border-gray-600"
+        >
           <button
             class="view-toggle-btn"
             :class="{ active: isGridView }"
@@ -836,7 +1019,23 @@ function usageColor(percent: number): string {
 </template>
 
 <style scoped>
-/* 视图切换按钮 */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .view-toggle {
   height: 32px;
 }
@@ -847,83 +1046,95 @@ function usageColor(percent: number): string {
   justify-content: center;
   width: 32px;
   height: 100%;
+  padding: 0;
+  color: rgb(255 255 255 / 45%);
+  cursor: pointer;
   background: transparent;
   border: none;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.45);
-  transition: background 0.2s, color 0.2s;
-  padding: 0;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .view-toggle-btn:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.08);
+  color: rgb(255 255 255 / 85%);
+  background: rgb(255 255 255 / 8%);
 }
 
 .view-toggle-btn.active {
   color: #1677ff;
-  background: rgba(22, 119, 255, 0.12);
+  background: rgb(22 119 255 / 12%);
 }
 
 /* 筛选栏（与服务器页面一致） */
 .server-filter-bar {
   display: flex;
-  align-items: center;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
 }
 
 .filter-group {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
   padding: 3px;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 8%);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .filter-chip {
   display: flex;
-  align-items: center;
   gap: 5px;
+  align-items: center;
   padding: 4px 10px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.5);
   font-size: 12px;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  color: rgb(255 255 255 / 50%);
   white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .filter-chip:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.06);
+  color: rgb(255 255 255 / 85%);
+  background: rgb(255 255 255 / 6%);
 }
 
 .filter-chip.active {
-  background: rgba(22, 119, 255, 0.18);
   color: #4096ff;
+  background: rgb(22 119 255 / 18%);
 }
 
 .filter-chip__dot {
+  flex-shrink: 0;
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
-.dot-online { background: #52c41a; }
-.dot-offline { background: rgba(255, 255, 255, 0.25); }
-.dot-busy { background: #1677ff; }
+.dot-online {
+  background: #52c41a;
+}
+
+.dot-offline {
+  background: rgb(255 255 255 / 25%);
+}
+
+.dot-busy {
+  background: #1677ff;
+}
 
 .filter-chip__count {
-  font-size: 11px;
-  opacity: 0.6;
   min-width: 14px;
+  font-size: 11px;
   text-align: center;
+  opacity: 0.6;
 }
 
 /* 排序 */
@@ -937,41 +1148,43 @@ function usageColor(percent: number): string {
 
 .sort-btn {
   display: flex;
-  align-items: center;
   gap: 5px;
+  align-items: center;
   padding: 5px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(255, 255, 255, 0.65);
   font-size: 12px;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  color: rgb(255 255 255 / 65%);
   white-space: nowrap;
+  cursor: pointer;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 8px;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .sort-btn:hover {
-  border-color: rgba(255, 255, 255, 0.25);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(255 255 255 / 90%);
+  border-color: rgb(255 255 255 / 25%);
 }
 
 .sort-dropdown {
   position: absolute;
-  right: 0;
   top: calc(100% + 6px);
-  min-width: 140px;
-  background: #1f1f1f;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 6px;
+  right: 0;
   z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  min-width: 140px;
+  padding: 6px;
+  background: #1f1f1f;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 50%);
 }
 
 .sort-dropdown__title {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
   padding: 4px 8px 6px;
+  font-size: 11px;
+  color: rgb(255 255 255 / 30%);
   letter-spacing: 0.05em;
 }
 
@@ -980,19 +1193,21 @@ function usageColor(percent: number): string {
   align-items: center;
   width: 100%;
   padding: 7px 8px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.65);
   font-size: 13px;
-  cursor: pointer;
+  color: rgb(255 255 255 / 65%);
   text-align: left;
-  transition: background 0.12s, color 0.12s;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .sort-dropdown__item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(255 255 255 / 90%);
+  background: rgb(255 255 255 / 6%);
 }
 
 .sort-dropdown__item.active {
@@ -1012,19 +1227,21 @@ function usageColor(percent: number): string {
 }
 
 .agent-card {
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.04);
-  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 16px;
+  background: rgb(255 255 255 / 4%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 10px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
 .agent-card:hover {
-  border-color: rgba(22, 119, 255, 0.5);
-  box-shadow: 0 4px 16px rgba(22, 119, 255, 0.15);
+  border-color: rgb(22 119 255 / 50%);
+  box-shadow: 0 4px 16px rgb(22 119 255 / 15%);
 }
 
 .agent-card--online {
@@ -1032,7 +1249,7 @@ function usageColor(percent: number): string {
 }
 
 .agent-card--online:hover {
-  box-shadow: 0 4px 16px rgba(82, 196, 26, 0.15);
+  box-shadow: 0 4px 16px rgb(82 196 26 / 15%);
 }
 
 .agent-card--busy {
@@ -1040,7 +1257,7 @@ function usageColor(percent: number): string {
 }
 
 .agent-card--offline {
-  border-left: 3px solid rgba(255, 255, 255, 0.15);
+  border-left: 3px solid rgb(255 255 255 / 15%);
   opacity: 0.75;
 }
 
@@ -1051,20 +1268,20 @@ function usageColor(percent: number): string {
 
 .agent-card__header {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
   flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
 }
 
 .agent-card__os-icon {
-  width: 40px;
-  height: 40px;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgb(255 255 255 / 6%);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  flex-shrink: 0;
 }
 
 .agent-card__title-area {
@@ -1074,8 +1291,8 @@ function usageColor(percent: number): string {
 .agent-card__name {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
   line-height: 1.4;
+  color: rgb(255 255 255 / 90%);
   transition: color 0.15s;
 }
 
@@ -1093,61 +1310,55 @@ function usageColor(percent: number): string {
 }
 
 .agent-card__version-tag {
-  margin-top: 2px;
   position: relative;
+  margin-top: 2px;
 }
 
 .upgrade-dot {
   display: inline-block;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: #ff4d4f;
   margin-left: 4px;
+  background: #ff4d4f;
+  border-radius: 50%;
   animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
-  100% { opacity: 1; transform: scale(1); }
 }
 
 .agent-card__body {
   display: flex;
   gap: 8px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
   min-height: 120px;
+  padding: 10px 12px;
+  background: rgb(0 0 0 / 20%);
+  border-radius: 6px;
 }
 
 .agent-card__info {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
+  justify-content: center;
   min-width: 0;
   overflow: hidden;
-  justify-content: center;
 }
 
 .agent-card__info-row {
   display: flex;
-  align-items: center;
   gap: 6px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.65);
+  align-items: center;
   min-width: 0;
+  font-size: 12px;
+  color: rgb(255 255 255 / 65%);
 }
 
 .agent-card__gauges {
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
+  gap: 0;
   align-items: center;
   justify-content: center;
-  gap: 0;
-  flex-shrink: 0;
 }
 
 .mini-gauge-wrap {
@@ -1159,11 +1370,13 @@ function usageColor(percent: number): string {
 .agent-card__actions {
   display: flex;
   gap: 6px;
-  margin-top: auto;
   padding-top: 4px;
+  margin-top: auto;
 }
 
 .agent-card__actions :deep(.ant-btn):not(:first-child) {
   flex-shrink: 0;
 }
+
+/* 视图切换按钮 */
 </style>

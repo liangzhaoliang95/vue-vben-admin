@@ -317,7 +317,10 @@ export namespace ServerManagementApi {
     );
   }
 
-  export function getProxyHistoryList(params: { limit?: number; serverId: string }) {
+  export function getProxyHistoryList(params: {
+    limit?: number;
+    serverId: string;
+  }) {
     return requestClient.post<{ count: number; list: ProxyHistory[] }>(
       '/serverAgent/getProxyHistoryList',
       params,
@@ -326,8 +329,8 @@ export namespace ServerManagementApi {
 
   export function saveProxyHistory(params: {
     localPort: string;
-    remoteAddr: string;
     remark?: string;
+    remoteAddr: string;
     serverId: string;
   }) {
     return requestClient.post<{ id: string; message: string }>(

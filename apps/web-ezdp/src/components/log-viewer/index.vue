@@ -13,7 +13,7 @@ import {
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
 import { WebLinksAddon } from '@xterm/addon-web-links';
-import { Button, Checkbox, Input, Space, Switch } from 'ant-design-vue';
+import { Button, Checkbox, Input, Select, Space, Switch } from 'ant-design-vue';
 import { Terminal } from 'xterm';
 
 import { $t } from '#/locales';
@@ -127,23 +127,12 @@ function getLogFromColor(logFrom: string): string {
   return '\u001B[94m'; // Bright Blue - 统一颜色
 }
 
-const RESET_COLOR = '\u001B[0m';
-
-onMounted(async () => {
-  if (!terminalRef.value) return;
-
-  // 创建终端实例
-  terminal = new Terminal({
-    fontSize: 14,
-    fontFamily:
-      '"SF Mono", Monaco, Menlo, "Roboto Mono", "Source Code Pro", "Courier New", monospace',
-    fontWeight: '500',
-    fontWeightBold: '700',
-    cursorBlink: true,
-    cursorStyle: 'block',
-    scrollback: 10_000,
+// 主题定义
+const TERMINAL_THEMES = {
+  default: {
+    name: '默认（暗色）',
     theme: {
-      background: '#1e1e1e',
+      background: '#000000',
       foreground: '#d4d4d4',
       cursor: '#aeafad',
       black: '#000000',
@@ -163,6 +152,145 @@ onMounted(async () => {
       brightCyan: '#29b8db',
       brightWhite: '#e5e5e5',
     },
+  },
+  monokai: {
+    name: 'Monokai',
+    theme: {
+      background: '#272822',
+      foreground: '#f8f8f2',
+      cursor: '#f8f8f0',
+      black: '#272822',
+      red: '#f92672',
+      green: '#a6e22e',
+      yellow: '#f4bf75',
+      blue: '#66d9ef',
+      magenta: '#ae81ff',
+      cyan: '#a1efe4',
+      white: '#f8f8f2',
+      brightBlack: '#75715e',
+      brightRed: '#f92672',
+      brightGreen: '#a6e22e',
+      brightYellow: '#f4bf75',
+      brightBlue: '#66d9ef',
+      brightMagenta: '#ae81ff',
+      brightCyan: '#a1efe4',
+      brightWhite: '#f9f8f5',
+    },
+  },
+  dracula: {
+    name: 'Dracula',
+    theme: {
+      background: '#282a36',
+      foreground: '#f8f8f2',
+      cursor: '#f8f8f2',
+      black: '#21222c',
+      red: '#ff5555',
+      green: '#50fa7b',
+      yellow: '#f1fa8c',
+      blue: '#bd93f9',
+      magenta: '#ff79c6',
+      cyan: '#8be9fd',
+      white: '#f8f8f2',
+      brightBlack: '#6272a4',
+      brightRed: '#ff6e6e',
+      brightGreen: '#69ff94',
+      brightYellow: '#ffffa5',
+      brightBlue: '#d6acff',
+      brightMagenta: '#ff92df',
+      brightCyan: '#a4ffff',
+      brightWhite: '#ffffff',
+    },
+  },
+  solarizedDark: {
+    name: 'Solarized Dark',
+    theme: {
+      background: '#002b36',
+      foreground: '#839496',
+      cursor: '#839496',
+      black: '#073642',
+      red: '#dc322f',
+      green: '#859900',
+      yellow: '#b58900',
+      blue: '#268bd2',
+      magenta: '#d33682',
+      cyan: '#2aa198',
+      white: '#eee8d5',
+      brightBlack: '#002b36',
+      brightRed: '#cb4b16',
+      brightGreen: '#586e75',
+      brightYellow: '#657b83',
+      brightBlue: '#839496',
+      brightMagenta: '#6c71c4',
+      brightCyan: '#93a1a1',
+      brightWhite: '#fdf6e3',
+    },
+  },
+  nord: {
+    name: 'Nord',
+    theme: {
+      background: '#2e3440',
+      foreground: '#d8dee9',
+      cursor: '#d8dee9',
+      black: '#3b4252',
+      red: '#bf616a',
+      green: '#a3be8c',
+      yellow: '#ebcb8b',
+      blue: '#81a1c1',
+      magenta: '#b48ead',
+      cyan: '#88c0d0',
+      white: '#e5e9f0',
+      brightBlack: '#4c566a',
+      brightRed: '#bf616a',
+      brightGreen: '#a3be8c',
+      brightYellow: '#ebcb8b',
+      brightBlue: '#81a1c1',
+      brightMagenta: '#b48ead',
+      brightCyan: '#8fbcbb',
+      brightWhite: '#eceff4',
+    },
+  },
+};
+
+// 主题选项
+const themeOptions = Object.entries(TERMINAL_THEMES).map(([key, value]) => ({
+  label: value.name,
+  value: key,
+}));
+
+// 从 localStorage 读取保存的主题
+const THEME_STORAGE_KEY = 'log-viewer-theme';
+const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'default';
+const selectedTheme = ref<keyof typeof TERMINAL_THEMES>(
+  savedTheme as keyof typeof TERMINAL_THEMES,
+);
+
+// 监听主题变化
+watch(selectedTheme, (newTheme) => {
+  // 保存到 localStorage
+  localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+
+  // 应用主题到终端
+  if (terminal) {
+    terminal.options.theme = TERMINAL_THEMES[newTheme].theme;
+  }
+});
+
+const RESET_COLOR = '\u001B[0m';
+
+onMounted(async () => {
+  if (!terminalRef.value) return;
+
+  // 创建终端实例
+  terminal = new Terminal({
+    fontSize: 14,
+    fontFamily:
+      '"SF Mono", Monaco, Menlo, "Roboto Mono", "Source Code Pro", "Courier New", monospace',
+    fontWeight: '500',
+    fontWeightBold: '700',
+    cursorBlink: true,
+    cursorStyle: 'block',
+    scrollback: 10_000,
+    theme: TERMINAL_THEMES[selectedTheme.value].theme,
   });
 
   // 添加插件
@@ -585,6 +713,15 @@ watch([levelFilters, visibleFields], reRenderLogs, {
             :options="levelOptions"
           />
         </div>
+        <!-- 主题选择器 -->
+        <div class="theme-selector">
+          <Select
+            v-model:value="selectedTheme"
+            :options="themeOptions"
+            size="small"
+            style="width: 150px"
+          />
+        </div>
         <Button size="small" @click="toggleFilterPanel">
           {{ showFilterPanel ? '隐藏过滤器' : '显示过滤器' }}
         </Button>
@@ -746,23 +883,46 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 
 .level-filter-inline {
   display: flex;
+  gap: 8px;
   align-items: center;
 }
 
 .level-filter-inline :deep(.ant-checkbox-group) {
   display: flex;
-  gap: 8px;
+  gap: 12px;
+  align-items: center;
 }
 
 .level-filter-inline :deep(.ant-checkbox-wrapper) {
-  margin: 0;
+  display: flex;
+  align-items: center;
+  margin: 0 !important;
   font-size: 12px;
+  line-height: 1;
   color: #d4d4d4;
+}
+
+.level-filter-inline :deep(.ant-checkbox) {
+  top: 0;
+  margin-top: 0;
 }
 
 .level-filter-inline :deep(.ant-checkbox-wrapper span) {
   padding-right: 0;
   padding-left: 4px;
+  line-height: 1;
+}
+
+.theme-selector {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.theme-label {
+  font-size: 12px;
+  color: #d4d4d4;
+  white-space: nowrap;
 }
 
 .auto-scroll-switch {
@@ -839,7 +999,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   position: relative;
   flex: 1;
   padding: 8px;
-  overflow: hidden;
+  overflow: hidden auto; /* 隐藏横向滚动条 */ /* 只显示纵向滚动条 */
 }
 
 /* xterm.js 样式覆盖 */
