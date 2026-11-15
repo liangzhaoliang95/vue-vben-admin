@@ -94,15 +94,45 @@ function handleMenuOpen(key: string, path: string[]) {
 </script>
 
 <template>
-  <!-- 菜单收起时只显示 logo 图标 -->
+  <!-- 菜单收起时显示可点击的 logo 图标 -->
   <div v-if="collapse" class="business-line-collapsed">
-    <img
-      v-if="selectedOption?.logoUrl"
-      :src="selectedOption.logoUrl"
-      :alt="selectedOption.label"
-      class="size-6 object-contain"
-    />
-    <SvgAvatar2Icon v-else class="size-6" />
+    <Select
+      v-model="selectedValue"
+      :disabled="switchingBusinessLine || businessStore.loading"
+    >
+      <SelectTrigger class="business-line-collapsed-trigger">
+        <img
+          v-if="selectedOption?.logoUrl"
+          :src="selectedOption.logoUrl"
+          :alt="selectedOption.label"
+          class="size-6 object-contain"
+        />
+        <SvgAvatar2Icon v-else class="size-6" />
+      </SelectTrigger>
+      <SelectContent class="business-line-select-content">
+        <SelectGroup>
+          <SelectItem
+            v-for="option in businessLineOptions"
+            :key="option.value"
+            :value="option.value"
+            :class="{
+              'business-line-item-selected': option.value === selectedValue,
+            }"
+          >
+            <div class="flex items-center">
+              <img
+                v-if="option.logoUrl"
+                :src="option.logoUrl"
+                :alt="option.label"
+                class="mr-2 size-5 object-contain"
+              />
+              <SvgAvatar2Icon v-else class="mr-2 size-5" />
+              <span>{{ option.label }}</span>
+            </div>
+          </SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
   </div>
 
   <!-- 菜单展开时显示完整下拉 -->
@@ -185,6 +215,31 @@ $namespace: vben;
   justify-content: center;
   width: 100%;
   padding: 10px 0;
+
+  :deep(.business-line-collapsed-trigger) {
+    // 移除默认边框和背景，只显示图标
+    width: auto;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+
+    // 隐藏下拉箭头
+    svg:last-child {
+      display: none;
+    }
+
+    // hover 效果
+    &:hover {
+      opacity: 0.8;
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: none;
+    }
+  }
 }
 </style>
 
