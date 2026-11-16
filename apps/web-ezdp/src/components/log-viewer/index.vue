@@ -998,8 +998,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 .log-viewer-terminal {
   position: relative;
   flex: 1;
+  min-height: 0;
   padding: 8px;
-  overflow: hidden auto; /* 隐藏横向滚动条 */ /* 只显示纵向滚动条 */
+  overflow: hidden;
 }
 
 /* xterm.js 样式覆盖 */
@@ -1008,16 +1009,34 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   font-family:
     '0xProto Nerd Font Mono', 'JetBrains Mono', 'Fira Code', Consolas, Monaco,
     'Courier New', monospace;
-  line-height: 1.8; /* 增加行间距 */
-  letter-spacing: 1px; /* 增加字间距，让 emoji 和文字不那么挤 */
+  line-height: 1.8;
+  letter-spacing: 1px;
 }
 
 :deep(.xterm-viewport) {
+  overflow-y: auto !important;
   background: #000 !important;
 }
 
 :deep(.xterm-screen) {
   background: #000 !important;
+}
+
+:deep(.xterm-viewport)::-webkit-scrollbar {
+  width: 8px;
+}
+
+:deep(.xterm-viewport)::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+:deep(.xterm-viewport)::-webkit-scrollbar-thumb {
+  background: #4a4a4a;
+  border-radius: 4px;
+}
+
+:deep(.xterm-viewport)::-webkit-scrollbar-thumb:hover {
+  background: #5a5a5a;
 }
 
 /* Checkbox 样式适配暗色主题 */

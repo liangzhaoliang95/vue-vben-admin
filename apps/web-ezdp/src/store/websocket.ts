@@ -250,7 +250,7 @@ export const useWebSocketStore = defineStore('websocket', () => {
     if (!cache) {
       cache = {
         messages: [],
-        maxSize: 1000, // 最多缓存1000条
+        maxSize: 10_000, // 最多缓存10000条,与 xterm scrollback 一致
       };
       logCaches.value.set(businessLineId, cache);
     }

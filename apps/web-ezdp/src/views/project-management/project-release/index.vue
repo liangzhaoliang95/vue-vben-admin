@@ -307,7 +307,6 @@ onMounted(() => {
         <LogViewer
           :subscription-id="String(currentBusinessLineId ?? 0)"
           :task-type="2"
-          title="Release日志"
           @close="handleCloseLogViewer"
         />
       </div>
