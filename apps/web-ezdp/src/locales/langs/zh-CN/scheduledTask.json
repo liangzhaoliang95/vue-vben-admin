@@ -1,0 +1,93 @@
+{
+  "title": "计划任务",
+  "list": {
+    "title": "计划任务列表",
+    "search": "搜索任务名称",
+    "all": "全部任务",
+    "enabled": "已启用",
+    "disabled": "已禁用"
+  },
+  "form": {
+    "name": "任务名称",
+    "namePlaceholder": "请输入任务名称",
+    "nameRequired": "任务名称不能为空",
+    "cronExpression": "Cron表达式",
+    "cronExpressionPlaceholder": "请输入Cron表达式，例如: 0 0 2 * * ?",
+    "cronExpressionRequired": "Cron表达式不能为空",
+    "cronExpressionInvalid": "Cron表达式格式不正确",
+    "taskType": "任务类型",
+    "taskTypePlaceholder": "请选择任务类型",
+    "taskTypeRequired": "任务类型不能为空",
+    "taskType1": "构建预检查",
+    "taskType2": "增量构建",
+    "projectConfig": "项目配置",
+    "projectConfigPlaceholder": "请选择项目配置",
+    "projectConfigRequired": "项目配置不能为空",
+    "branch": "分支",
+    "branchPlaceholder": "请选择分支",
+    "branchRequired": "分支不能为空",
+    "enabled": "启用状态",
+    "enabledTrue": "启用",
+    "enabledFalse": "禁用"
+  },
+  "column": {
+    "name": "任务名称",
+    "cronExpression": "Cron表达式",
+    "taskType": "任务类型",
+    "projectConfig": "项目配置",
+    "branch": "分支",
+    "enabled": "状态",
+    "lastExecuteTime": "上次执行时间",
+    "nextExecuteTime": "下次执行时间",
+    "lastExecuteStatus": "上次执行状态",
+    "createdBy": "创建人",
+    "createdAt": "创建时间",
+    "action": "操作"
+  },
+  "status": {
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "success": "成功",
+    "failed": "失败",
+    "running": "执行中",
+    "never": "未执行"
+  },
+  "action": {
+    "create": "新建任务",
+    "edit": "编辑",
+    "delete": "删除",
+    "enable": "启用",
+    "disable": "禁用",
+    "executeNow": "立即执行",
+    "view": "查看"
+  },
+  "message": {
+    "createSuccess": "创建任务成功",
+    "createFailed": "创建任务失败",
+    "updateSuccess": "更新任务成功",
+    "updateFailed": "更新任务失败",
+    "deleteSuccess": "删除任务成功",
+    "deleteFailed": "删除任务失败",
+    "deleteConfirm": "确认删除该任务吗？",
+    "enableSuccess": "启用任务成功",
+    "enableFailed": "启用任务失败",
+    "disableSuccess": "禁用任务成功",
+    "disableFailed": "禁用任务失败",
+    "executeSuccess": "任务已提交执行",
+    "executeFailed": "任务执行失败",
+    "executeConfirm": "确认立即执行该任务吗？"
+  },
+  "cronHelper": {
+    "title": "Cron表达式说明",
+    "format": "格式: 秒 分 时 日 月 周",
+    "example1": "每天凌晨2点: 0 0 2 * * ?",
+    "example2": "每小时: 0 0 * * * ?",
+    "example3": "每30分钟: 0 */30 * * * ?",
+    "example4": "工作日早上9点: 0 0 9 ? * MON-FRI",
+    "wildcard": "* = 每个值",
+    "range": "- = 范围",
+    "list": ", = 列表",
+    "step": "/ = 步长",
+    "any": "? = 任意（仅用于日和周）"
+  }
+}

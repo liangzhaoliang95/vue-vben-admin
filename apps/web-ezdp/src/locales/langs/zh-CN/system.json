@@ -145,5 +145,27 @@
     "heartbeatTimeout": "心跳超时",
     "noSubscribers": "没有订阅者",
     "reconnectIn": "将在 {delay}ms 后重连"
+  },
+  "systemStatus": {
+    "title": "系统状态",
+    "overview": "依赖工具状态",
+    "totalDependencies": "依赖总数",
+    "availableDependencies": "可用依赖",
+    "requiredUnavailable": "必需依赖缺失",
+    "lastCheckAt": "上次检查",
+    "checkNow": "立即检查",
+    "required": "必需",
+    "optional": "可选",
+    "available": "可用",
+    "unavailable": "不可用",
+    "description": "说明",
+    "version": "版本",
+    "path": "路径",
+    "status": "状态",
+    "notFound": "未找到",
+    "noDependencies": "暂无依赖工具",
+    "loadFailed": "加载系统状态失败",
+    "checkSuccess": "依赖检查完成",
+    "checkFailed": "依赖检查失败"
   }
 }

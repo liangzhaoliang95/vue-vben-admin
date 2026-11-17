@@ -145,5 +145,27 @@
     "heartbeatTimeout": "Heartbeat timeout",
     "noSubscribers": "No subscribers",
     "reconnectIn": "Reconnecting in {delay}ms"
+  },
+  "systemStatus": {
+    "title": "System Status",
+    "overview": "Dependency Tools Status",
+    "totalDependencies": "Total Dependencies",
+    "availableDependencies": "Available",
+    "requiredUnavailable": "Required Missing",
+    "lastCheckAt": "Last Check",
+    "checkNow": "Check Now",
+    "required": "Required",
+    "optional": "Optional",
+    "available": "Available",
+    "unavailable": "Unavailable",
+    "description": "Description",
+    "version": "Version",
+    "path": "Path",
+    "status": "Status",
+    "notFound": "Not Found",
+    "noDependencies": "No dependencies",
+    "loadFailed": "Failed to load system status",
+    "checkSuccess": "Dependency check completed",
+    "checkFailed": "Dependency check failed"
   }
 }
