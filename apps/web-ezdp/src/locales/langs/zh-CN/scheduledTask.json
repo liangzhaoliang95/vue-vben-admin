@@ -12,7 +12,7 @@
     "namePlaceholder": "请输入任务名称",
     "nameRequired": "任务名称不能为空",
     "cronExpression": "Cron表达式",
-    "cronExpressionPlaceholder": "请输入Cron表达式，例如: 0 0 2 * * ?",
+    "cronExpressionPlaceholder": "请输入Cron表达式，例如: 0 2 * * *",
     "cronExpressionRequired": "Cron表达式不能为空",
     "cronExpressionInvalid": "Cron表达式格式不正确",
     "taskType": "任务类型",
@@ -79,15 +79,15 @@
   },
   "cronHelper": {
     "title": "Cron表达式说明",
-    "format": "格式: 秒 分 时 日 月 周",
-    "example1": "每天凌晨2点: 0 0 2 * * ?",
-    "example2": "每小时: 0 0 * * * ?",
-    "example3": "每30分钟: 0 */30 * * * ?",
-    "example4": "工作日早上9点: 0 0 9 ? * MON-FRI",
+    "format": "格式: 分 时 日 月 周",
+    "example1": "每天凌晨2点: 0 2 * * *",
+    "example2": "每小时: 0 * * * *",
+    "example3": "每30分钟: */30 * * * *",
+    "example4": "工作日早上9点: 0 9 * * 1-5",
     "wildcard": "* = 每个值",
     "range": "- = 范围",
     "list": ", = 列表",
     "step": "/ = 步长",
-    "any": "? = 任意（仅用于日和周）"
+    "any": "标准Linux Cron格式"
   }
 }

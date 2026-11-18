@@ -12,7 +12,7 @@
     "namePlaceholder": "Please enter task name",
     "nameRequired": "Task name is required",
     "cronExpression": "Cron Expression",
-    "cronExpressionPlaceholder": "Enter cron expression, e.g: 0 0 2 * * ?",
+    "cronExpressionPlaceholder": "Enter cron expression, e.g: 0 2 * * *",
     "cronExpressionRequired": "Cron expression is required",
     "cronExpressionInvalid": "Invalid cron expression format",
     "taskType": "Task Type",
@@ -79,15 +79,15 @@
   },
   "cronHelper": {
     "title": "Cron Expression Guide",
-    "format": "Format: second minute hour day month weekday",
-    "example1": "Daily at 2 AM: 0 0 2 * * ?",
-    "example2": "Every hour: 0 0 * * * ?",
-    "example3": "Every 30 minutes: 0 */30 * * * ?",
-    "example4": "Weekdays at 9 AM: 0 0 9 ? * MON-FRI",
+    "format": "Format: minute hour day month weekday",
+    "example1": "Daily at 2 AM: 0 2 * * *",
+    "example2": "Every hour: 0 * * * *",
+    "example3": "Every 30 minutes: */30 * * * *",
+    "example4": "Weekdays at 9 AM: 0 9 * * 1-5",
     "wildcard": "* = every value",
     "range": "- = range",
     "list": ", = list",
     "step": "/ = step",
-    "any": "? = any (day and weekday only)"
+    "any": "Standard Linux cron format"
   }
 }
