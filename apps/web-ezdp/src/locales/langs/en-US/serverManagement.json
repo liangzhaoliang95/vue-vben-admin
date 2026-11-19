@@ -116,5 +116,14 @@
     "pasteClipboard": "Paste to Remote Desktop",
     "sendToRemote": "Send to Remote",
     "cancel": "Cancel"
+  },
+  "databaseManagement": {
+    "title": "Database Management",
+    "refresh": "Refresh",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "loading": "Loading database management tool",
+    "loadSuccess": "Database management tool loaded successfully",
+    "loadError": "Failed to load database management tool"
   }
 }

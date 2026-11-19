@@ -116,5 +116,14 @@
     "pasteClipboard": "粘贴到远程桌面",
     "sendToRemote": "发送到远程",
     "cancel": "取消"
+  },
+  "databaseManagement": {
+    "title": "数据库管理",
+    "refresh": "刷新",
+    "connected": "已连接",
+    "disconnected": "未连接",
+    "loading": "正在加载数据库管理工具",
+    "loadSuccess": "数据库管理工具已加载",
+    "loadError": "加载数据库管理工具失败"
   }
 }
