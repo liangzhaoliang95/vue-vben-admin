@@ -89,7 +89,12 @@ onMounted(async () => {
               frameborder="0"
               class="database-iframe"
               @load="() => (connected = true)"
-              @error="() => message.error($t('serverManagement.databaseManagement.loadError'))"
+              @error="
+                () =>
+                  message.error(
+                    $t('serverManagement.databaseManagement.loadError'),
+                  )
+              "
             />
           </div>
         </template>
@@ -146,9 +151,9 @@ onMounted(async () => {
 }
 
 .database-preview {
+  overflow: hidden;
   border: 1px solid #d9d9d9;
   border-radius: 4px;
-  overflow: hidden;
 }
 
 .database-iframe {
