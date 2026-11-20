@@ -316,14 +316,20 @@ function formatUptime(uptimeMs: number): string {
                   <Statistic
                     :title="$t('system.systemStatus.restartCount')"
                     :value="systemMetrics.restartCount"
-                    :value-style="{ color: systemMetrics.restartCount > 0 ? '#cf1322' : '#52c41a' }"
+                    :value-style="{
+                      color:
+                        systemMetrics.restartCount > 0 ? '#cf1322' : '#52c41a',
+                    }"
                   />
                 </Col>
               </Row>
             </Card>
 
             <!-- 系统信息 -->
-            <Card size="small" :title="$t('system.systemStatus.systemEnvironment')">
+            <Card
+              size="small"
+              :title="$t('system.systemStatus.systemEnvironment')"
+            >
               <Row :gutter="16">
                 <Col :xs="24" :sm="12" :md="6">
                   <Statistic
