@@ -166,6 +166,26 @@
     "noDependencies": "No dependencies",
     "loadFailed": "Failed to load system status",
     "checkSuccess": "Dependency check completed",
-    "checkFailed": "Dependency check failed"
+    "checkFailed": "Dependency check failed",
+    "dependencies": "Dependencies",
+    "monitoring": "Monitoring",
+    "systemInfo": "System Information",
+    "basicInfo": "Basic Info",
+    "appVersion": "App Version",
+    "buildTime": "Build Time",
+    "goVersion": "Go Version",
+    "restartCount": "Restart Count",
+    "systemEnvironment": "System Environment",
+    "os": "OS",
+    "arch": "Architecture",
+    "numCPU": "CPU Cores",
+    "runtimeInfo": "Runtime Info",
+    "uptime": "Uptime",
+    "goroutines": "Goroutines",
+    "memoryInfo": "Memory Info",
+    "allocMemory": "Allocated Memory",
+    "totalAllocMemory": "Total Allocated",
+    "sysMemory": "System Memory",
+    "noData": "No data"
   }
 }

@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 
 import { Card, Empty, message, Space, Button, Tag } from 'ant-design-vue';
+import { useAccessStore } from '@vben/stores';
 
 import MFAVerify from '#/components/mfa-verify/index.vue';
 import { $t } from '#/locales';
@@ -16,8 +17,11 @@ function buildDBXURL() {
   // 前端通过代理API访问DBX
   const protocol = window.location.protocol;
   const host = window.location.host;
-  const path = '/server/ezdp/dbx';
-  return `${protocol}//${host}${path}`;
+  const path = '/server/ezdp/dbx/';
+  // iframe 无法自动携带 Authorization 头，通过 query 参数传递 token，
+  // 后端 tokenChecker 中间件已支持从 ?token= 读取（用于 WebSocket/iframe 场景）
+  const token = useAccessStore().accessToken || '';
+  return `${protocol}//${host}${path}?token=${encodeURIComponent(token)}`;
 }
 
 async function loadDatabase() {

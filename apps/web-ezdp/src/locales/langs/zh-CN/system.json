@@ -166,6 +166,26 @@
     "noDependencies": "暂无依赖工具",
     "loadFailed": "加载系统状态失败",
     "checkSuccess": "依赖检查完成",
-    "checkFailed": "依赖检查失败"
+    "checkFailed": "依赖检查失败",
+    "dependencies": "依赖检查",
+    "monitoring": "系统监控",
+    "systemInfo": "系统信息",
+    "basicInfo": "基本信息",
+    "appVersion": "应用版本",
+    "buildTime": "编译时间",
+    "goVersion": "Go 版本",
+    "restartCount": "重启次数",
+    "systemEnvironment": "系统环境",
+    "os": "操作系统",
+    "arch": "CPU 架构",
+    "numCPU": "CPU 核数",
+    "runtimeInfo": "运行时信息",
+    "uptime": "运行时长",
+    "goroutines": "协程数量",
+    "memoryInfo": "内存信息",
+    "allocMemory": "当前分配内存",
+    "totalAllocMemory": "累计分配内存",
+    "sysMemory": "系统内存",
+    "noData": "暂无数据"
   }
 }
