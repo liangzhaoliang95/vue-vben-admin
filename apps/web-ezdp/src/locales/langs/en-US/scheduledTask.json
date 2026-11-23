@@ -1,0 +1,93 @@
+{
+  "title": "Scheduled Tasks",
+  "list": {
+    "title": "Scheduled Task List",
+    "search": "Search task name",
+    "all": "All Tasks",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  },
+  "form": {
+    "name": "Task Name",
+    "namePlaceholder": "Please enter task name",
+    "nameRequired": "Task name is required",
+    "cronExpression": "Cron Expression",
+    "cronExpressionPlaceholder": "Enter cron expression, e.g: 0 2 * * *",
+    "cronExpressionRequired": "Cron expression is required",
+    "cronExpressionInvalid": "Invalid cron expression format",
+    "taskType": "Task Type",
+    "taskTypePlaceholder": "Please select task type",
+    "taskTypeRequired": "Task type is required",
+    "taskType1": "Build Pre-check",
+    "taskType2": "Incremental Build",
+    "projectConfig": "Project Config",
+    "projectConfigPlaceholder": "Please select project config",
+    "projectConfigRequired": "Project config is required",
+    "branch": "Branch",
+    "branchPlaceholder": "Please select branch",
+    "branchRequired": "Branch is required",
+    "enabled": "Status",
+    "enabledTrue": "Enabled",
+    "enabledFalse": "Disabled"
+  },
+  "column": {
+    "name": "Task Name",
+    "cronExpression": "Cron Expression",
+    "taskType": "Task Type",
+    "projectConfig": "Project Config",
+    "branch": "Branch",
+    "enabled": "Status",
+    "lastExecuteTime": "Last Execute Time",
+    "nextExecuteTime": "Next Execute Time",
+    "lastExecuteStatus": "Last Status",
+    "createdBy": "Created By",
+    "createdAt": "Created At",
+    "action": "Action"
+  },
+  "status": {
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "success": "Success",
+    "failed": "Failed",
+    "running": "Running",
+    "never": "Never"
+  },
+  "action": {
+    "create": "Create Task",
+    "edit": "Edit",
+    "delete": "Delete",
+    "enable": "Enable",
+    "disable": "Disable",
+    "executeNow": "Execute Now",
+    "view": "View"
+  },
+  "message": {
+    "createSuccess": "Task created successfully",
+    "createFailed": "Failed to create task",
+    "updateSuccess": "Task updated successfully",
+    "updateFailed": "Failed to update task",
+    "deleteSuccess": "Task deleted successfully",
+    "deleteFailed": "Failed to delete task",
+    "deleteConfirm": "Are you sure to delete this task?",
+    "enableSuccess": "Task enabled successfully",
+    "enableFailed": "Failed to enable task",
+    "disableSuccess": "Task disabled successfully",
+    "disableFailed": "Failed to disable task",
+    "executeSuccess": "Task submitted for execution",
+    "executeFailed": "Failed to execute task",
+    "executeConfirm": "Are you sure to execute this task now?"
+  },
+  "cronHelper": {
+    "title": "Cron Expression Guide",
+    "format": "Format: minute hour day month weekday",
+    "example1": "Daily at 2 AM: 0 2 * * *",
+    "example2": "Every hour: 0 * * * *",
+    "example3": "Every 30 minutes: */30 * * * *",
+    "example4": "Weekdays at 9 AM: 0 9 * * 1-5",
+    "wildcard": "* = every value",
+    "range": "- = range",
+    "list": ", = list",
+    "step": "/ = step",
+    "any": "Standard Linux cron format"
+  }
+}
