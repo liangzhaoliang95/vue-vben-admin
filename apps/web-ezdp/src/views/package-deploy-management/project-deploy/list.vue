@@ -35,7 +35,7 @@ import {
   deployByVersionIncremental,
   getEnvironmentVersion,
 } from '#/api/package-deploy-management/deploy';
-import { getBuildTaskList } from '#/api/package-deploy-management/project-package';
+import { getBuildTaskList, getProjectChangelog } from '#/api/package-deploy-management/project-package';
 import {
   getDeployEnvironmentList,
   getEnvironmentProjectVersions,
@@ -886,6 +886,7 @@ onActivated(async () => {
 // changelog modal 状态
 const changelogModalOpen = ref(false);
 const changelogVersion = ref<any>(null);
+const changelogLoading = ref(false);
 
 // 解析 changelog JSON
 const changelogCommits = computed(() => {
@@ -897,10 +898,28 @@ const changelogCommits = computed(() => {
   }
 });
 
-// 打开 changelog modal
-function openChangelog(version: any) {
-  changelogVersion.value = version;
+// 打开 changelog modal（实时获取 changelog）
+async function openChangelog(buildVersionId: string, project: any) {
+  changelogVersion.value = { ...project, changelog: '' };
   changelogModalOpen.value = true;
+  changelogLoading.value = true;
+
+  try {
+    const result = await getProjectChangelog({
+      buildVersionId,
+      projectConfigId: project.projectConfigId,
+    });
+    changelogVersion.value = {
+      ...project,
+      changelog: result?.changelog || '',
+    };
+  } catch (error) {
+    console.error('获取 changelog 失败:', error);
+    message.error('获取 changelog 失败');
+    changelogModalOpen.value = false;
+  } finally {
+    changelogLoading.value = false;
+  }
 }
 
 // 格式化 commit 时间
@@ -1339,26 +1358,7 @@ onDeactivated(() => {
                         </Button>
                       </Tooltip>
                     </div>
-                    <!-- 变更日志按钮 -->
-                    <span
-                      v-if="version.changelog"
-                      class="changelog-btn"
-                      @click.stop="openChangelog(version)"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="13"
-                        height="13"
-                        viewBox="0 0 92 92"
-                        fill="currentColor"
-                        style="flex-shrink: 0"
-                      >
-                        <path
-                          d="M90.156 41.965L50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.043 7.043 0 0 1 1.672 7.277l10.183 10.184a7.026 7.026 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.038 7.038 0 0 1-1.532-7.66L49.73 33.516v27.085a7.03 7.03 0 0 1 1.86 1.297 7.04 7.04 0 0 1 0 9.957 7.045 7.045 0 0 1-9.961 0 7.04 7.04 0 0 1 0-9.957 7.074 7.074 0 0 1 2.304-1.539V33.035a7.07 7.07 0 0 1-2.304-1.535 7.047 7.047 0 0 1-1.516-7.7L29.945 13.234 1.734 41.445a5.918 5.918 0 0 0 0 8.371l40.12 40.121a5.918 5.918 0 0 0 8.372 0l39.93-39.934a5.925 5.925 0 0 0 0-8.038z"
-                        />
-                      </svg>
-                      提交记录
-                    </span>
+                    <!-- 变更日志按钮已移除（版本级别无 changelog） -->
                     <Button
                       type="primary"
                       size="large"
@@ -1486,11 +1486,8 @@ onDeactivated(() => {
                         </Tag>
                         <span
                           class="changelog-btn"
-                          :class="{
-                            'changelog-btn--empty': !project.changelog,
-                          }"
                           @click.stop="
-                            project.changelog && openChangelog(project)
+                            openChangelog(version.id, project)
                           "
                         >
                           <svg
@@ -1627,11 +1624,8 @@ onDeactivated(() => {
                         </Tag>
                         <span
                           class="changelog-btn"
-                          :class="{
-                            'changelog-btn--empty': !project.changelog,
-                          }"
                           @click.stop="
-                            project.changelog && openChangelog(project)
+                            openChangelog(version.id, project)
                           "
                         >
                           <svg
@@ -1748,32 +1742,34 @@ onDeactivated(() => {
       :footer="null"
       width="800px"
     >
-      <div
-        v-if="changelogCommits.length === 0"
-        class="py-8 text-center text-gray-400"
-      >
-        {{ $t('deploy.packageDeployManagement.projectDeploy.changelogEmpty') }}
-      </div>
-      <div v-else class="changelog-list">
+      <Spin :spinning="changelogLoading">
         <div
-          v-for="commit in changelogCommits"
-          :key="commit.id"
-          class="changelog-item"
+          v-if="!changelogLoading && changelogCommits.length === 0"
+          class="py-8 text-center text-gray-400"
         >
-          <span class="commit-title">{{ commit.title }}</span>
-          <div class="commit-meta">
-            <Tag color="warning" class="commit-id-tag">
-              {{ commit.shortId }}
-            </Tag>
-            <Tag color="blue" class="commit-author-tag">
-              {{ commit.authorName }}
-            </Tag>
-            <Tag class="commit-time-tag">
-              {{ formatCommitTime(commit.committedAt) }}
-            </Tag>
+          {{ $t('deploy.packageDeployManagement.projectDeploy.changelogEmpty') }}
+        </div>
+        <div v-else class="changelog-list">
+          <div
+            v-for="commit in changelogCommits"
+            :key="commit.id"
+            class="changelog-item"
+          >
+            <span class="commit-title">{{ commit.title }}</span>
+            <div class="commit-meta">
+              <Tag color="warning" class="commit-id-tag">
+                {{ commit.shortId }}
+              </Tag>
+              <Tag color="blue" class="commit-author-tag">
+                {{ commit.authorName }}
+              </Tag>
+              <Tag class="commit-time-tag">
+                {{ formatCommitTime(commit.committedAt) }}
+              </Tag>
+            </div>
           </div>
         </div>
-      </div>
+      </Spin>
     </Modal>
   </Page>
 </template>
@@ -1928,18 +1924,6 @@ onDeactivated(() => {
 .changelog-btn:hover {
   background-color: rgb(240 80 51 / 8%);
   opacity: 1;
-}
-
-.changelog-btn--empty {
-  color: hsl(var(--muted-foreground));
-  cursor: default;
-  border-color: hsl(var(--border));
-  opacity: 0.4;
-}
-
-.changelog-btn--empty:hover {
-  background-color: transparent;
-  opacity: 0.4;
 }
 
 .changelog-placeholder {

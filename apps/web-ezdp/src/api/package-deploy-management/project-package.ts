@@ -28,7 +28,6 @@ export namespace ProjectPackageApi {
     buildTime: number; // 构建时间
     businessLineId?: number; // 业务线ID
     description?: string; // 版本描述
-    changelog?: string; // 变更日志（JSON格式）
     children: BuildTask[]; // 子项目列表
   }
 
@@ -66,6 +65,18 @@ export namespace ProjectPackageApi {
   export interface PreBuildCheckResult {
     message: string;
   }
+
+  export interface GetProjectChangelogParams {
+    buildVersionId: string; // 大版本ID
+    projectConfigId: string; // 项目配置ID
+  }
+
+  export interface ProjectChangelogInfo {
+    projectConfigId: string; // 项目配置ID
+    projectName: string; // 项目名称
+    version: string; // 项目版本号
+    changelog: string; // 变更日志（JSON格式）
+  }
 }
 
 /**
@@ -100,6 +111,18 @@ export async function triggerPreBuildCheck(
 ) {
   return requestClient.post<ProjectPackageApi.PreBuildCheckResult>(
     '/packageDeployManagement/projectPackage/preBuildCheck',
+    params,
+  );
+}
+
+/**
+ * 获取项目的 changelog
+ */
+export async function getProjectChangelog(
+  params: ProjectPackageApi.GetProjectChangelogParams,
+) {
+  return requestClient.post<ProjectPackageApi.ProjectChangelogInfo>(
+    '/packageDeployManagement/projectPackage/changelog',
     params,
   );
 }

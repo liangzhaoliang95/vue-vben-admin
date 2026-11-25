@@ -26,6 +26,7 @@ import { FolderOpen, Monitor, Package, ServerCrash } from 'lucide-vue-next';
 import { getBranchManagementList } from '#/api/package-deploy-management/branch-management';
 import {
   getBuildTaskList,
+  getProjectChangelog,
   startBuildTask,
   triggerPreBuildCheck,
 } from '#/api/package-deploy-management/project-package';
@@ -1053,6 +1054,8 @@ async function copyVersionAsYaml(version: any) {
 // changelog modal 状态
 const changelogModalOpen = ref(false);
 const changelogVersion = ref<any>(null);
+const changelogProject = ref<any>(null);
+const changelogLoading = ref(false);
 
 // artifact modal 状态
 const artifactModalOpen = ref(false);
@@ -1061,18 +1064,34 @@ const artifactProjectName = ref('');
 
 // 解析 changelog JSON
 const changelogCommits = computed(() => {
-  if (!changelogVersion.value?.changelog) return [];
+  if (!changelogProject.value?.changelog) return [];
   try {
-    return JSON.parse(changelogVersion.value.changelog);
+    return JSON.parse(changelogProject.value.changelog);
   } catch {
     return [];
   }
 });
 
 // 打开 changelog modal
-function openChangelog(version: any) {
+async function openChangelog(version: any, project: any) {
   changelogVersion.value = version;
+  changelogProject.value = null;
   changelogModalOpen.value = true;
+  changelogLoading.value = true;
+
+  try {
+    const result = await getProjectChangelog({
+      buildVersionId: version.id,
+      projectConfigId: project.projectConfigId,
+    });
+    changelogProject.value = result;
+  } catch (error) {
+    console.error('获取 changelog 失败:', error);
+    message.error('获取 changelog 失败');
+    changelogModalOpen.value = false;
+  } finally {
+    changelogLoading.value = false;
+  }
 }
 
 // 打开 artifact modal
@@ -1523,12 +1542,7 @@ onDeactivated(() => {
                           </Tag>
                           <span
                             class="changelog-btn"
-                            :class="{
-                              'changelog-btn--empty': !project.changelog,
-                            }"
-                            @click.stop="
-                              project.changelog && openChangelog(project)
-                            "
+                            @click.stop="openChangelog(changelogVersion, project)"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1656,12 +1670,7 @@ onDeactivated(() => {
                           </Tag>
                           <span
                             class="changelog-btn"
-                            :class="{
-                              'changelog-btn--empty': !project.changelog,
-                            }"
-                            @click.stop="
-                              project.changelog && openChangelog(project)
-                            "
+                            @click.stop="openChangelog(changelogVersion, project)"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1893,32 +1902,34 @@ onDeactivated(() => {
       :footer="null"
       width="800px"
     >
-      <div
-        v-if="changelogCommits.length === 0"
-        class="py-8 text-center text-gray-400"
-      >
-        {{ $t('deploy.packageDeployManagement.projectPackage.changelogEmpty') }}
-      </div>
-      <div v-else class="changelog-list">
+      <Spin :spinning="changelogLoading">
         <div
-          v-for="commit in changelogCommits"
-          :key="commit.id"
-          class="changelog-item"
+          v-if="!changelogLoading && changelogCommits.length === 0"
+          class="py-8 text-center text-gray-400"
         >
-          <span class="commit-title">{{ commit.title }}</span>
-          <div class="commit-meta">
-            <Tag color="warning" class="commit-id-tag">
-              {{ commit.shortId }}
-            </Tag>
-            <Tag color="blue" class="commit-author-tag">
-              {{ commit.authorName }}
-            </Tag>
-            <Tag class="commit-time-tag">
-              {{ formatCommitTime(commit.committedAt) }}
-            </Tag>
+          {{ $t('deploy.packageDeployManagement.projectPackage.changelogEmpty') }}
+        </div>
+        <div v-else class="changelog-list">
+          <div
+            v-for="commit in changelogCommits"
+            :key="commit.id"
+            class="changelog-item"
+          >
+            <span class="commit-title">{{ commit.title }}</span>
+            <div class="commit-meta">
+              <Tag color="warning" class="commit-id-tag">
+                {{ commit.shortId }}
+              </Tag>
+              <Tag color="blue" class="commit-author-tag">
+                {{ commit.authorName }}
+              </Tag>
+              <Tag class="commit-time-tag">
+                {{ formatCommitTime(commit.committedAt) }}
+              </Tag>
+            </div>
           </div>
         </div>
-      </div>
+      </Spin>
     </Modal>
 
     <!-- Artifact Modal -->
@@ -2115,18 +2126,6 @@ onDeactivated(() => {
 .changelog-btn:hover {
   background-color: rgb(240 80 51 / 8%);
   opacity: 1;
-}
-
-.changelog-btn--empty {
-  color: hsl(var(--muted-foreground));
-  cursor: default;
-  border-color: hsl(var(--border));
-  opacity: 0.4;
-}
-
-.changelog-btn--empty:hover {
-  background-color: transparent;
-  opacity: 0.4;
 }
 
 .changelog-placeholder {
