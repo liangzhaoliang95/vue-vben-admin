@@ -1081,8 +1081,7 @@ async function openChangelog(version: any, project: any) {
 
   try {
     const result = await getProjectChangelog({
-      buildVersionId: version.id,
-      projectConfigId: project.projectConfigId,
+      projectRecordId: project.id,
     });
     changelogProject.value = result;
   } catch (error) {
@@ -1542,7 +1541,9 @@ onDeactivated(() => {
                           </Tag>
                           <span
                             class="changelog-btn"
-                            @click.stop="openChangelog(changelogVersion, project)"
+                            @click.stop="
+                              openChangelog(version, project)
+                            "
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1670,7 +1671,9 @@ onDeactivated(() => {
                           </Tag>
                           <span
                             class="changelog-btn"
-                            @click.stop="openChangelog(changelogVersion, project)"
+                            @click.stop="
+                              openChangelog(version, project)
+                            "
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1907,7 +1910,9 @@ onDeactivated(() => {
           v-if="!changelogLoading && changelogCommits.length === 0"
           class="py-8 text-center text-gray-400"
         >
-          {{ $t('deploy.packageDeployManagement.projectPackage.changelogEmpty') }}
+          {{
+            $t('deploy.packageDeployManagement.projectPackage.changelogEmpty')
+          }}
         </div>
         <div v-else class="changelog-list">
           <div

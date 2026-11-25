@@ -35,7 +35,10 @@ import {
   deployByVersionIncremental,
   getEnvironmentVersion,
 } from '#/api/package-deploy-management/deploy';
-import { getBuildTaskList, getProjectChangelog } from '#/api/package-deploy-management/project-package';
+import {
+  getBuildTaskList,
+  getProjectChangelog,
+} from '#/api/package-deploy-management/project-package';
 import {
   getDeployEnvironmentList,
   getEnvironmentProjectVersions,
@@ -906,8 +909,7 @@ async function openChangelog(buildVersionId: string, project: any) {
 
   try {
     const result = await getProjectChangelog({
-      buildVersionId,
-      projectConfigId: project.projectConfigId,
+      projectRecordId: project.id,
     });
     changelogVersion.value = {
       ...project,
@@ -1486,9 +1488,7 @@ onDeactivated(() => {
                         </Tag>
                         <span
                           class="changelog-btn"
-                          @click.stop="
-                            openChangelog(version.id, project)
-                          "
+                          @click.stop="openChangelog(version.id, project)"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -1624,9 +1624,7 @@ onDeactivated(() => {
                         </Tag>
                         <span
                           class="changelog-btn"
-                          @click.stop="
-                            openChangelog(version.id, project)
-                          "
+                          @click.stop="openChangelog(version.id, project)"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -1747,7 +1745,9 @@ onDeactivated(() => {
           v-if="!changelogLoading && changelogCommits.length === 0"
           class="py-8 text-center text-gray-400"
         >
-          {{ $t('deploy.packageDeployManagement.projectDeploy.changelogEmpty') }}
+          {{
+            $t('deploy.packageDeployManagement.projectDeploy.changelogEmpty')
+          }}
         </div>
         <div v-else class="changelog-list">
           <div

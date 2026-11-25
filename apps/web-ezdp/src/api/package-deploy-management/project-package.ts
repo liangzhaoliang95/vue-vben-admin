@@ -67,8 +67,7 @@ export namespace ProjectPackageApi {
   }
 
   export interface GetProjectChangelogParams {
-    buildVersionId: string; // 大版本ID
-    projectConfigId: string; // 项目配置ID
+    projectRecordId: string; // 项目记录ID（BuildVersionProject.id）
   }
 
   export interface ProjectChangelogInfo {
