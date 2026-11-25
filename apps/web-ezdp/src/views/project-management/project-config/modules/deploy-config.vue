@@ -40,6 +40,7 @@ const formState = reactive({
   containerName: 'main', // K8s 容器名称（默认为main）
   ossName: '', // OSS 名称
   scriptContent: '', // 脚本内容
+  postScriptContent: '', // 善后脚本（非必填）
 });
 
 const loading = ref(false);
@@ -138,6 +139,9 @@ async function handleSave() {
       data.ossName = formState.ossName;
     } else if (formState.deployType === 'script') {
       data.scriptContent = formState.scriptContent;
+      if (formState.postScriptContent) {
+        data.postScriptContent = formState.postScriptContent;
+      }
     }
 
     await createOrUpdateDeployConfig(data);
@@ -167,6 +171,7 @@ async function loadConfig() {
       formState.containerName = config.containerName || 'main';
       formState.ossName = config.ossName || '';
       formState.scriptContent = config.scriptContent || '';
+      formState.postScriptContent = config.postScriptContent || '';
     }
   } catch (error) {
     console.error('加载配置失败:', error);
@@ -326,6 +331,33 @@ onMounted(() => {
             {{
               $t(
                 'deploy.projectManagement.projectConfig.deployConfig.scriptContentTip',
+              )
+            }}
+          </div>
+        </FormItem>
+
+        <FormItem
+          :label="
+            $t(
+              'deploy.projectManagement.projectConfig.deployConfig.postScriptContent',
+            )
+          "
+          name="postScriptContent"
+        >
+          <ShellEditor
+            v-model:value="formState.postScriptContent"
+            :min-rows="6"
+            :max-rows="15"
+            :placeholder="
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.postScriptContentPlaceholder',
+              )
+            "
+          />
+          <div class="mt-1 text-xs text-gray-500">
+            {{
+              $t(
+                'deploy.projectManagement.projectConfig.deployConfig.postScriptContentTip',
               )
             }}
           </div>

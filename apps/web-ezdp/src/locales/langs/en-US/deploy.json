@@ -281,6 +281,9 @@
         "scriptContent": "Deploy Script",
         "scriptContentPlaceholder": "Please enter deployment script commands, for example:\n#!/bin/bash\ncd /path/to/project\ngit pull\nnpm install\nnpm run build\npm2 restart app",
         "scriptContentTip": "Supports multi-line scripts, one command per line. Scripts will be executed sequentially during deployment.",
+        "postScriptContent": "Post Script",
+        "postScriptContentPlaceholder": "Optional post-deployment script, e.g.:\n#!/bin/bash\n# Callback notification\ncurl -X POST https://example.com/callback\n# Cleanup temp files\nrm -f /tmp/deploy_*",
+        "postScriptContentTip": "Runs after the deploy script succeeds. Use for callbacks, cleanup, etc. A failure here does not affect the deploy result.",
         "saveConfig": "Save Configuration"
       },
       "import": {

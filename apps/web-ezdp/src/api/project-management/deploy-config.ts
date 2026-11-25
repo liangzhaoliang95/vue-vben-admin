@@ -12,6 +12,7 @@ export namespace DeployConfigApi {
     containerName?: string;
     ossName?: string;
     scriptContent?: string;
+    postScriptContent?: string;
     createdAt: number;
     updatedAt: number;
   }

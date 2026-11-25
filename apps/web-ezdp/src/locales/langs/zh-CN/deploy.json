@@ -281,6 +281,9 @@
         "scriptContent": "发布脚本",
         "scriptContentPlaceholder": "请输入发布脚本命令，例如：\n#!/bin/bash\ncd /path/to/project\ngit pull\nnpm install\nnpm run build\npm2 restart app",
         "scriptContentTip": "支持多行脚本，每行一个命令。脚本将在发布时按顺序执行。",
+        "postScriptContent": "善后脚本",
+        "postScriptContentPlaceholder": "请输入善后脚本（非必填），例如：\n#!/bin/bash\n# 通知回调\ncurl -X POST https://example.com/callback\n# 清理临时文件\nrm -f /tmp/deploy_*",
+        "postScriptContentTip": "发布脚本执行成功后运行，可用于回调通知、清理环境变量等善后操作。即使善后脚本失败，发布结果不受影响。",
         "saveConfig": "保存配置"
       },
       "import": {
