@@ -1541,9 +1541,7 @@ onDeactivated(() => {
                           </Tag>
                           <span
                             class="changelog-btn"
-                            @click.stop="
-                              openChangelog(version, project)
-                            "
+                            @click.stop="openChangelog(version, project)"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1671,9 +1669,7 @@ onDeactivated(() => {
                           </Tag>
                           <span
                             class="changelog-btn"
-                            @click.stop="
-                              openChangelog(version, project)
-                            "
+                            @click.stop="openChangelog(version, project)"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
