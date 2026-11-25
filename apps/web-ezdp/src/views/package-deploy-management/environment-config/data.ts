@@ -482,12 +482,16 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: ['edit', 'delete'],
+        options: [
+          { code: 'envVars', text: $t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.title') },
+          'edit',
+          'delete',
+        ],
       },
       field: 'operation',
       fixed: 'right',
       title: $t('common.action'),
-      width: 150,
+      width: 220,
     },
   ];
 }

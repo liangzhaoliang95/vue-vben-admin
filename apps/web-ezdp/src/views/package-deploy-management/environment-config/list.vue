@@ -21,6 +21,7 @@ import {
 import { $t } from '#/locales';
 
 import { loadReferenceData, useColumns, useGridFormSchema } from './data';
+import EnvVarsDrawer from './modules/env-vars-drawer.vue';
 import Form from './modules/form.vue';
 import VersionModal from './modules/version-modal.vue';
 
@@ -36,8 +37,14 @@ const selectedEnvironment = ref<{
   name: '',
 });
 
+// 环境变量抽屉状态
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
+  destroyOnClose: true,
+});
+
+const [EnvVarsDrawerComp, envVarsDrawerApi] = useVbenDrawer({
+  connectedComponent: EnvVarsDrawer,
   destroyOnClose: true,
 });
 
@@ -123,6 +130,10 @@ function onActionClick(
       onEdit(e.row);
       break;
     }
+    case 'envVars': {
+      onEnvVars(e.row);
+      break;
+    }
   }
 }
 
@@ -148,6 +159,10 @@ function confirm(content: string, title: string) {
 
 function onEdit(row: DeployEnvironmentApi.DeployEnvironment) {
   formDrawerApi.setData(row).open();
+}
+
+function onEnvVars(row: DeployEnvironmentApi.DeployEnvironment) {
+  envVarsDrawerApi.setData({ id: row.id, name: row.name, envVars: row.envVars }).open();
 }
 
 function onDelete(row: DeployEnvironmentApi.DeployEnvironment) {
@@ -182,6 +197,7 @@ function showVersionModal(id: string, name: string) {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
+    <EnvVarsDrawerComp @success="onRefresh" />
     <VersionModal
       v-model:open="versionModalOpen"
       :environment-id="selectedEnvironment.id"

@@ -661,6 +661,17 @@
       "isAgentDeploy": "Agent负责发布",
       "atLeastOneTargetRequired": "至少需要配置前端、后端或远端服务器之一",
       "agentEnvNotAllowedFrontendBackend": "Agent环境不允许配置前端/后端/远端服务器信息",
+      "envVarsDrawer": {
+        "title": "环境变量配置",
+        "keyLabel": "变量名",
+        "valueLabel": "变量值",
+        "keyPlaceholder": "变量名，如 NODE_ENV",
+        "valuePlaceholder": "变量值",
+        "addRow": "添加变量",
+        "saveSuccess": "环境变量保存成功",
+        "keyRequired": "变量名不能为空",
+        "keyDuplicate": "变量名重复"
+      },
       "versionModal": {
         "title": "环境【{0}】项目版本",
         "projectName": "项目名称",

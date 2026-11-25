@@ -662,6 +662,17 @@
       "isAgentDeploy": "Agent Deploy",
       "atLeastOneTargetRequired": "At least one deployment target (frontend, backend or remote server) must be configured",
       "agentEnvNotAllowedFrontendBackend": "Agent environment does not allow frontend/backend/remote server configuration",
+      "envVarsDrawer": {
+        "title": "Environment Variables",
+        "keyLabel": "Variable Name",
+        "valueLabel": "Value",
+        "keyPlaceholder": "Variable name, e.g. NODE_ENV",
+        "valuePlaceholder": "Value",
+        "addRow": "Add Variable",
+        "saveSuccess": "Environment variables saved",
+        "keyRequired": "Variable name is required",
+        "keyDuplicate": "Duplicate variable name"
+      },
       "versionModal": {
         "title": "Environment [{0}] Project Versions",
         "projectName": "Project Name",

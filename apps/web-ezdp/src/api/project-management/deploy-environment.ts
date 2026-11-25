@@ -16,6 +16,7 @@ export namespace DeployEnvironmentApi {
     remoteServer?: string;
     remoteDeployPath?: string;
     isAgentDeploy: boolean;
+    envVars?: Record<string, string>;
     sortOrder: number;
     createdAt: number;
     updatedAt: number;
@@ -132,6 +133,19 @@ async function getEnvironmentProjectVersions(deployEnvironmentId: string) {
   });
 }
 
+/**
+ * 更新发布环境变量
+ */
+async function updateDeployEnvironmentEnvVars(
+  id: string,
+  envVars: Record<string, string>,
+) {
+  return requestClient.post('/projectManagement/deployEnvironment/updateEnvVars', {
+    id,
+    envVars,
+  });
+}
+
 export {
   createDeployEnvironment,
   deleteDeployEnvironment,
@@ -139,5 +153,6 @@ export {
   getDeployEnvironmentList,
   getEnvironmentProjectVersions,
   updateDeployEnvironment,
+  updateDeployEnvironmentEnvVars,
   updateDeployEnvironmentOrder,
 };
