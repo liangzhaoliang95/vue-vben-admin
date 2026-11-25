@@ -285,7 +285,12 @@ async function loadVersionList() {
     }
 
     const res = await getBuildTaskList(queryParams);
-    versionList.value = res.items || [];
+
+    // 加载后对每个版本的 children 进行排序，确保排序顺序稳定
+    versionList.value = (res.items || []).map((version) => ({
+      ...version,
+      children: getSortedProjects(version.children || []),
+    }));
 
     // 加载当前环境的版本
     await loadCurrentEnvironmentVersion();
@@ -432,7 +437,12 @@ async function handleShowAll() {
     }
 
     const res = await getBuildTaskList(queryParams);
-    versionList.value = res.items || [];
+
+    // 数据加载后立即对每个版本的 children 进行排序
+    versionList.value = (res.items || []).map((version) => ({
+      ...version,
+      children: getSortedProjects(version.children || []),
+    }));
 
     await loadCurrentEnvironmentVersion();
     message.success('全量获取成功');
@@ -759,36 +769,26 @@ function getSortedProjects(projects: any[]) {
     );
   }
 
-  return [...projects].sort((a, b) => {
-    const typeOrder: Record<string, number> = {
-      backend: 1,
-      submodule: 2,
-      frontend: 3,
-    };
-
-    const orderA = typeOrder[a.projectType] || 999;
-    const orderB = typeOrder[b.projectType] || 999;
-
-    if (orderA !== orderB) {
-      return orderA - orderB;
+  // 版本号语义化比较函数
+  const versionCompare = (v1: string, v2: string) => {
+    const parts1 = (v1 || '').split('.').map((x) => parseInt(x, 10) || 0);
+    const parts2 = (v2 || '').split('.').map((x) => parseInt(x, 10) || 0);
+    const len = Math.max(parts1.length, parts2.length);
+    for (let i = 0; i < len; i++) {
+      const n1 = parts1[i] ?? 0;
+      const n2 = parts2[i] ?? 0;
+      if (n1 !== n2) return n2 - n1; // 版本号降序
     }
+    return 0;
+  };
 
-    // 同类型内按版本号降序（语义化版本比较）
-    const versionCompare = (v1: string, v2: string) => {
-      const parts1 = (v1 || '').split('.').map(Number);
-      const parts2 = (v2 || '').split('.').map(Number);
-      const len = Math.max(parts1.length, parts2.length);
-      for (let i = 0; i < len; i++) {
-        const n1 = parts1[i] ?? 0;
-        const n2 = parts2[i] ?? 0;
-        if (n1 !== n2) return n2 - n1;
-      }
-      return 0;
-    };
+  return [...projects].sort((a, b) => {
+    // 1. 先按项目版本号降序排序
     const versionDiff = versionCompare(a.version, b.version);
     if (versionDiff !== 0) return versionDiff;
 
-    return (a.projectName || '').localeCompare(b.projectName || '');
+    // 2. 项目版本号相同则按项目名称升序排序
+    return (a.projectName || '').localeCompare(b.projectName || '', 'zh-CN');
   });
 }
 
@@ -940,7 +940,7 @@ async function copyVersionAsMarkdown(version: any) {
     const versionInfo = `**构建时间:** ${formatTime(version.buildTime)}\n\n`;
     const headers = ['项目名称', '项目类型', '版本号'];
     const separator = ['---', '---', '---'];
-    const rows = getSortedProjects(version.children).map((project: any) => [
+    const rows = version.children.map((project: any) => [
       project.projectName || '-',
       getProjectTypeName(project.projectType || ''),
       project.version || '-',
@@ -971,7 +971,7 @@ async function copyVersionAsJson(version: any) {
   }
   try {
     const obj: Record<string, string> = { version: version.version || '' };
-    for (const project of getSortedProjects(version.children)) {
+    for (const project of version.children) {
       if (project.projectName && project.version) {
         obj[project.projectName] = project.version;
       }
@@ -996,10 +996,10 @@ async function copyVersionAsYaml(version: any) {
     return;
   }
   try {
-    const backendProjects = getSortedProjects(version.children).filter(
+    const backendProjects = version.children.filter(
       (p) => p.projectType !== 'frontend',
     );
-    const frontendProjects = getSortedProjects(version.children).filter(
+    const frontendProjects = version.children.filter(
       (p) => p.projectType === 'frontend',
     );
     const lines: string[] = [
