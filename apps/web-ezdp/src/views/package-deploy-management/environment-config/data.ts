@@ -483,7 +483,12 @@ export function useColumns<T = DeployEnvironmentApi.DeployEnvironment>(
         },
         name: 'CellOperation',
         options: [
-          { code: 'envVars', text: $t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.title') },
+          {
+            code: 'envVars',
+            text: $t(
+              'deploy.packageDeployManagement.environmentConfig.envVarsDrawer.title',
+            ),
+          },
           'edit',
           'delete',
         ],

@@ -115,9 +115,12 @@ async function getDeployEnvironmentDetail(id: number | string) {
 async function updateDeployEnvironmentOrder(
   orders: DeployEnvironmentApi.OrderItem[],
 ) {
-  return requestClient.post('/projectManagement/deployEnvironment/updateOrder', {
-    orders,
-  });
+  return requestClient.post(
+    '/projectManagement/deployEnvironment/updateOrder',
+    {
+      orders,
+    },
+  );
 }
 
 /**
@@ -140,10 +143,13 @@ async function updateDeployEnvironmentEnvVars(
   id: string,
   envVars: Record<string, string>,
 ) {
-  return requestClient.post('/projectManagement/deployEnvironment/updateEnvVars', {
-    id,
-    envVars,
-  });
+  return requestClient.post(
+    '/projectManagement/deployEnvironment/updateEnvVars',
+    {
+      id,
+      envVars,
+    },
+  );
 }
 
 export {

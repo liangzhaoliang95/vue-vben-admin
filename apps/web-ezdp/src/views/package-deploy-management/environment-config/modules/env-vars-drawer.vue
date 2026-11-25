@@ -39,13 +39,17 @@ const [Drawer, drawerApi] = useVbenDrawer({
         value,
         id: rowIdCounter++,
       }));
-      rows.value = entries.length > 0 ? entries : [{ key: '', value: '', id: rowIdCounter++ }];
+      rows.value =
+        entries.length > 0
+          ? entries
+          : [{ key: '', value: '', id: rowIdCounter++ }];
     }
   },
 });
 
 const title = computed(
-  () => `${$t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.title')} — ${environmentName.value}`,
+  () =>
+    `${$t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.title')} — ${environmentName.value}`,
 );
 
 const duplicateKeys = computed(() => {
@@ -72,14 +76,18 @@ function validate(): boolean {
   for (const row of rows.value) {
     if (!row.key.trim()) {
       message.error(
-        $t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.keyRequired'),
+        $t(
+          'deploy.packageDeployManagement.environmentConfig.envVarsDrawer.keyRequired',
+        ),
       );
       return false;
     }
   }
   if (duplicateKeys.value.size > 0) {
     message.error(
-      $t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.keyDuplicate'),
+      $t(
+        'deploy.packageDeployManagement.environmentConfig.envVarsDrawer.keyDuplicate',
+      ),
     );
     return false;
   }
@@ -99,7 +107,9 @@ async function handleConfirm() {
   try {
     await updateDeployEnvironmentEnvVars(environmentId.value, envVars);
     message.success(
-      $t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.saveSuccess'),
+      $t(
+        'deploy.packageDeployManagement.environmentConfig.envVarsDrawer.saveSuccess',
+      ),
     );
     emits('success');
     drawerApi.close();
@@ -115,10 +125,14 @@ async function handleConfirm() {
       <!-- 表头 -->
       <div class="env-vars-header">
         <span class="col-key">{{
-          $t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.keyLabel')
+          $t(
+            'deploy.packageDeployManagement.environmentConfig.envVarsDrawer.keyLabel',
+          )
         }}</span>
         <span class="col-value">{{
-          $t('deploy.packageDeployManagement.environmentConfig.envVarsDrawer.valueLabel')
+          $t(
+            'deploy.packageDeployManagement.environmentConfig.envVarsDrawer.valueLabel',
+          )
         }}</span>
         <span class="col-action" />
       </div>
@@ -133,7 +147,11 @@ async function handleConfirm() {
               'deploy.packageDeployManagement.environmentConfig.envVarsDrawer.keyPlaceholder',
             )
           "
-          :status="duplicateKeys.has(row.key.trim()) && row.key.trim() ? 'error' : undefined"
+          :status="
+            duplicateKeys.has(row.key.trim()) && row.key.trim()
+              ? 'error'
+              : undefined
+          "
           spellcheck="false"
         />
         <Input
@@ -185,8 +203,8 @@ async function handleConfirm() {
   gap: 8px;
   padding: 0 2px;
   font-size: 12px;
-  color: var(--ant-color-text-secondary, #666);
   font-weight: 500;
+  color: var(--ant-color-text-secondary, #666);
 }
 
 .env-vars-row {
@@ -206,9 +224,9 @@ async function handleConfirm() {
 }
 
 .col-action {
-  flex: none;
-  width: 32px;
   display: flex;
+  flex: none;
   justify-content: center;
+  width: 32px;
 }
 </style>

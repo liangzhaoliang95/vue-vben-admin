@@ -162,7 +162,9 @@ function onEdit(row: DeployEnvironmentApi.DeployEnvironment) {
 }
 
 function onEnvVars(row: DeployEnvironmentApi.DeployEnvironment) {
-  envVarsDrawerApi.setData({ id: row.id, name: row.name, envVars: row.envVars }).open();
+  envVarsDrawerApi
+    .setData({ id: row.id, name: row.name, envVars: row.envVars })
+    .open();
 }
 
 function onDelete(row: DeployEnvironmentApi.DeployEnvironment) {
