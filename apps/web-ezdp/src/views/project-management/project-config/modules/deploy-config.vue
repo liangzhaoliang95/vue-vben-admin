@@ -9,8 +9,9 @@ import {
   message,
   Select,
   SelectOption,
-  Textarea,
 } from 'ant-design-vue';
+
+import ShellEditor from '#/components/ShellEditor.vue';
 
 import {
   createOrUpdateDeployConfig,
@@ -311,16 +312,15 @@ onMounted(() => {
           "
           name="scriptContent"
         >
-          <Textarea
+          <ShellEditor
             v-model:value="formState.scriptContent"
+            :min-rows="10"
+            :max-rows="20"
             :placeholder="
               $t(
                 'deploy.projectManagement.projectConfig.deployConfig.scriptContentPlaceholder',
               )
             "
-            :rows="10"
-            :auto-size="{ minRows: 10, maxRows: 20 }"
-            style="font-family: Consolas, Monaco, 'Courier New', monospace"
           />
           <div class="mt-1 text-xs text-gray-500">
             {{

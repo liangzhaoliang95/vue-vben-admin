@@ -11,6 +11,8 @@ import {
   Switch,
 } from 'ant-design-vue';
 
+import ShellEditor from '#/components/ShellEditor.vue';
+
 import { getDockerSecretList } from '#/api/deploy-tools/docker-secret';
 import {
   createOrUpdateBuildConfig,
@@ -474,9 +476,9 @@ onMounted(() => {
           "
           name="buildScript"
         >
-          <Input.TextArea
+          <ShellEditor
             v-model:value="formState.buildScript"
-            :rows="6"
+            :min-rows="6"
             :placeholder="
               $t(
                 'deploy.projectManagement.projectConfig.buildConfig.buildScriptPlaceholder',
@@ -487,13 +489,15 @@ onMounted(() => {
 
         <FormItem
           :label="
-            $t('deploy.projectManagement.projectConfig.buildConfig.uploadScript')
+            $t(
+              'deploy.projectManagement.projectConfig.buildConfig.uploadScript',
+            )
           "
           name="uploadScript"
         >
-          <Input.TextArea
+          <ShellEditor
             v-model:value="formState.uploadScript"
-            :rows="6"
+            :min-rows="6"
             :placeholder="
               $t(
                 'deploy.projectManagement.projectConfig.buildConfig.uploadScriptPlaceholder',
