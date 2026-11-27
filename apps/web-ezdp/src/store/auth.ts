@@ -140,7 +140,9 @@ export const useAuthStore = defineStore('auth', () => {
     businessStore.reset();
 
     // 4. 清除 tabbar（避免切换账号后看到上一个用户的标签页）
-    const affixTabs = tabbarStore.tabs.filter((tab) => tab?.meta?.affixTab === true);
+    const affixTabs = tabbarStore.tabs.filter(
+      (tab) => tab?.meta?.affixTab === true,
+    );
     tabbarStore.tabs = affixTabs.length > 0 ? affixTabs : [];
     tabbarStore.updateCacheTabs();
 
