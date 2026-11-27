@@ -33,7 +33,12 @@ const [UpdateNoticeModal, modalApi] = useVbenModal({
     // 在 hash 前加 _r 参数，强制浏览器视为新 URL 完整重载（绕过缓存）
     const sep = window.location.search ? '&' : '?';
     window.location.href =
-      window.location.pathname + window.location.search + sep + '_r=' + Date.now() + window.location.hash;
+      window.location.pathname +
+      window.location.search +
+      sep +
+      '_r=' +
+      Date.now() +
+      window.location.hash;
   },
 });
 

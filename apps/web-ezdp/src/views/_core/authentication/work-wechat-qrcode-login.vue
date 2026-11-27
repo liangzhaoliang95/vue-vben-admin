@@ -89,6 +89,10 @@ async function handleLoginSuccess(accessToken: string) {
       accessStore.setLoginExpired(false);
     }
 
+    // token 已就绪，立即初始化 WebSocket
+    const { useWebSocketStore } = await import('#/store/websocket');
+    useWebSocketStore().initGlobalWebSocket();
+
     // 跳转到首页
     router.push(userInfo?.homePath || '/');
   } catch (error) {

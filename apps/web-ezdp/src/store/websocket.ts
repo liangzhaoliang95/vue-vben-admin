@@ -510,8 +510,14 @@ export const useWebSocketStore = defineStore('websocket', () => {
       rejectPromise = reject;
     });
 
-    // 创建 WebSocket 连接
-    const url = buildWebSocketURL();
+    // 创建 WebSocket 连接（buildWebSocketURL 可能因 token 未就绪而抛出）
+    let url: string;
+    try {
+      url = buildWebSocketURL();
+    } catch (error) {
+      isConnecting.value = false;
+      throw error;
+    }
     const ws = new WebSocket(url);
 
     // 创建或更新连接对象

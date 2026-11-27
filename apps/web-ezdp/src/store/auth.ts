@@ -55,6 +55,10 @@ export const useAuthStore = defineStore('auth', () => {
       if (accessToken) {
         accessStore.setAccessToken(accessToken);
 
+        // token 已就绪，立即初始化 WebSocket
+        const { useWebSocketStore } = await import('./websocket');
+        useWebSocketStore().initGlobalWebSocket();
+
         // 获取用户信息并存储到 accessStore 中
         const [fetchUserInfoResult, accessCodes, businessLines] =
           await Promise.all([
