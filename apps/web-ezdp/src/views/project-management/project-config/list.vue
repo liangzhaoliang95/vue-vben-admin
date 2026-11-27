@@ -12,7 +12,7 @@ import { Page, useVbenDrawer } from '@vben/common-ui';
 import { Plus } from '@vben/icons';
 import { useBusinessStore } from '@vben/stores';
 
-import { Button, message, Modal } from 'ant-design-vue';
+import { Button, message, Modal, Select } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -30,6 +30,13 @@ const router = useRouter();
 const businessStore = useBusinessStore();
 
 const importModalRef = ref();
+
+const sortBy = ref<'name' | 'projectId'>('projectId');
+
+const sortOptions = [
+  { label: () => $t('deploy.projectManagement.projectConfig.sort.projectId'), value: 'projectId' },
+  { label: () => $t('deploy.projectManagement.projectConfig.sort.name'), value: 'name' },
+];
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   connectedComponent: Form,
@@ -53,6 +60,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             page: page.currentPage,
             pageSize: page.pageSize,
             ...formValues,
+            sortBy: sortBy.value,
           };
 
           // 业务线筛选逻辑：
@@ -68,7 +76,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
           const result = await getProjectConfigList(queryParams);
 
-          // 排序已在后端实现：backend > frontend > submodule，同类型内按项目ID正序
+          // 排序已在后端实现：backend > frontend > submodule，同类型内按指定字段正序
           return result;
         },
       },
@@ -98,6 +106,11 @@ watch(
     gridApi.query();
   },
 );
+
+// 监听排序方式变化，自动刷新数据
+watch(sortBy, () => {
+  gridApi.query();
+});
 
 function onActionClick(e: OnActionClickParams<ProjectConfigApi.ProjectConfig>) {
   switch (e.code) {
@@ -210,6 +223,12 @@ async function onDeployConfigClick(row: ProjectConfigApi.ProjectConfig) {
     <ImportModal ref="importModalRef" @success="onImportSuccess" />
     <Grid :table-title="$t('deploy.projectManagement.projectConfig.title')">
       <template #toolbar-tools>
+        <Select
+          v-model:value="sortBy"
+          :options="sortOptions"
+          :placeholder="$t('deploy.projectManagement.projectConfig.sort.label')"
+          style="margin-right: 8px; width: 120px"
+        />
         <Button style="margin-right: 8px" @click="onImport">
           {{ $t('deploy.projectManagement.projectConfig.import.button') }}
         </Button>

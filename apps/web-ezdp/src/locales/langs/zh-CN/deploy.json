@@ -227,6 +227,11 @@
       "hasDeployConfig": "发布",
       "configured": "已配置",
       "notConfigured": "未配置",
+      "sort": {
+        "label": "排序方式",
+        "projectId": "项目ID正序",
+        "name": "名称正序"
+      },
       "basicInfo": "项目基本信息",
       "buildConfig": {
         "title": "打包配置",

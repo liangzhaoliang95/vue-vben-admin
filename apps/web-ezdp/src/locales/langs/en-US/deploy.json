@@ -227,6 +227,11 @@
       "hasDeployConfig": "Deploy",
       "configured": "Configured",
       "notConfigured": "Not Configured",
+      "sort": {
+        "label": "Sort By",
+        "projectId": "Project ID",
+        "name": "Name"
+      },
       "basicInfo": "Project Basic Information",
       "buildConfig": {
         "title": "Build Configuration",
