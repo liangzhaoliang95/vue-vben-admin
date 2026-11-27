@@ -374,7 +374,9 @@ const themeOptions = Object.entries(TERMINAL_THEMES).map(([key, value]) => ({
 const THEME_STORAGE_KEY = 'log-viewer-theme';
 const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'default';
 const selectedTheme = ref<keyof typeof TERMINAL_THEMES>(
-  (savedTheme in TERMINAL_THEMES ? savedTheme : 'default') as keyof typeof TERMINAL_THEMES,
+  (savedTheme in TERMINAL_THEMES
+    ? savedTheme
+    : 'default') as keyof typeof TERMINAL_THEMES,
 );
 
 // 当前主题的背景色和前景色，用于同步整个容器样式
@@ -1005,7 +1007,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   padding: 12px 16px;
   background: color-mix(in srgb, var(--theme-bg, #000) 70%, #fff 30%);
   border-bottom: 1px solid var(--theme-border, #3a3d41);
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .log-viewer-header-left {
@@ -1137,7 +1141,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   padding: 12px 16px;
   background: color-mix(in srgb, var(--theme-bg, #000) 80%, #fff 20%);
   border-bottom: 1px solid var(--theme-border, #3a3d41);
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .filter-row {
@@ -1161,7 +1167,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   padding: 12px 16px;
   background: color-mix(in srgb, var(--theme-bg, #000) 80%, #fff 20%);
   border-bottom: 1px solid var(--theme-border, #3a3d41);
-  transition: background 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 }
 
 .search-input {
