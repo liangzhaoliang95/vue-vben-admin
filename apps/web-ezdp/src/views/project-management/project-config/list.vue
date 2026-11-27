@@ -233,7 +233,7 @@ async function onDeployConfigClick(row: ProjectConfigApi.ProjectConfig) {
           v-model:value="sortBy"
           :options="sortOptions"
           :placeholder="$t('deploy.projectManagement.projectConfig.sort.label')"
-          style=" width: 120px;margin-right: 8px"
+          style="width: 120px; margin-right: 8px"
         />
         <Button style="margin-right: 8px" @click="onImport">
           {{ $t('deploy.projectManagement.projectConfig.import.button') }}

@@ -3,7 +3,6 @@ import type { WebSocketMessage } from '#/store/websocket';
 
 import {
   computed,
-  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
@@ -314,7 +313,7 @@ onMounted(async () => {
 
   // 监听滚动事件
   terminal.onScroll(() => {
-    if (!terminal) return;
+    if (!terminal || isReRendering) return;
     const viewportY = terminal.buffer.active.viewportY;
     const baseY = terminal.buffer.active.baseY;
     if (viewportY === baseY) {
@@ -635,24 +634,66 @@ function searchPrev() {
   });
 }
 
+let isReRendering = false;
+
 /**
- * 重新渲染所有日志（应用过滤器）
+ * 重新渲染所有日志（应用过滤器），渲染完后恢复滚动位置
  */
 function reRenderLogs() {
   if (!terminal) return;
 
+  // 渲染前快照滚动状态
+  // terminal.clear() 会触发 onScroll（viewportY===baseY===0），必须先快照再 clear
+  const viewportY = terminal.buffer.active.viewportY;
+  const baseY = terminal.buffer.active.baseY;
+  const isAtBottom = viewportY >= baseY;
+  const wasAutoScroll = autoScroll.value;
+  const distanceFromBottom = baseY - viewportY;
+
+  isReRendering = true;
   terminal.clear();
   totalLines.value = 0;
+  isReRendering = false;
 
   const cachedLogs = wsStore.getCachedLogs(wsStore.currentBusinessLineId);
-  if (cachedLogs && cachedLogs.length > 0) {
-    cachedLogs.forEach((message) => {
-      renderLogMessage(message);
-    });
-    if (autoScroll.value) {
+  if (!cachedLogs || cachedLogs.length === 0) return;
+
+  // 把最后一条日志单独拿出来，利用 writeln 的 callback 确认 xterm parser 处理完毕后再恢复位置
+  const restLogs = cachedLogs.slice(0, -1);
+  const lastLog = cachedLogs[cachedLogs.length - 1];
+
+  restLogs.forEach((message) => {
+    renderLogMessage(message);
+  });
+
+  // 临时 patch terminal.writeln 以拦截最后一行的 callback
+  const origWriteln = terminal.writeln.bind(terminal);
+  let callbackFired = false;
+
+  const restoreScroll = () => {
+    if (callbackFired || !terminal) return;
+    callbackFired = true;
+    if (isAtBottom || wasAutoScroll) {
       terminal.scrollToBottom();
+    } else {
+      const newBaseY = terminal.buffer.active.baseY;
+      const targetViewportY = Math.max(0, newBaseY - distanceFromBottom);
+      terminal.scrollToLine(targetViewportY);
     }
-  }
+  };
+
+  // 渲染最后一条，回调里恢复位置
+  // renderLogMessage 内部调用 terminal.writeln，这里直接在最后写一个空串触发 callback
+  renderLogMessage(lastLog);
+  terminal.write('', () => {
+    if (!terminal) return;
+    // parser 处理完，但 xterm 渲染在下一个 RAF 才完成，再多等一帧确保 viewport 稳定
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        restoreScroll();
+      });
+    });
+  });
 }
 
 // 监听搜索关键词变化
