@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import type { WebSocketMessage } from '#/store/websocket';
 
-import {
-  computed,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  watch,
-} from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 import { FitAddon } from '@xterm/addon-fit';
 import { SearchAddon } from '@xterm/addon-search';
@@ -153,7 +147,7 @@ const TERMINAL_THEMES = {
     },
   },
   monokai: {
-    name: 'Monokai',
+    name: 'Monokai（暗色）',
     theme: {
       background: '#272822',
       foreground: '#f8f8f2',
@@ -177,7 +171,7 @@ const TERMINAL_THEMES = {
     },
   },
   dracula: {
-    name: 'Dracula',
+    name: '德古拉（暗色）',
     theme: {
       background: '#282a36',
       foreground: '#f8f8f2',
@@ -201,7 +195,7 @@ const TERMINAL_THEMES = {
     },
   },
   solarizedDark: {
-    name: 'Solarized Dark',
+    name: '日晒（暗色）',
     theme: {
       background: '#002b36',
       foreground: '#839496',
@@ -225,7 +219,7 @@ const TERMINAL_THEMES = {
     },
   },
   nord: {
-    name: 'Nord',
+    name: '北欧（暗色）',
     theme: {
       background: '#2e3440',
       foreground: '#d8dee9',
@@ -248,6 +242,126 @@ const TERMINAL_THEMES = {
       brightWhite: '#eceff4',
     },
   },
+  gruvboxDark: {
+    name: '复古木纹（暗色）',
+    theme: {
+      background: '#282828',
+      foreground: '#ebdbb2',
+      cursor: '#ebdbb2',
+      black: '#282828',
+      red: '#cc241d',
+      green: '#98971a',
+      yellow: '#d79921',
+      blue: '#458588',
+      magenta: '#b16286',
+      cyan: '#689d6a',
+      white: '#a89984',
+      brightBlack: '#928374',
+      brightRed: '#fb4934',
+      brightGreen: '#b8bb26',
+      brightYellow: '#fabd2f',
+      brightBlue: '#83a598',
+      brightMagenta: '#d3869b',
+      brightCyan: '#8ec07c',
+      brightWhite: '#ebdbb2',
+    },
+  },
+  oneDark: {
+    name: '原子（暗色）',
+    theme: {
+      background: '#282c34',
+      foreground: '#abb2bf',
+      cursor: '#528bff',
+      black: '#282c34',
+      red: '#e06c75',
+      green: '#98c379',
+      yellow: '#e5c07b',
+      blue: '#61afef',
+      magenta: '#c678dd',
+      cyan: '#56b6c2',
+      white: '#abb2bf',
+      brightBlack: '#5c6370',
+      brightRed: '#e06c75',
+      brightGreen: '#98c379',
+      brightYellow: '#e5c07b',
+      brightBlue: '#61afef',
+      brightMagenta: '#c678dd',
+      brightCyan: '#56b6c2',
+      brightWhite: '#ffffff',
+    },
+  },
+  tokyoNight: {
+    name: '东京之夜（暗色）',
+    theme: {
+      background: '#1a1b26',
+      foreground: '#c0caf5',
+      cursor: '#c0caf5',
+      black: '#15161e',
+      red: '#f7768e',
+      green: '#9ece6a',
+      yellow: '#e0af68',
+      blue: '#7aa2f7',
+      magenta: '#bb9af7',
+      cyan: '#7dcfff',
+      white: '#a9b1d6',
+      brightBlack: '#414868',
+      brightRed: '#f7768e',
+      brightGreen: '#9ece6a',
+      brightYellow: '#e0af68',
+      brightBlue: '#7aa2f7',
+      brightMagenta: '#bb9af7',
+      brightCyan: '#7dcfff',
+      brightWhite: '#c0caf5',
+    },
+  },
+  catppuccinMocha: {
+    name: '拿铁猫（暗色）',
+    theme: {
+      background: '#1e1e2e',
+      foreground: '#cdd6f4',
+      cursor: '#f5e0dc',
+      black: '#45475a',
+      red: '#f38ba8',
+      green: '#a6e3a1',
+      yellow: '#f9e2af',
+      blue: '#89b4fa',
+      magenta: '#f5c2e7',
+      cyan: '#94e2d5',
+      white: '#bac2de',
+      brightBlack: '#585b70',
+      brightRed: '#f38ba8',
+      brightGreen: '#a6e3a1',
+      brightYellow: '#f9e2af',
+      brightBlue: '#89b4fa',
+      brightMagenta: '#f5c2e7',
+      brightCyan: '#94e2d5',
+      brightWhite: '#a6adc8',
+    },
+  },
+  github: {
+    name: 'GitHub（暗色）',
+    theme: {
+      background: '#0d1117',
+      foreground: '#c9d1d9',
+      cursor: '#c9d1d9',
+      black: '#484f58',
+      red: '#ff7b72',
+      green: '#3fb950',
+      yellow: '#d29922',
+      blue: '#58a6ff',
+      magenta: '#bc8cff',
+      cyan: '#39c5cf',
+      white: '#b1bac4',
+      brightBlack: '#6e7681',
+      brightRed: '#ffa198',
+      brightGreen: '#56d364',
+      brightYellow: '#e3b341',
+      brightBlue: '#79c0ff',
+      brightMagenta: '#d2a8ff',
+      brightCyan: '#56d4dd',
+      brightWhite: '#f0f6fc',
+    },
+  },
 };
 
 // 主题选项
@@ -260,7 +374,19 @@ const themeOptions = Object.entries(TERMINAL_THEMES).map(([key, value]) => ({
 const THEME_STORAGE_KEY = 'log-viewer-theme';
 const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'default';
 const selectedTheme = ref<keyof typeof TERMINAL_THEMES>(
-  savedTheme as keyof typeof TERMINAL_THEMES,
+  (savedTheme in TERMINAL_THEMES ? savedTheme : 'default') as keyof typeof TERMINAL_THEMES,
+);
+
+// 当前主题的背景色和前景色，用于同步整个容器样式
+const themeBackground = computed(
+  () => TERMINAL_THEMES[selectedTheme.value].theme.background,
+);
+const themeForeground = computed(
+  () => TERMINAL_THEMES[selectedTheme.value].theme.foreground,
+);
+const LIGHT_THEMES = new Set<string>();
+const themeBorderColor = computed(() =>
+  LIGHT_THEMES.has(selectedTheme.value) ? '#c8c8c8' : '#3a3d41',
 );
 
 // 监听主题变化
@@ -389,11 +515,12 @@ onBeforeUnmount(() => {
  */
 function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
-  const ms = String(date.getMilliseconds()).padStart(3, '0');
-  return `${hours}:${minutes}:${seconds}.${ms}`;
+  return `${month}/${day} ${hours}:${minutes}:${seconds}`;
 }
 
 /**
@@ -434,7 +561,7 @@ function renderStructuredLog(data: any) {
 
   // 时间戳
   if (visibleFields.value.includes('timestamp') && data.timestamp) {
-    parts.push(`\u001B[90m${formatTimestamp(data.timestamp)}\u001B[0m`);
+    parts.push(`\u001B[96m[${formatTimestamp(data.timestamp)}]\u001B[0m`);
   }
 
   // 级别（带颜色，居中对齐，显示中文）
@@ -716,7 +843,14 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 </script>
 
 <template>
-  <div class="log-viewer">
+  <div
+    class="log-viewer"
+    :style="{
+      '--theme-bg': themeBackground,
+      '--theme-fg': themeForeground,
+      '--theme-border': themeBorderColor,
+    }"
+  >
     <!-- 头部 -->
     <div class="log-viewer-header">
       <div class="log-viewer-header-left">
@@ -858,8 +992,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: #000;
+  background: var(--theme-bg, #000);
   border-radius: 4px;
+  transition: background 0.2s;
 }
 
 .log-viewer-header {
@@ -868,8 +1003,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #2d2d2d;
-  border-bottom: 1px solid #3a3d41;
+  background: color-mix(in srgb, var(--theme-bg, #000) 70%, #fff 30%);
+  border-bottom: 1px solid var(--theme-border, #3a3d41);
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .log-viewer-header-left {
@@ -881,7 +1017,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 .log-viewer-title {
   font-size: 14px;
   font-weight: 500;
-  color: #d4d4d4;
+  color: var(--theme-fg, #d4d4d4);
 }
 
 .log-viewer-status {
@@ -908,12 +1044,12 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 
 .status-text {
   font-size: 12px;
-  color: #d4d4d4;
+  color: var(--theme-fg, #d4d4d4);
 }
 
 .log-viewer-lines {
   font-size: 12px;
-  color: #858585;
+  color: color-mix(in srgb, var(--theme-fg, #858585) 60%, transparent);
 }
 
 .log-viewer-header-right {
@@ -940,7 +1076,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   margin: 0 !important;
   font-size: 12px;
   line-height: 1;
-  color: #d4d4d4;
+  color: var(--theme-fg, #d4d4d4);
 }
 
 .level-filter-inline :deep(.ant-checkbox) {
@@ -962,7 +1098,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 
 .theme-label {
   font-size: 12px;
-  color: #d4d4d4;
+  color: var(--theme-fg, #d4d4d4);
   white-space: nowrap;
 }
 
@@ -974,7 +1110,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 
 .switch-label {
   font-size: 12px;
-  color: #d4d4d4;
+  color: var(--theme-fg, #d4d4d4);
 }
 
 .log-viewer-close {
@@ -983,7 +1119,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   justify-content: center;
   padding: 4px;
   font-size: 16px;
-  color: #d4d4d4;
+  color: var(--theme-fg, #d4d4d4);
   cursor: pointer;
   background: none;
   border: none;
@@ -999,8 +1135,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 .log-viewer-filter {
   flex-shrink: 0;
   padding: 12px 16px;
-  background: #252526;
-  border-bottom: 1px solid #3a3d41;
+  background: color-mix(in srgb, var(--theme-bg, #000) 80%, #fff 20%);
+  border-bottom: 1px solid var(--theme-border, #3a3d41);
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .filter-row {
@@ -1013,7 +1150,7 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   flex-shrink: 0;
   min-width: 80px;
   font-size: 12px;
-  color: #d4d4d4;
+  color: var(--theme-fg, #d4d4d4);
 }
 
 .log-viewer-search {
@@ -1022,8 +1159,9 @@ watch([levelFilters, visibleFields], reRenderLogs, {
   gap: 12px;
   align-items: center;
   padding: 12px 16px;
-  background: #252526;
-  border-bottom: 1px solid #3a3d41;
+  background: color-mix(in srgb, var(--theme-bg, #000) 80%, #fff 20%);
+  border-bottom: 1px solid var(--theme-border, #3a3d41);
+  transition: background 0.2s, border-color 0.2s;
 }
 
 .search-input {
@@ -1056,11 +1194,11 @@ watch([levelFilters, visibleFields], reRenderLogs, {
 
 :deep(.xterm-viewport) {
   overflow-y: auto !important;
-  background: #000 !important;
+  background: var(--theme-bg, #000) !important;
 }
 
 :deep(.xterm-screen) {
-  background: #000 !important;
+  background: var(--theme-bg, #000) !important;
 }
 
 :deep(.xterm-viewport)::-webkit-scrollbar {
