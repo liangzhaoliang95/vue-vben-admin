@@ -34,8 +34,14 @@ const importModalRef = ref();
 const sortBy = ref<'name' | 'projectId'>('projectId');
 
 const sortOptions = [
-  { label: () => $t('deploy.projectManagement.projectConfig.sort.projectId'), value: 'projectId' },
-  { label: () => $t('deploy.projectManagement.projectConfig.sort.name'), value: 'name' },
+  {
+    label: () => $t('deploy.projectManagement.projectConfig.sort.projectId'),
+    value: 'projectId',
+  },
+  {
+    label: () => $t('deploy.projectManagement.projectConfig.sort.name'),
+    value: 'name',
+  },
 ];
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -227,7 +233,7 @@ async function onDeployConfigClick(row: ProjectConfigApi.ProjectConfig) {
           v-model:value="sortBy"
           :options="sortOptions"
           :placeholder="$t('deploy.projectManagement.projectConfig.sort.label')"
-          style="margin-right: 8px; width: 120px"
+          style=" width: 120px;margin-right: 8px"
         />
         <Button style="margin-right: 8px" @click="onImport">
           {{ $t('deploy.projectManagement.projectConfig.import.button') }}
